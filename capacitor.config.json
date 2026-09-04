@@ -1,0 +1,9 @@
+{
+  "appId": "com.lifetracker.app",
+  "appName": "Life Tracker",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https"
+  }
+}
