@@ -18,7 +18,7 @@ import { db, isInitialized, initFirebase } from './firebase';
 export const DB_HEALTH_PROTOCOL_TEMPLATE = {
   meta: {
     isCustom: false,
-    planName: 'Standard Ayurvedic & Fitness Protocol',
+    planName: 'Daily Calorie, Care & Nutrition Protocol',
     uploadedAt: null,
     source: 'cloud_database',
   },
@@ -61,63 +61,6 @@ export const DB_HEALTH_PROTOCOL_TEMPLATE = {
       },
     ]
   },
-  mealSchedule: [
-    {
-      id: 'meal-1',
-      time: '08:00 AM',
-      name: '🌅 Morning Detox & Hydration',
-      dishes: 'Warm water + 1/2 lemon + soaked chia seeds (1 tbsp)',
-      calories: 45,
-      protein: '1 g',
-      hairSkinBenefits: 'Flushes metabolic toxins, stimulates gut motility & digestive enzymes'
-    },
-    {
-      id: 'meal-2',
-      time: '10:30 AM',
-      name: '🍵 Pre-Meal Brain & Energy Boost',
-      dishes: '1 cup green tea + 10 soaked almonds + 2 walnuts + 1 medjool date',
-      calories: 140,
-      protein: '4 g',
-      hairSkinBenefits: 'Vitamin E & healthy omega-3 fatty acids for skin glow & scalp moisture'
-    },
-    {
-      id: 'meal-3',
-      time: '01:00 PM',
-      name: '🥗 Main Lunch / High-Protein Nutrition',
-      dishes: '1 cup brown rice or 2 multigrain rotis + grilled paneer/tofu (150g) or boiled eggs + 1 bowl mixed dal + cucumber salad + fresh curd',
-      calories: 520,
-      protein: '30 g',
-      hairSkinBenefits: 'Keratin synthesis, amino acids for hair growth & sustained afternoon energy'
-    },
-    {
-      id: 'meal-4',
-      time: '04:30 PM',
-      name: '🥜 Evening Snack & Hydration',
-      dishes: 'Roasted pumpkin seeds (15g) + tender coconut water or buttermilk',
-      calories: 130,
-      protein: '5 g',
-      hairSkinBenefits: 'Zinc for acne prevention & magnesium for craving reduction'
-    },
-    {
-      id: 'meal-5',
-      time: '07:30 PM',
-      name: '🍲 Light Dinner / Cell Repair',
-      dishes: 'Warm vegetable soup + stir-fried broccoli, mushrooms, paneer/tofu or 3 egg whites + 1 bowl lentil broth',
-      calories: 380,
-      protein: '25 g',
-      hairSkinBenefits: 'Collagen synthesis, overnight muscle recovery & sound deep sleep'
-    }
-  ],
-  fastingAndWater: {
-    fastingProtocol: '16:8 Intermittent Fasting',
-    fastingWindow: 'Fasting 8:00 PM to 12:00 PM next day',
-    fastingStart: '20:00',
-    fastingEnd: '12:00',
-    waterTargetLiters: 3.5,
-    waterTargetGlasses: 14,
-    electrolyteHack: 'Morning warm water + pinch of pink Himalayan salt + lemon',
-    fastingNotes: 'Zero-calorie beverages permitted: Water, plain green tea, black coffee without sugar'
-  },
   micronutrients: [
     { id: 'iron', name: 'Iron', color: '#f43f5e', target: 'Bloating, fatigue, hair fall', sources: 'Dates, spinach, beetroot, jaggery' },
     { id: 'b12', name: 'Vitamin B12', color: '#8b5cf6', target: 'Mood swings, low energy', sources: 'Curd, paneer, fortified foods' },
@@ -125,6 +68,23 @@ export const DB_HEALTH_PROTOCOL_TEMPLATE = {
     { id: 'magnesium', name: 'Magnesium', color: '#6366f1', target: 'Sleep, stress, cravings', sources: 'Pumpkin seeds, peanuts' },
     { id: 'zinc', name: 'Zinc', color: '#0ea5e9', target: 'Hair strength & skin healing', sources: 'Nuts, seeds, legumes' },
   ],
+  skinCare: {
+    daily: 'AM and PM (Cleanse, hydrate, sunscreen AM, barrier repair PM)',
+    weeklySunday: 'Sunday: Face shaving and scrub',
+    weeklyTueFri: 'Tuesday & Friday: Face pack',
+    notes: 'Gentle circular motion for scrub; use soothing gel after face shaving.'
+  },
+  bodyCare: {
+    sunday: 'Sunday: Oiling, scrub, shaving',
+    tueFri: 'Tuesday & Friday: Exfoliating body wash',
+    notes: 'Warm oil before bath on Sundays; gentle loofah with exfoliating wash on Tue/Fri.'
+  },
+  hairCare: {
+    daily: 'Serum and hair growth water',
+    weekly: '3x Oiling, hair pack, hair wash',
+    biWeekly: 'Two weeks once: Saturday henna and Sunday avari podi (In the next alternate: Hair growth serum)',
+    notes: 'Air dry naturally, wide-tooth detangling comb, warm oil massage.'
+  },
   exerciseRoutine: {
     morning: {
       title: '🌅 Morning Cardio (30–40 Mins)',
@@ -144,23 +104,6 @@ export const DB_HEALTH_PROTOCOL_TEMPLATE = {
       { week: 'Week 3', action: 'Sugar strictly limited to festival / weekly cheat day', status: 'Phase 3' }
     ],
     cravingHack: '🧠 Craving Hack: Drink 1 glass warm water + take 5 slow deep breaths. Cravings fade in 90 seconds.'
-  },
-  skinCare: {
-    daily: 'AM and PM (Cleanse, hydrate, sunscreen AM, barrier repair PM)',
-    weeklySunday: 'Sunday: Face shaving and scrub',
-    weeklyTueFri: 'Tuesday & Friday: Face pack',
-    notes: 'Gentle circular motion for scrub; use soothing gel after face shaving.'
-  },
-  bodyCare: {
-    sunday: 'Sunday: Oiling, scrub, shaving',
-    tueFri: 'Tuesday & Friday: Exfoliating body wash',
-    notes: 'Warm oil before bath on Sundays; gentle loofah with exfoliating wash on Tue/Fri.'
-  },
-  hairCare: {
-    daily: 'Serum and hair growth water',
-    weekly: '3x Oiling, hair pack, hair wash',
-    biWeekly: 'Two weeks once: Saturday henna and Sunday avari podi (In the next alternate: Hair growth serum)',
-    notes: 'Air dry naturally, wide-tooth detangling comb, warm oil massage.'
   }
 };
 

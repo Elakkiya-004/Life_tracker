@@ -36,37 +36,14 @@ export const exportHealthProtocolToExcel = (protocol = DEFAULT_HEALTH_PROTOCOL, 
     const wb = XLSX.utils.book_new();
     const cleanProtocol = sanitizeHealthProtocol({ ...DEFAULT_HEALTH_PROTOCOL, ...protocol });
 
-    // --- SHEET 1: Meal Schedule ---
-    const mealRows = (cleanProtocol.mealSchedule || []).map((m, idx) => ({
-      'Meal #': idx + 1,
-      'Time': m.time || '',
-      'Meal Title': m.name || '',
-      'Dishes & Ingredients': m.dishes || '',
-      'Calories (kcal)': m.calories || 0,
-      'Protein (g)': String(m.protein || '').replace(/\s*\([^)]*\)/g, '').trim(),
-      'Hair & Skin Benefits': m.hairSkinBenefits || ''
-    }));
-
-    const wsMeals = XLSX.utils.json_to_sheet(mealRows);
-    wsMeals['!cols'] = [
-      { wch: 8 },  // Meal #
-      { wch: 14 }, // Time
-      { wch: 32 }, // Meal Title
-      { wch: 65 }, // Dishes & Ingredients
-      { wch: 16 }, // Calories
-      { wch: 14 }, // Protein
-      { wch: 55 }, // Hair & Skin Benefits
-    ];
-    XLSX.utils.book_append_sheet(wb, wsMeals, 'Meal_Schedule');
-
-    // --- SHEET 2: Macros & Calories ---
+    // --- SHEET 1: Macros & Calories ---
     const cal = cleanProtocol.calories || {};
     const macroRows = [
       {
         'Metric / Macro Name': 'Maintenance Calories',
         'Target Amount / Calories': `${cal.maintenance || 1850} kcal/day`,
         'Ratio / Percentage': '—',
-        'Health & Body Purpose': 'Daily energy needed for zero weight change',
+        'Health & Body Purpose': 'Daily energy needed for zero weight change baseline',
         'Top Food Sources & Guidelines': 'Whole balanced diet'
       },
       {
@@ -78,7 +55,7 @@ export const exportHealthProtocolToExcel = (protocol = DEFAULT_HEALTH_PROTOCOL, 
       },
       {
         'Metric / Macro Name': 'Expected Fat Loss Rate',
-        'Target Amount / Calories': cal.expectedLoss || '0.5–0.7 kg/week',
+        'Target Amount / Calories': cal.expectedLoss || '0.5–0.7 kg/week (healthy & sustainable)',
         'Ratio / Percentage': '—',
         'Health & Body Purpose': 'Sustainable and healthy fat reduction pace',
         'Top Food Sources & Guidelines': 'Maintains lean muscle mass'
@@ -101,47 +78,15 @@ export const exportHealthProtocolToExcel = (protocol = DEFAULT_HEALTH_PROTOCOL, 
 
     const wsMacros = XLSX.utils.json_to_sheet(macroRows);
     wsMacros['!cols'] = [
-      { wch: 24 },
+      { wch: 26 },
       { wch: 24 },
       { wch: 18 },
-      { wch: 50 },
-      { wch: 60 },
+      { wch: 52 },
+      { wch: 65 },
     ];
     XLSX.utils.book_append_sheet(wb, wsMacros, 'Macros_And_Calories');
 
-    // --- SHEET 3: Fasting & Hydration ---
-    const fw = cleanProtocol.fastingAndWater || {};
-    const fastingRows = [
-      {
-        'Protocol Name': 'Intermittent Fasting Protocol',
-        'Setting / Target': fw.fastingProtocol || '16:8 Intermittent Fasting',
-        'Timing / Window': fw.fastingWindow || 'Fasting 8:00 PM to 12:00 PM next day',
-        'Special Guidelines': fw.fastingNotes || 'Zero-calorie drinks allowed (Water, black coffee, green tea)'
-      },
-      {
-        'Protocol Name': 'Daily Water Intake Goal',
-        'Setting / Target': `${fw.waterTargetLiters || 3.5} Litres`,
-        'Timing / Window': `${fw.waterTargetGlasses || 14} Glasses (250ml each)`,
-        'Special Guidelines': 'Drink 1 glass every 60–90 minutes; stop 1 hr before bedtime'
-      },
-      {
-        'Protocol Name': 'Morning Electrolyte Hack',
-        'Setting / Target': 'Warm lemon water + Pink Himalayan Salt',
-        'Timing / Window': '08:00 AM (Immediately on waking)',
-        'Special Guidelines': fw.electrolyteHack || 'Stimulates gut motility, rehydrates cells, flushes toxins'
-      }
-    ];
-
-    const wsFasting = XLSX.utils.json_to_sheet(fastingRows);
-    wsFasting['!cols'] = [
-      { wch: 28 },
-      { wch: 32 },
-      { wch: 36 },
-      { wch: 60 },
-    ];
-    XLSX.utils.book_append_sheet(wb, wsFasting, 'Fasting_And_Water');
-
-    // --- SHEET 4: Micronutrients Focus ---
+    // --- SHEET 2: Micronutrients Focus ---
     const microRows = (cleanProtocol.micronutrients || []).map(micro => ({
       'Nutrient Name': micro.name || '',
       'Target Deficiency / Symptom': micro.target || '',

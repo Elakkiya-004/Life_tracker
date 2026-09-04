@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
 import { 
@@ -21,13 +21,9 @@ import {
   FileSpreadsheet,
   Download,
   RotateCcw,
-  Droplets,
-  Utensils,
-  Check,
-  Share2,
-  FileDown,
-  Info,
-  CheckCircle2
+  CheckCircle2,
+  AlertTriangle,
+  FileDown
 } from 'lucide-react';
 import { 
   exportHealthProtocolToExcel, 
@@ -41,7 +37,6 @@ export const HealthProtocolView = () => {
     updateHealthProtocol, 
     importHealthProtocolFromExcel,
     resetHealthProtocolToDefault,
-    todayStr,
     triggerCelebration
   } = useApp();
 
@@ -50,48 +45,10 @@ export const HealthProtocolView = () => {
   const [notificationMsg, setNotificationMsg] = useState(null);
   const [isExcelModalOpen, setIsExcelModalOpen] = useState(false);
 
-  // Daily Water Tracker state (Persisted in localStorage per day & user)
-  const waterStorageKey = `life_tracker_water_${currentUser?.uid || 'user'}_${todayStr}`;
-  const [waterGlasses, setWaterGlasses] = useState(() => {
-    try {
-      const saved = localStorage.getItem(waterStorageKey);
-      return saved !== null ? parseInt(saved, 10) : 0;
-    } catch {
-      return 0;
-    }
-  });
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(waterStorageKey, String(waterGlasses));
-    } catch {
-      // Ignore storage errors
-    }
-  }, [waterGlasses, waterStorageKey]);
-
-  // Daily Completed Meals Tracker state
-  const mealStorageKey = `life_tracker_meals_done_${currentUser?.uid || 'user'}_${todayStr}`;
-  const [completedMeals, setCompletedMeals] = useState(() => {
-    try {
-      const saved = localStorage.getItem(mealStorageKey);
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
-  });
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(mealStorageKey, JSON.stringify(completedMeals));
-    } catch {
-      // Ignore storage errors
-    }
-  }, [completedMeals, mealStorageKey]);
-
-  // Edit Modals State
-  const [activeModal, setActiveModal] = useState(null); // 'calories' | 'micronutrients' | 'exercise' | 'sugar' | 'skincare' | 'bodycare' | 'haircare' | 'meals' | 'fasting' | null
+  // Edit Modals State: 'calories' | 'micronutrients' | 'exercise' | 'sugar' | 'skincare' | 'bodycare' | 'haircare' | null
+  const [activeModal, setActiveModal] = useState(null);
   
-  // Temporary Form States
+  // Temporary Form States for Modals
   const [formData, setFormData] = useState({});
 
   const protocol = healthProtocol || {};
@@ -99,19 +56,7 @@ export const HealthProtocolView = () => {
   const isCustomPlan = !!meta.isCustom;
 
   const calories = protocol.calories || {};
-  const macros = calories.macros || [];
-  const mealSchedule = Array.isArray(protocol.mealSchedule) && protocol.mealSchedule.length > 0
-    ? protocol.mealSchedule
-    : [];
-
-  const fastingAndWater = protocol.fastingAndWater || {
-    fastingProtocol: '16:8 Intermittent Fasting',
-    fastingWindow: 'Fasting 8:00 PM to 12:00 PM next day',
-    waterTargetLiters: 3.5,
-    waterTargetGlasses: 14,
-    electrolyteHack: 'Morning warm water + pink Himalayan salt + lemon',
-    fastingNotes: 'Water, black coffee, plain green tea allowed during fast'
-  };
+  const macros = Array.isArray(calories.macros) ? calories.macros : [];
 
   const micronutrients = Array.isArray(protocol.micronutrients) && protocol.micronutrients.length > 0 
     ? protocol.micronutrients 
@@ -123,8 +68,27 @@ export const HealthProtocolView = () => {
         { id: 'zinc', name: 'Zinc', color: '#0ea5e9', target: 'Hair strength & skin healing', sources: 'Nuts, seeds, legumes' },
       ];
 
-  const exerciseRoutine = protocol.exerciseRoutine || {};
-  const sugarCutting = protocol.sugarCutting || {};
+  const exerciseRoutine = protocol.exerciseRoutine || {
+    morning: {
+      title: '🌅 Morning Cardio (30–40 Mins)',
+      activities: 'Cycling or brisk outdoor walking',
+      benefits: 'Fat burning zone, insulin sensitivity & stimulates natural gut motility'
+    },
+    evening: {
+      title: '💪 Evening Bodyweight Routine (20 Mins)',
+      activities: 'Squats (3x15), Glute bridges (3x15), Wall push-ups (3x12), Planks (3x30s)',
+      benefits: 'Tones glutes/core, improves posture, activates metabolism. Consistency > Intensity.'
+    }
+  };
+
+  const sugarCutting = protocol.sugarCutting || {
+    phases: [
+      { week: 'Week 1', action: 'Remove added sugar from tea & coffee', status: 'Phase 1' },
+      { week: 'Week 2', action: 'Replace sweets & bakery snacks with fresh fruits / dates', status: 'Phase 2' },
+      { week: 'Week 3', action: 'Sugar strictly limited to festival / weekly cheat day', status: 'Phase 3' }
+    ],
+    cravingHack: '🧠 Craving Hack: Drink 1 glass warm water + take 5 slow deep breaths. Cravings fade in 90 seconds.'
+  };
   
   const skinCare = protocol.skinCare || {
     daily: 'AM and PM (Cleanse, hydrate, sunscreen AM, barrier repair PM)',
@@ -151,33 +115,6 @@ export const HealthProtocolView = () => {
     setTimeout(() => setNotificationMsg(null), 3500);
   };
 
-  // Water Increment / Decrement
-  const handleAddWater = () => {
-    const next = waterGlasses + 1;
-    setWaterGlasses(next);
-    if (next === (fastingAndWater.waterTargetGlasses || 14)) {
-      triggerCelebration();
-      showToast('🎉 Awesome! Daily water goal completed (3.5L)!');
-    }
-  };
-
-  const handleSubWater = () => {
-    setWaterGlasses(prev => Math.max(0, prev - 1));
-  };
-
-  // Toggle Meal Completion
-  const handleToggleMeal = (mealId) => {
-    setCompletedMeals(prev => {
-      const isDone = prev.includes(mealId);
-      const updated = isDone ? prev.filter(id => id !== mealId) : [...prev, mealId];
-      if (!isDone && mealSchedule.length > 0 && updated.length === mealSchedule.length) {
-        triggerCelebration();
-        showToast('🌟 All daily protocol meals completed! Super disciplined!');
-      }
-      return updated;
-    });
-  };
-
   // Export current protocol to Excel
   const handleExportExcel = () => {
     const res = exportHealthProtocolToExcel(protocol, currentUser?.name || 'My_Diet_Plan');
@@ -186,29 +123,90 @@ export const HealthProtocolView = () => {
     }
   };
 
-  // Revert protocol to standard default
+  // Revert protocol to standard default template
   const handleRevertToDefault = () => {
-    if (window.confirm('Are you sure you want to revert to the Standard System Health Protocol? Your custom uploaded sheets will be reset to defaults.')) {
+    if (window.confirm('Are you sure you want to reset to the Standard Health & Care Protocol template?')) {
       resetHealthProtocolToDefault();
       showToast('🔄 Reverted back to Standard System Health Protocol.');
     }
   };
 
-  // --- CALORIE & MACRO EDITING ---
+  // Clear/Delete entire protocol data
+  const handleClearAllProtocol = () => {
+    if (window.confirm('⚠️ Are you sure you want to DELETE/CLEAR all protocol targets and regimes?')) {
+      updateHealthProtocol({
+        meta: { isCustom: true, planName: 'Empty Protocol', uploadedAt: new Date().toISOString() },
+        calories: {
+          maintenance: 0,
+          fatLossTarget: '0 kcal/day',
+          expectedLoss: '0 kg/week',
+          cheatDay: { target: '0 kcal', rules: '' },
+          macros: []
+        },
+        micronutrients: [],
+        skinCare: { daily: '', weeklySunday: '', weeklyTueFri: '', notes: '' },
+        bodyCare: { sunday: '', tueFri: '', notes: '' },
+        hairCare: { daily: '', weekly: '', biWeekly: '', notes: '' },
+        exerciseRoutine: {
+          morning: { title: '', activities: '', benefits: '' },
+          evening: { title: '', activities: '', benefits: '' }
+        },
+        sugarCutting: { phases: [], cravingHack: '' }
+      });
+      showToast('🗑️ All protocol data has been cleared.');
+    }
+  };
+
+  // --- 1. MACROS & CALORIES ACTIONS ---
   const handleOpenEditCalories = () => {
     setFormData({
       maintenance: calories.maintenance || 1850,
       fatLossTarget: calories.fatLossTarget || '1350–1450 kcal/day',
-      expectedLoss: calories.expectedLoss || '0.5–0.7 kg/week',
+      expectedLoss: calories.expectedLoss || '0.5–0.7 kg/week (healthy & sustainable)',
       cheatTarget: calories.cheatDay?.target || '1800–1900 kcal',
-      cheatRules: calories.cheatDay?.rules || '',
+      cheatRules: calories.cheatDay?.rules || 'No binge eating • Protein + Fiber first • Stop at 80% fullness',
       macros: macros.map(m => ({ ...m })),
     });
     setActiveModal('calories');
   };
 
+  const handleAddMacroRow = () => {
+    const colors = ['#ef4444', '#f59e0b', '#10b981', '#6366f1', '#ec4899', '#0ea5e9'];
+    setFormData(prev => ({
+      ...prev,
+      macros: [
+        ...(prev.macros || []),
+        {
+          id: `macro-${Date.now()}`,
+          name: '',
+          amount: '',
+          percentage: '',
+          color: colors[(prev.macros?.length || 0) % colors.length],
+          purpose: '',
+          foods: ''
+        }
+      ]
+    }));
+  };
+
+  const handleRemoveMacroRow = (idx) => {
+    setFormData(prev => ({
+      ...prev,
+      macros: prev.macros.filter((_, i) => i !== idx)
+    }));
+  };
+
+  const handleUpdateMacroRow = (idx, field, value) => {
+    setFormData(prev => {
+      const updated = [...prev.macros];
+      updated[idx] = { ...updated[idx], [field]: value };
+      return { ...prev, macros: updated };
+    });
+  };
+
   const handleSaveCalories = (e) => {
     e.preventDefault();
+    const cleanMacros = (formData.macros || []).filter(m => m.name.trim() !== '');
     updateHealthProtocol(prev => ({
       ...prev,
       calories: {
@@ -217,49 +215,32 @@ export const HealthProtocolView = () => {
         fatLossTarget: formData.fatLossTarget,
         expectedLoss: formData.expectedLoss,
         cheatDay: {
-          ...prev.calories?.cheatDay,
           target: formData.cheatTarget,
+          frequency: '1 day / week only',
           rules: formData.cheatRules,
         },
-        macros: formData.macros,
+        macros: cleanMacros,
       }
     }));
     setActiveModal(null);
     showToast('✅ Calorie & Macro targets updated successfully!');
   };
 
-  // --- FASTING & WATER EDITING ---
-  const handleOpenEditFasting = () => {
-    setFormData({
-      fastingProtocol: fastingAndWater.fastingProtocol || '16:8 Intermittent Fasting',
-      fastingWindow: fastingAndWater.fastingWindow || 'Fasting 8:00 PM to 12:00 PM next day',
-      waterTargetLiters: fastingAndWater.waterTargetLiters || 3.5,
-      electrolyteHack: fastingAndWater.electrolyteHack || '',
-      fastingNotes: fastingAndWater.fastingNotes || ''
-    });
-    setActiveModal('fasting');
+  const handleDeleteMacroDirect = (macroName) => {
+    if (window.confirm(`Delete "${macroName}" macronutrient target?`)) {
+      const updatedMacros = macros.filter(m => m.name !== macroName);
+      updateHealthProtocol(prev => ({
+        ...prev,
+        calories: {
+          ...prev.calories,
+          macros: updatedMacros
+        }
+      }));
+      showToast(`🗑️ Removed "${macroName}" macro.`);
+    }
   };
 
-  const handleSaveFasting = (e) => {
-    e.preventDefault();
-    const liters = parseFloat(formData.waterTargetLiters) || 3.5;
-    updateHealthProtocol(prev => ({
-      ...prev,
-      fastingAndWater: {
-        ...prev.fastingAndWater,
-        fastingProtocol: formData.fastingProtocol,
-        fastingWindow: formData.fastingWindow,
-        waterTargetLiters: liters,
-        waterTargetGlasses: Math.round(liters * 4),
-        electrolyteHack: formData.electrolyteHack,
-        fastingNotes: formData.fastingNotes
-      }
-    }));
-    setActiveModal(null);
-    showToast('✅ Fasting & Hydration targets updated!');
-  };
-
-  // --- MICRONUTRIENTS EDITING ---
+  // --- 2. MICRONUTRIENTS ACTIONS ---
   const handleOpenEditMicronutrients = () => {
     setFormData({
       items: micronutrients.map(item => ({ ...item })),
@@ -268,6 +249,7 @@ export const HealthProtocolView = () => {
   };
 
   const handleAddMicronutrientRow = () => {
+    const colors = ['#f43f5e', '#8b5cf6', '#f59e0b', '#6366f1', '#0ea5e9', '#10b981', '#ec4899'];
     setFormData(prev => ({
       ...prev,
       items: [
@@ -277,7 +259,7 @@ export const HealthProtocolView = () => {
           name: '',
           target: '',
           sources: '',
-          color: '#10b981',
+          color: colors[prev.items.length % colors.length],
         }
       ]
     }));
@@ -309,13 +291,130 @@ export const HealthProtocolView = () => {
     showToast('✅ Micronutrients updated successfully!');
   };
 
-  // --- EXERCISE EDITING ---
+  const handleDeleteMicronutrientDirect = (nutrientId, nutrientName) => {
+    if (window.confirm(`Delete "${nutrientName}" from Micronutrients focus?`)) {
+      const updated = micronutrients.filter(m => (m.id || m.name) !== (nutrientId || nutrientName));
+      updateHealthProtocol(prev => ({
+        ...prev,
+        micronutrients: updated
+      }));
+      showToast(`🗑️ Removed "${nutrientName}" micronutrient.`);
+    }
+  };
+
+  // --- 3. SKIN CARE ACTIONS ---
+  const handleOpenEditSkinCare = () => {
+    setFormData({
+      daily: skinCare.daily || '',
+      weeklySunday: skinCare.weeklySunday || '',
+      weeklyTueFri: skinCare.weeklyTueFri || '',
+      notes: skinCare.notes || '',
+    });
+    setActiveModal('skincare');
+  };
+
+  const handleSaveSkinCare = (e) => {
+    e.preventDefault();
+    updateHealthProtocol(prev => ({
+      ...prev,
+      skinCare: {
+        daily: formData.daily,
+        weeklySunday: formData.weeklySunday,
+        weeklyTueFri: formData.weeklyTueFri,
+        notes: formData.notes,
+      }
+    }));
+    setActiveModal(null);
+    showToast('✅ Skin care regime updated!');
+  };
+
+  const handleClearSkinCare = () => {
+    if (window.confirm('Delete/Clear Skin Care regime details?')) {
+      updateHealthProtocol(prev => ({
+        ...prev,
+        skinCare: { daily: '', weeklySunday: '', weeklyTueFri: '', notes: '' }
+      }));
+      showToast('🗑️ Skin care regime cleared.');
+    }
+  };
+
+  // --- 4. BODY CARE ACTIONS ---
+  const handleOpenEditBodyCare = () => {
+    setFormData({
+      sunday: bodyCare.sunday || '',
+      tueFri: bodyCare.tueFri || '',
+      notes: bodyCare.notes || '',
+    });
+    setActiveModal('bodycare');
+  };
+
+  const handleSaveBodyCare = (e) => {
+    e.preventDefault();
+    updateHealthProtocol(prev => ({
+      ...prev,
+      bodyCare: {
+        sunday: formData.sunday,
+        tueFri: formData.tueFri,
+        notes: formData.notes,
+      }
+    }));
+    setActiveModal(null);
+    showToast('✅ Body care regime updated!');
+  };
+
+  const handleClearBodyCare = () => {
+    if (window.confirm('Delete/Clear Body Care regime details?')) {
+      updateHealthProtocol(prev => ({
+        ...prev,
+        bodyCare: { sunday: '', tueFri: '', notes: '' }
+      }));
+      showToast('🗑️ Body care regime cleared.');
+    }
+  };
+
+  // --- 5. HAIR CARE ACTIONS ---
+  const handleOpenEditHairCare = () => {
+    setFormData({
+      daily: hairCare.daily || '',
+      weekly: hairCare.weekly || '',
+      biWeekly: hairCare.biWeekly || '',
+      notes: hairCare.notes || '',
+    });
+    setActiveModal('haircare');
+  };
+
+  const handleSaveHairCare = (e) => {
+    e.preventDefault();
+    updateHealthProtocol(prev => ({
+      ...prev,
+      hairCare: {
+        daily: formData.daily,
+        weekly: formData.weekly,
+        biWeekly: formData.biWeekly,
+        notes: formData.notes,
+      }
+    }));
+    setActiveModal(null);
+    showToast('✅ Hair care regime updated!');
+  };
+
+  const handleClearHairCare = () => {
+    if (window.confirm('Delete/Clear Hair Care regime details?')) {
+      updateHealthProtocol(prev => ({
+        ...prev,
+        hairCare: { daily: '', weekly: '', biWeekly: '', notes: '' }
+      }));
+      showToast('🗑️ Hair care regime cleared.');
+    }
+  };
+
+  // --- 6. EXERCISE ACTIONS ---
   const handleOpenEditExercise = () => {
     setFormData({
-      morningTitle: exerciseRoutine.morning?.title || '',
+      morningTitle: exerciseRoutine.morning?.title || '🌅 Morning Cardio (30–40 Mins)',
       morningActivities: exerciseRoutine.morning?.activities || '',
       morningBenefits: exerciseRoutine.morning?.benefits || '',
-      eveningTitle: exerciseRoutine.evening?.title || '',
+      eveningTitle: exerciseRoutine.evening?.title || '💪 Evening Bodyweight Routine (20 Mins)',
       eveningActivities: exerciseRoutine.evening?.activities || '',
       eveningBenefits: exerciseRoutine.evening?.benefits || '',
     });
@@ -343,27 +442,60 @@ export const HealthProtocolView = () => {
     showToast('✅ Exercise routine updated!');
   };
 
-  // --- SUGAR CUTTING EDITING ---
+  const handleClearExercise = () => {
+    if (window.confirm('Delete/Clear Exercise Routine details?')) {
+      updateHealthProtocol(prev => ({
+        ...prev,
+        exerciseRoutine: {
+          morning: { title: '', activities: '', benefits: '' },
+          evening: { title: '', activities: '', benefits: '' }
+        }
+      }));
+      showToast('🗑️ Exercise routine cleared.');
+    }
+  };
+
+  // --- 7. SUGAR CUTTING ACTIONS ---
   const handleOpenEditSugar = () => {
     setFormData({
-      week1: sugarCutting.phases?.[0]?.action || '',
-      week2: sugarCutting.phases?.[1]?.action || '',
-      week3: sugarCutting.phases?.[2]?.action || '',
-      cravingHack: sugarCutting.cravingHack || '',
+      phases: (sugarCutting.phases || []).map(p => ({ ...p })),
+      cravingHack: sugarCutting.cravingHack || '🧠 Craving Hack: Drink 1 glass warm water + take 5 slow deep breaths. Cravings fade in 90 seconds.',
     });
     setActiveModal('sugar');
   };
 
+  const handleAddSugarPhaseRow = () => {
+    setFormData(prev => ({
+      ...prev,
+      phases: [
+        ...(prev.phases || []),
+        { week: `Week ${(prev.phases?.length || 0) + 1}`, action: '', status: `Phase ${(prev.phases?.length || 0) + 1}` }
+      ]
+    }));
+  };
+
+  const handleRemoveSugarPhaseRow = (idx) => {
+    setFormData(prev => ({
+      ...prev,
+      phases: prev.phases.filter((_, i) => i !== idx)
+    }));
+  };
+
+  const handleUpdateSugarPhaseRow = (idx, field, value) => {
+    setFormData(prev => {
+      const updated = [...prev.phases];
+      updated[idx] = { ...updated[idx], [field]: value };
+      return { ...prev, phases: updated };
+    });
+  };
+
   const handleSaveSugar = (e) => {
     e.preventDefault();
+    const cleanPhases = (formData.phases || []).filter(p => p.action.trim() !== '');
     updateHealthProtocol(prev => ({
       ...prev,
       sugarCutting: {
-        phases: [
-          { week: 'Week 1', action: formData.week1, status: 'Phase 1' },
-          { week: 'Week 2', action: formData.week2, status: 'Phase 2' },
-          { week: 'Week 3', action: formData.week3, status: 'Phase 3' },
-        ],
+        phases: cleanPhases,
         cravingHack: formData.cravingHack,
       }
     }));
@@ -371,84 +503,17 @@ export const HealthProtocolView = () => {
     showToast('✅ Sugar cutting strategy updated!');
   };
 
-  // --- SKIN CARE EDITING ---
-  const handleOpenEditSkinCare = () => {
-    setFormData({
-      daily: skinCare.daily || '',
-      weeklySunday: skinCare.weeklySunday || '',
-      weeklyTueFri: skinCare.weeklyTueFri || '',
-      notes: skinCare.notes || '',
-    });
-    setActiveModal('skincare');
-  };
-
-  const handleSaveSkinCare = (e) => {
-    e.preventDefault();
+  const handleDeleteSugarPhaseDirect = (idx) => {
+    const updatedPhases = (sugarCutting.phases || []).filter((_, i) => i !== idx);
     updateHealthProtocol(prev => ({
       ...prev,
-      skinCare: {
-        daily: formData.daily,
-        weeklySunday: formData.weeklySunday,
-        weeklyTueFri: formData.weeklyTueFri,
-        notes: formData.notes,
+      sugarCutting: {
+        ...prev.sugarCutting,
+        phases: updatedPhases
       }
     }));
-    setActiveModal(null);
-    showToast('✅ Skin care regime updated!');
+    showToast('🗑️ Removed sugar cutting phase.');
   };
-
-  // --- BODY CARE EDITING ---
-  const handleOpenEditBodyCare = () => {
-    setFormData({
-      sunday: bodyCare.sunday || '',
-      tueFri: bodyCare.tueFri || '',
-      notes: bodyCare.notes || '',
-    });
-    setActiveModal('bodycare');
-  };
-
-  const handleSaveBodyCare = (e) => {
-    e.preventDefault();
-    updateHealthProtocol(prev => ({
-      ...prev,
-      bodyCare: {
-        sunday: formData.sunday,
-        tueFri: formData.tueFri,
-        notes: formData.notes,
-      }
-    }));
-    setActiveModal(null);
-    showToast('✅ Body care regime updated!');
-  };
-
-  // --- HAIR CARE EDITING ---
-  const handleOpenEditHairCare = () => {
-    setFormData({
-      daily: hairCare.daily || '',
-      weekly: hairCare.weekly || '',
-      biWeekly: hairCare.biWeekly || '',
-      notes: hairCare.notes || '',
-    });
-    setActiveModal('haircare');
-  };
-
-  const handleSaveHairCare = (e) => {
-    e.preventDefault();
-    updateHealthProtocol(prev => ({
-      ...prev,
-      hairCare: {
-        daily: formData.daily,
-        weekly: formData.weekly,
-        biWeekly: formData.biWeekly,
-        notes: formData.notes,
-      }
-    }));
-    setActiveModal(null);
-    showToast('✅ Hair care regime updated!');
-  };
-
-  const waterTargetGlasses = fastingAndWater.waterTargetGlasses || 14;
-  const waterPercent = Math.min(100, Math.round((waterGlasses / waterTargetGlasses) * 100));
 
   return (
     <div className="health-protocol-view">
@@ -482,12 +547,12 @@ export const HealthProtocolView = () => {
             {isCustomPlan ? (
               <span className="badge badge-custom-plan">
                 <Sparkles size={14} />
-                <span>⭐ CUSTOM PLAN: {meta.planName || meta.fileName || 'Personalized Excel'}</span>
+                <span>⭐ CUSTOM PLAN: {meta.planName || meta.fileName || 'Personalized'}</span>
               </span>
             ) : (
               <span className="badge badge-success">
                 <ShieldCheck size={14} />
-                <span>🌿 STANDARD AYURVEDIC & FITNESS PROTOCOL</span>
+                <span>🌿 STANDARD NUTRITION & CARE PROTOCOL</span>
               </span>
             )}
           </div>
@@ -500,14 +565,14 @@ export const HealthProtocolView = () => {
               onClick={() => setIsExcelModalOpen(true)}
             >
               <UploadCloud size={15} />
-              <span>Upload Diet Excel (.xlsx)</span>
+              <span>Upload Excel (.xlsx)</span>
             </button>
 
             <button
               type="button"
               className="btn btn-secondary btn-sm"
               onClick={downloadSampleDietTemplate}
-              title="Download empty pre-formatted Excel template"
+              title="Download sample formatted Excel template"
             >
               <Download size={15} />
               <span>Sample Template</span>
@@ -523,192 +588,42 @@ export const HealthProtocolView = () => {
               <span>Export Plan</span>
             </button>
 
-            {isCustomPlan && (
-              <button
-                type="button"
-                className="btn btn-ghost btn-sm text-danger"
-                onClick={handleRevertToDefault}
-                title="Reset back to standard protocol"
-              >
-                <RotateCcw size={14} />
-                <span>Reset to Standard</span>
-              </button>
-            )}
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm text-amber"
+              onClick={handleRevertToDefault}
+              title="Reset back to standard template"
+            >
+              <RotateCcw size={14} />
+              <span>Reset Template</span>
+            </button>
+
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm text-danger"
+              onClick={handleClearAllProtocol}
+              title="Delete all protocol data"
+            >
+              <Trash2 size={14} />
+              <span>Delete All Data</span>
+            </button>
           </div>
         </div>
 
         <div className="hero-bottom-text">
           <h2 className="hero-heading">
             {isCustomPlan 
-              ? `${currentUser?.name ? currentUser.name + "'s" : 'Personalized'} Custom Nutrition & Wellness Protocol` 
-              : 'Nutrition, Self-Care & Body Wellness Protocol'}
+              ? `${currentUser?.name ? currentUser.name + "'s" : 'Personalized'} Nutrition & Wellness Protocol` 
+              : 'Daily Calorie, Care & Nutrition Protocol'}
           </h2>
           <p className="hero-sub">
-            {isCustomPlan && meta.uploadedAt 
-              ? `Custom timetable loaded from spreadsheet on ${new Date(meta.uploadedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}. Updates are isolated to your profile.`
-              : 'Your personalized regime for daily meals, macros, hydration, workout timing, and dedicated Skin, Body & Hair care routines.'}
+            Your structured targets for daily macros, essential micronutrients, workout routines, and dedicated Skin, Body & Hair care schedules.
           </p>
         </div>
       </div>
 
       {/* ========================================================================= */}
-      {/* 0. INTERACTIVE FASTING & DAILY MEAL SCHEDULE (Excel-Driven Timetable) */}
-      {/* ========================================================================= */}
-      <div className="section-container">
-        <div className="section-title-row">
-          <div className="title-with-icon">
-            <Utensils size={20} className="text-primary" />
-            <h3 className="section-title">Daily Meal Timetable & Fasting Protocol</h3>
-          </div>
-          <div className="title-actions">
-            <button 
-              type="button" 
-              className="btn btn-secondary btn-sm"
-              onClick={handleOpenEditFasting}
-            >
-              <Edit3 size={14} />
-              <span>Edit Fasting & Water</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Fasting & Water Dual Row */}
-        <div className="fasting-water-grid">
-          {/* Fasting Card */}
-          <div className="card fasting-card">
-            <div className="fasting-header">
-              <div className="fasting-icon-wrap">
-                <Clock size={20} />
-              </div>
-              <div>
-                <span className="fasting-badge">{fastingAndWater.fastingProtocol}</span>
-                <h4 className="fasting-title">{fastingAndWater.fastingWindow}</h4>
-              </div>
-            </div>
-            <div className="fasting-details">
-              <p className="fasting-notes">
-                <strong>Rules:</strong> {fastingAndWater.fastingNotes}
-              </p>
-              {fastingAndWater.electrolyteHack && (
-                <div className="electrolyte-tip">
-                  ⚡ <strong>Morning Hack:</strong> {fastingAndWater.electrolyteHack}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Water Intake Interactive Card */}
-          <div className="card water-card">
-            <div className="water-header">
-              <div className="water-icon-wrap">
-                <Droplets size={22} />
-              </div>
-              <div className="water-header-text">
-                <div className="water-title-row">
-                  <h4 className="water-title">Daily Hydration Counter</h4>
-                  <span className="water-goal-badge">{fastingAndWater.waterTargetLiters || 3.5} Litres Goal</span>
-                </div>
-                <span className="water-sub">
-                  {waterGlasses} of {waterTargetGlasses} glasses logged today ({(waterGlasses * 0.25).toFixed(2)}L)
-                </span>
-              </div>
-            </div>
-
-            {/* Progress Bar */}
-            <div className="water-progress-track">
-              <div 
-                className="water-progress-fill" 
-                style={{ width: `${waterPercent}%` }}
-              />
-            </div>
-
-            {/* Quick Logging Buttons */}
-            <div className="water-actions-row">
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm"
-                onClick={handleSubWater}
-                disabled={waterGlasses === 0}
-              >
-                - 1 Glass
-              </button>
-              <span className="water-percent-tag">{waterPercent}%</span>
-              <button
-                type="button"
-                className="btn btn-primary btn-sm btn-water-add"
-                onClick={handleAddWater}
-              >
-                <Plus size={15} />
-                <span>+ 1 Glass (250ml)</span>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Meal Timetable Schedule List */}
-        {mealSchedule.length > 0 && (
-          <div className="meal-schedule-list">
-            {mealSchedule.map((meal, idx) => {
-              const isDone = completedMeals.includes(meal.id || `meal-${idx}`);
-              return (
-                <div 
-                  key={meal.id || idx} 
-                  className={`card meal-schedule-card ${isDone ? 'meal-completed' : ''}`}
-                >
-                  <div className="meal-card-top">
-                    <button
-                      type="button"
-                      className={`meal-check-btn ${isDone ? 'checked' : ''}`}
-                      onClick={() => handleToggleMeal(meal.id || `meal-${idx}`)}
-                      title={isDone ? 'Mark uncompleted' : 'Mark meal done for today'}
-                    >
-                      {isDone ? <Check size={16} /> : <div className="meal-check-circle" />}
-                    </button>
-
-                    <div className="meal-time-tag">
-                      <Clock size={13} />
-                      <span>{meal.time}</span>
-                    </div>
-
-                    <h4 className="meal-name">{meal.name}</h4>
-
-                    <div className="meal-macros-pills">
-                      {meal.calories > 0 && (
-                        <span className="meal-cal-pill">
-                          <Flame size={12} />
-                          <span>{meal.calories} kcal</span>
-                        </span>
-                      )}
-                      {meal.protein && (
-                        <span className="meal-protein-pill">
-                          <span>{meal.protein} protein</span>
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="meal-card-content">
-                    <div className="meal-dishes-box">
-                      <span className="dishes-label">🥗 Ingredients / Dishes:</span>
-                      <span className="dishes-text">{meal.dishes}</span>
-                    </div>
-
-                    {meal.hairSkinBenefits && (
-                      <div className="meal-benefits-box">
-                        <Sparkles size={14} className="text-pink" />
-                        <span><strong>Hair & Skin Benefits:</strong> {meal.hairSkinBenefits}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      {/* ========================================================================= */}
-      {/* 1. Daily Calories & Macronutrients (Editable) */}
+      {/* 1. Daily Calories & Macronutrient Targets */}
       {/* ========================================================================= */}
       <div className="section-container">
         <div className="section-title-row">
@@ -716,36 +631,38 @@ export const HealthProtocolView = () => {
             <Flame size={20} className="text-amber" />
             <h3 className="section-title">1. Daily Calorie & Macronutrient Targets</h3>
           </div>
-          <button 
-            type="button" 
-            className="btn btn-secondary btn-sm"
-            onClick={handleOpenEditCalories}
-          >
-            <Edit3 size={14} />
-            <span>Edit Calories & Macros</span>
-          </button>
+          <div className="title-actions">
+            <button 
+              type="button" 
+              className="btn btn-secondary btn-sm"
+              onClick={handleOpenEditCalories}
+            >
+              <Edit3 size={14} />
+              <span>Edit Calories & Macros</span>
+            </button>
+          </div>
         </div>
 
         {/* Calorie Stats Grid */}
         <div className="calories-stat-grid">
           <div className="card cal-card">
             <span className="cal-label">Maintenance Calories</span>
-            <span className="cal-val">~{calories.maintenance} <small>kcal/day</small></span>
+            <span className="cal-val">~{calories.maintenance || 1850} <small>kcal/day</small></span>
             <span className="cal-desc">Zero weight change baseline</span>
           </div>
 
           <div className="card cal-card highlight-card">
             <div className="card-top-tag">FAT LOSS TARGET</div>
             <span className="cal-label">Daily Calorie Target</span>
-            <span className="cal-val text-primary">{calories.fatLossTarget}</span>
-            <span className="cal-desc text-success">📉 Expected fat loss: {calories.expectedLoss}</span>
+            <span className="cal-val text-primary">{calories.fatLossTarget || '1350–1450 kcal/day'}</span>
+            <span className="cal-desc text-success">📉 Expected fat loss: {calories.expectedLoss || '0.5–0.7 kg/week (healthy & sustainable)'}</span>
           </div>
 
           <div className="card cal-card cheat-card">
             <div className="card-top-tag tag-amber">1 DAY / WEEK</div>
             <span className="cal-label">Cheat Day Budget</span>
-            <span className="cal-val text-amber">{calories.cheatDay?.target}</span>
-            <span className="cal-desc">{calories.cheatDay?.rules}</span>
+            <span className="cal-val text-amber">{calories.cheatDay?.target || '1800–1900 kcal'}</span>
+            <span className="cal-desc">{calories.cheatDay?.rules || 'No binge eating • Protein + Fiber first • Stop at 80% fullness'}</span>
           </div>
         </div>
 
@@ -753,15 +670,25 @@ export const HealthProtocolView = () => {
         <div className="macros-grid">
           {macros.map((m) => (
             <div 
-              key={m.name} 
+              key={m.id || m.name} 
               className="card macro-card"
-              style={{ borderTopColor: m.color }}
+              style={{ borderTopColor: m.color || 'var(--accent-primary)' }}
             >
               <div className="macro-header">
-                <span className="macro-name" style={{ color: m.color }}>{m.name}</span>
-                <span className="macro-badge" style={{ backgroundColor: `${m.color}20`, color: m.color }}>
-                  {m.percentage}
-                </span>
+                <span className="macro-name" style={{ color: m.color || 'var(--accent-primary)' }}>{m.name}</span>
+                <div className="macro-header-right">
+                  <span className="macro-badge" style={{ backgroundColor: `${m.color || '#6366f1'}20`, color: m.color || 'var(--accent-primary)' }}>
+                    {m.percentage}
+                  </span>
+                  <button
+                    type="button"
+                    className="btn-icon-sm btn-ghost text-danger delete-item-btn"
+                    onClick={() => handleDeleteMacroDirect(m.name)}
+                    title={`Delete ${m.name} macro`}
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                </div>
               </div>
               <div className="macro-amount">{m.amount}</div>
               <div className="macro-purpose">
@@ -776,7 +703,7 @@ export const HealthProtocolView = () => {
       </div>
 
       {/* ========================================================================= */}
-      {/* 2. Micronutrients Focus (Editable) */}
+      {/* 2. Micronutrients Focus */}
       {/* ========================================================================= */}
       <div className="section-container">
         <div className="section-title-row">
@@ -784,14 +711,16 @@ export const HealthProtocolView = () => {
             <Apple size={20} className="text-emerald" />
             <h3 className="section-title">2. Micronutrients You Must Focus On</h3>
           </div>
-          <button 
-            type="button" 
-            className="btn btn-secondary btn-sm"
-            onClick={handleOpenEditMicronutrients}
-          >
-            <Edit3 size={14} />
-            <span>Edit Micronutrients</span>
-          </button>
+          <div className="title-actions">
+            <button 
+              type="button" 
+              className="btn btn-secondary btn-sm"
+              onClick={handleOpenEditMicronutrients}
+            >
+              <Edit3 size={14} />
+              <span>Edit Micronutrients</span>
+            </button>
+          </div>
         </div>
 
         <div className="micronutrients-grid">
@@ -806,7 +735,17 @@ export const HealthProtocolView = () => {
                   <span className="micro-dot" style={{ backgroundColor: micro.color || 'var(--accent-primary)' }} />
                   <span className="micro-name">{micro.name}</span>
                 </div>
-                <span className="micro-target-tag">{micro.target}</span>
+                <div className="micro-header-right">
+                  <span className="micro-target-tag">{micro.target}</span>
+                  <button
+                    type="button"
+                    className="btn-icon-sm btn-ghost text-danger delete-item-btn"
+                    onClick={() => handleDeleteMicronutrientDirect(micro.id, micro.name)}
+                    title={`Delete ${micro.name}`}
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                </div>
               </div>
               <div className="micro-sources-box">
                 <span className="sources-label">Sources:</span>
@@ -818,7 +757,7 @@ export const HealthProtocolView = () => {
       </div>
 
       {/* ========================================================================= */}
-      {/* 3. Skin, Body & Hair Care Regimes (Editable) */}
+      {/* 3. Skin, Body & Hair Care Regimes */}
       {/* ========================================================================= */}
       <div className="section-container">
         <div className="section-title-row">
@@ -842,14 +781,25 @@ export const HealthProtocolView = () => {
                   <span className="regime-sub">Glow & Barrier Repair</span>
                 </div>
               </div>
-              <button 
-                type="button" 
-                className="btn btn-secondary btn-sm"
-                onClick={handleOpenEditSkinCare}
-              >
-                <Edit3 size={14} />
-                <span>Edit</span>
-              </button>
+              <div className="regime-actions">
+                <button 
+                  type="button" 
+                  className="btn btn-secondary btn-sm"
+                  onClick={handleOpenEditSkinCare}
+                  title="Edit Skin Care"
+                >
+                  <Edit3 size={13} />
+                  <span>Edit</span>
+                </button>
+                <button
+                  type="button"
+                  className="btn-icon-sm btn-ghost text-danger"
+                  onClick={handleClearSkinCare}
+                  title="Clear Skin Care"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
             </div>
 
             <div className="regime-body">
@@ -859,7 +809,7 @@ export const HealthProtocolView = () => {
                   <span>Daily</span>
                 </div>
                 <div className="regime-content">
-                  <strong>AM & PM:</strong> {skinCare.daily}
+                  <strong>AM & PM:</strong> {skinCare.daily || 'Not specified'}
                 </div>
               </div>
 
@@ -869,8 +819,8 @@ export const HealthProtocolView = () => {
                   <span>Weekly</span>
                 </div>
                 <div className="regime-content">
-                  <p>• <strong>Sunday:</strong> {skinCare.weeklySunday}</p>
-                  <p>• <strong>Tuesday & Friday:</strong> {skinCare.weeklyTueFri}</p>
+                  <p>• <strong>Sunday:</strong> {skinCare.weeklySunday || 'Face shaving and scrub'}</p>
+                  <p>• <strong>Tuesday & Friday:</strong> {skinCare.weeklyTueFri || 'Face pack'}</p>
                 </div>
               </div>
 
@@ -894,14 +844,25 @@ export const HealthProtocolView = () => {
                   <span className="regime-sub">Smooth & Nourished Skin</span>
                 </div>
               </div>
-              <button 
-                type="button" 
-                className="btn btn-secondary btn-sm"
-                onClick={handleOpenEditBodyCare}
-              >
-                <Edit3 size={14} />
-                <span>Edit</span>
-              </button>
+              <div className="regime-actions">
+                <button 
+                  type="button" 
+                  className="btn btn-secondary btn-sm"
+                  onClick={handleOpenEditBodyCare}
+                  title="Edit Body Care"
+                >
+                  <Edit3 size={13} />
+                  <span>Edit</span>
+                </button>
+                <button
+                  type="button"
+                  className="btn-icon-sm btn-ghost text-danger"
+                  onClick={handleClearBodyCare}
+                  title="Clear Body Care"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
             </div>
 
             <div className="regime-body">
@@ -911,7 +872,7 @@ export const HealthProtocolView = () => {
                   <span>Sunday</span>
                 </div>
                 <div className="regime-content">
-                  <strong>Sunday Routine:</strong> {bodyCare.sunday}
+                  <strong>Sunday Routine:</strong> {bodyCare.sunday || 'Oiling, scrub, shaving'}
                 </div>
               </div>
 
@@ -921,7 +882,7 @@ export const HealthProtocolView = () => {
                   <span>Tue & Fri</span>
                 </div>
                 <div className="regime-content">
-                  <strong>Tuesday & Friday:</strong> {bodyCare.tueFri}
+                  <strong>Tuesday & Friday:</strong> {bodyCare.tueFri || 'Exfoliating body wash'}
                 </div>
               </div>
 
@@ -945,14 +906,25 @@ export const HealthProtocolView = () => {
                   <span className="regime-sub">Length, Volume & Strength</span>
                 </div>
               </div>
-              <button 
-                type="button" 
-                className="btn btn-secondary btn-sm"
-                onClick={handleOpenEditHairCare}
-              >
-                <Edit3 size={14} />
-                <span>Edit</span>
-              </button>
+              <div className="regime-actions">
+                <button 
+                  type="button" 
+                  className="btn btn-secondary btn-sm"
+                  onClick={handleOpenEditHairCare}
+                  title="Edit Hair Care"
+                >
+                  <Edit3 size={13} />
+                  <span>Edit</span>
+                </button>
+                <button
+                  type="button"
+                  className="btn-icon-sm btn-ghost text-danger"
+                  onClick={handleClearHairCare}
+                  title="Clear Hair Care"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
             </div>
 
             <div className="regime-body">
@@ -962,7 +934,7 @@ export const HealthProtocolView = () => {
                   <span>Daily</span>
                 </div>
                 <div className="regime-content">
-                  <strong>Daily:</strong> {hairCare.daily}
+                  <strong>Daily:</strong> {hairCare.daily || 'Serum and hair growth water'}
                 </div>
               </div>
 
@@ -972,7 +944,7 @@ export const HealthProtocolView = () => {
                   <span>Weekly</span>
                 </div>
                 <div className="regime-content">
-                  <strong>Weekly Routine:</strong> {hairCare.weekly}
+                  <strong>Weekly Routine:</strong> {hairCare.weekly || '3x Oiling, hair pack, hair wash'}
                 </div>
               </div>
 
@@ -982,7 +954,7 @@ export const HealthProtocolView = () => {
                   <span>Two Weeks Once</span>
                 </div>
                 <div className="regime-content">
-                  <strong>Bi-Weekly Cycle:</strong> {hairCare.biWeekly}
+                  <strong>Bi-Weekly Cycle:</strong> {hairCare.biWeekly || 'Two weeks once: Saturday henna and Sunday avari podi (In the next alternate: Hair growth serum)'}
                 </div>
               </div>
 
@@ -997,7 +969,7 @@ export const HealthProtocolView = () => {
       </div>
 
       {/* ========================================================================= */}
-      {/* 4. Fitness & Sugar Protocols (Editable) */}
+      {/* 4. Fitness & Sugar Protocols */}
       {/* ========================================================================= */}
       <div className="protocol-cards-grid">
         {/* Exercise Routine */}
@@ -1012,27 +984,37 @@ export const HealthProtocolView = () => {
                 <span className="proto-sub">Consistency over intensity</span>
               </div>
             </div>
-            <button 
-              type="button" 
-              className="btn btn-secondary btn-sm"
-              onClick={handleOpenEditExercise}
-            >
-              <Edit3 size={14} />
-              <span>Edit</span>
-            </button>
+            <div className="proto-actions">
+              <button 
+                type="button" 
+                className="btn btn-secondary btn-sm"
+                onClick={handleOpenEditExercise}
+              >
+                <Edit3 size={13} />
+                <span>Edit</span>
+              </button>
+              <button 
+                type="button" 
+                className="btn-icon-sm btn-ghost text-danger"
+                onClick={handleClearExercise}
+                title="Clear Exercise Routine"
+              >
+                <Trash2 size={14} />
+              </button>
+            </div>
           </div>
 
           <div className="exercise-grid">
             <div className="exercise-card">
-              <span className="exercise-title">{exerciseRoutine.morning?.title}</span>
-              <p className="exercise-activities"><strong>Activities:</strong> {exerciseRoutine.morning?.activities}</p>
-              <span className="exercise-benefits">✨ {exerciseRoutine.morning?.benefits}</span>
+              <span className="exercise-title">{exerciseRoutine.morning?.title || '🌅 Morning Cardio (30–40 Mins)'}</span>
+              <p className="exercise-activities"><strong>Activities:</strong> {exerciseRoutine.morning?.activities || 'Cycling or brisk outdoor walking'}</p>
+              <span className="exercise-benefits">✨ {exerciseRoutine.morning?.benefits || 'Fat burning zone, insulin sensitivity & stimulates natural gut motility'}</span>
             </div>
 
             <div className="exercise-card">
-              <span className="exercise-title">{exerciseRoutine.evening?.title}</span>
-              <p className="exercise-activities"><strong>Activities:</strong> {exerciseRoutine.evening?.activities}</p>
-              <span className="exercise-benefits">✨ {exerciseRoutine.evening?.benefits}</span>
+              <span className="exercise-title">{exerciseRoutine.evening?.title || '💪 Evening Bodyweight Routine (20 Mins)'}</span>
+              <p className="exercise-activities"><strong>Activities:</strong> {exerciseRoutine.evening?.activities || 'Squats (3x15), Glute bridges (3x15), Wall push-ups (3x12), Planks (3x30s)'}</p>
+              <span className="exercise-benefits">✨ {exerciseRoutine.evening?.benefits || 'Tones glutes/core, improves posture, activates metabolism. Consistency > Intensity.'}</span>
             </div>
           </div>
         </div>
@@ -1049,14 +1031,16 @@ export const HealthProtocolView = () => {
                 <span className="proto-sub">3-Week Sustainable Progression</span>
               </div>
             </div>
-            <button 
-              type="button" 
-              className="btn btn-secondary btn-sm"
-              onClick={handleOpenEditSugar}
-            >
-              <Edit3 size={14} />
-              <span>Edit</span>
-            </button>
+            <div className="proto-actions">
+              <button 
+                type="button" 
+                className="btn btn-secondary btn-sm"
+                onClick={handleOpenEditSugar}
+              >
+                <Edit3 size={13} />
+                <span>Edit</span>
+              </button>
+            </div>
           </div>
 
           <div className="sugar-phases-list">
@@ -1064,11 +1048,21 @@ export const HealthProtocolView = () => {
               <div key={i} className="phase-row">
                 <span className="phase-badge">{p.week}</span>
                 <span className="phase-action">{p.action}</span>
+                <button
+                  type="button"
+                  className="btn-icon-sm btn-ghost text-danger delete-phase-btn"
+                  onClick={() => handleDeleteSugarPhaseDirect(i)}
+                  title={`Delete ${p.week}`}
+                >
+                  <Trash2 size={13} />
+                </button>
               </div>
             ))}
-            <div className="craving-hack-box">
-              {sugarCutting.cravingHack}
-            </div>
+            {sugarCutting.cravingHack && (
+              <div className="craving-hack-box">
+                {sugarCutting.cravingHack}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -1077,10 +1071,10 @@ export const HealthProtocolView = () => {
       {/* EDIT MODALS */}
       {/* ========================================================================= */}
 
-      {/* 1. Edit Calories Modal */}
+      {/* 1. Edit Calories & Macros Modal */}
       {activeModal === 'calories' && (
         <div className="modal-overlay" onClick={() => setActiveModal(null)}>
-          <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-panel" style={{ maxWidth: '680px' }} onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3 className="modal-title">Edit Calorie & Macro Targets</h3>
               <button type="button" className="btn-icon btn-ghost" onClick={() => setActiveModal(null)}><X size={18} /></button>
@@ -1138,80 +1132,75 @@ export const HealthProtocolView = () => {
                 />
               </div>
 
-              <div className="modal-actions">
-                <button type="button" className="btn btn-secondary" onClick={() => setActiveModal(null)}>Cancel</button>
-                <button type="submit" className="btn btn-primary">Save Targets</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+              {/* Editable Macros Sub-list */}
+              <div className="modal-subsection">
+                <div className="subsection-header">
+                  <label className="label" style={{ marginBottom: 0 }}>Macronutrients Breakdown</label>
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm"
+                    onClick={handleAddMacroRow}
+                  >
+                    <Plus size={13} />
+                    <span>Add Macro</span>
+                  </button>
+                </div>
 
-      {/* 2. Edit Fasting Modal */}
-      {activeModal === 'fasting' && (
-        <div className="modal-overlay" onClick={() => setActiveModal(null)}>
-          <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3 className="modal-title">Edit Fasting & Hydration Targets</h3>
-              <button type="button" className="btn-icon btn-ghost" onClick={() => setActiveModal(null)}><X size={18} /></button>
-            </div>
-            <form onSubmit={handleSaveFasting} className="modal-form">
-              <div className="input-group">
-                <label className="label">Fasting Protocol</label>
-                <input
-                  type="text"
-                  className="input"
-                  value={formData.fastingProtocol}
-                  onChange={(e) => setFormData({ ...formData, fastingProtocol: e.target.value })}
-                  placeholder="e.g. 16:8 Intermittent Fasting"
-                  required
-                />
-              </div>
-
-              <div className="input-group">
-                <label className="label">Fasting Window (Timing)</label>
-                <input
-                  type="text"
-                  className="input"
-                  value={formData.fastingWindow}
-                  onChange={(e) => setFormData({ ...formData, fastingWindow: e.target.value })}
-                  placeholder="e.g. Fasting 8:00 PM to 12:00 PM next day"
-                  required
-                />
-              </div>
-
-              <div className="input-group">
-                <label className="label">Daily Water Target (Litres)</label>
-                <input
-                  type="number"
-                  step="0.1"
-                  className="input"
-                  value={formData.waterTargetLiters}
-                  onChange={(e) => setFormData({ ...formData, waterTargetLiters: e.target.value })}
-                  required
-                />
-              </div>
-
-              <div className="input-group">
-                <label className="label">Morning Electrolyte Hack</label>
-                <input
-                  type="text"
-                  className="input"
-                  value={formData.electrolyteHack}
-                  onChange={(e) => setFormData({ ...formData, electrolyteHack: e.target.value })}
-                  placeholder="e.g. Warm lemon water + pink Himalayan salt"
-                />
-              </div>
-
-              <div className="input-group">
-                <label className="label">Fasting Guidelines & Permitted Drinks</label>
-                <textarea
-                  className="textarea"
-                  rows={2}
-                  value={formData.fastingNotes}
-                  onChange={(e) => setFormData({ ...formData, fastingNotes: e.target.value })}
-                  placeholder="e.g. Water, black coffee, plain green tea allowed"
-                />
+                <div className="modal-scroll-area">
+                  {(formData.macros || []).map((m, idx) => (
+                    <div key={idx} className="edit-macro-card">
+                      <div className="macro-edit-row">
+                        <input
+                          type="text"
+                          className="input flex-1"
+                          placeholder="Macro (e.g. Protein)"
+                          value={m.name}
+                          onChange={(e) => handleUpdateMacroRow(idx, 'name', e.target.value)}
+                          required
+                        />
+                        <input
+                          type="text"
+                          className="input"
+                          style={{ width: '90px' }}
+                          placeholder="Ratio %"
+                          value={m.percentage}
+                          onChange={(e) => handleUpdateMacroRow(idx, 'percentage', e.target.value)}
+                        />
+                        <input
+                          type="text"
+                          className="input"
+                          style={{ width: '110px' }}
+                          placeholder="Amount (g)"
+                          value={m.amount}
+                          onChange={(e) => handleUpdateMacroRow(idx, 'amount', e.target.value)}
+                          required
+                        />
+                        <button
+                          type="button"
+                          className="btn-icon btn-ghost text-danger"
+                          onClick={() => handleRemoveMacroRow(idx)}
+                          title="Remove Macro"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                      <input
+                        type="text"
+                        className="input"
+                        placeholder="Target Purpose (e.g. Hair strength, muscle renewal)"
+                        value={m.purpose}
+                        onChange={(e) => handleUpdateMacroRow(idx, 'purpose', e.target.value)}
+                      />
+                      <input
+                        type="text"
+                        className="input"
+                        placeholder="Top Food Sources (e.g. Paneer, curd, dal, sprouts)"
+                        value={m.foods}
+                        onChange={(e) => handleUpdateMacroRow(idx, 'foods', e.target.value)}
+                      />
+                    </div>
+                  ))}
+                </div>
               </div>
 
               <div className="modal-actions">
@@ -1223,7 +1212,7 @@ export const HealthProtocolView = () => {
         </div>
       )}
 
-      {/* 3. Edit Micronutrients Modal */}
+      {/* 2. Edit Micronutrients Modal */}
       {activeModal === 'micronutrients' && (
         <div className="modal-overlay" onClick={() => setActiveModal(null)}>
           <div className="modal-panel" style={{ maxWidth: '650px' }} onClick={(e) => e.stopPropagation()}>
@@ -1247,7 +1236,7 @@ export const HealthProtocolView = () => {
                       <input
                         type="text"
                         className="input micro-input-target"
-                        placeholder="Symptoms / Target (e.g. bloating, fatigue, hair fall)"
+                        placeholder="Target symptoms (e.g. Bloating, fatigue, hair fall)"
                         value={item.target}
                         onChange={(e) => handleUpdateMicronutrientRow(idx, 'target', e.target.value)}
                         required
@@ -1266,7 +1255,7 @@ export const HealthProtocolView = () => {
                       <input
                         type="text"
                         className="input"
-                        placeholder="Food sources (e.g. dates, spinach, beetroot, jaggery)"
+                        placeholder="Food sources (e.g. Dates, spinach, beetroot, jaggery)"
                         value={item.sources}
                         onChange={(e) => handleUpdateMicronutrientRow(idx, 'sources', e.target.value)}
                         required
@@ -1295,7 +1284,7 @@ export const HealthProtocolView = () => {
         </div>
       )}
 
-      {/* 4. Edit Skin Care Modal */}
+      {/* 3. Edit Skin Care Modal */}
       {activeModal === 'skincare' && (
         <div className="modal-overlay" onClick={() => setActiveModal(null)}>
           <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
@@ -1309,7 +1298,7 @@ export const HealthProtocolView = () => {
                 <input
                   type="text"
                   className="input"
-                  placeholder="e.g. AM and PM"
+                  placeholder="e.g. AM and PM (Cleanse, hydrate, sunscreen AM, barrier repair PM)"
                   value={formData.daily}
                   onChange={(e) => setFormData({ ...formData, daily: e.target.value })}
                   required
@@ -1321,7 +1310,7 @@ export const HealthProtocolView = () => {
                 <input
                   type="text"
                   className="input"
-                  placeholder="e.g. Sunday face shaving and scrub"
+                  placeholder="e.g. Sunday: Face shaving and scrub"
                   value={formData.weeklySunday}
                   onChange={(e) => setFormData({ ...formData, weeklySunday: e.target.value })}
                   required
@@ -1333,7 +1322,7 @@ export const HealthProtocolView = () => {
                 <input
                   type="text"
                   className="input"
-                  placeholder="e.g. Tuesday and friday face pack"
+                  placeholder="e.g. Tuesday & Friday: Face pack"
                   value={formData.weeklyTueFri}
                   onChange={(e) => setFormData({ ...formData, weeklyTueFri: e.target.value })}
                   required
@@ -1341,7 +1330,7 @@ export const HealthProtocolView = () => {
               </div>
 
               <div className="input-group">
-                <label className="label">Notes / Special Instructions</label>
+                <label className="label">Notes / Guidelines</label>
                 <textarea
                   className="textarea"
                   rows={2}
@@ -1359,7 +1348,7 @@ export const HealthProtocolView = () => {
         </div>
       )}
 
-      {/* 5. Edit Body Care Modal */}
+      {/* 4. Edit Body Care Modal */}
       {activeModal === 'bodycare' && (
         <div className="modal-overlay" onClick={() => setActiveModal(null)}>
           <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
@@ -1373,7 +1362,7 @@ export const HealthProtocolView = () => {
                 <input
                   type="text"
                   className="input"
-                  placeholder="e.g. Sunday oiling , scrub ,shaving"
+                  placeholder="e.g. Sunday: Oiling, scrub, shaving"
                   value={formData.sunday}
                   onChange={(e) => setFormData({ ...formData, sunday: e.target.value })}
                   required
@@ -1385,7 +1374,7 @@ export const HealthProtocolView = () => {
                 <input
                   type="text"
                   className="input"
-                  placeholder="e.g. Tuesday friday exfoliating body wash"
+                  placeholder="e.g. Tuesday & Friday: Exfoliating body wash"
                   value={formData.tueFri}
                   onChange={(e) => setFormData({ ...formData, tueFri: e.target.value })}
                   required
@@ -1411,7 +1400,7 @@ export const HealthProtocolView = () => {
         </div>
       )}
 
-      {/* 6. Edit Hair Care Modal */}
+      {/* 5. Edit Hair Care Modal */}
       {activeModal === 'haircare' && (
         <div className="modal-overlay" onClick={() => setActiveModal(null)}>
           <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
@@ -1437,7 +1426,7 @@ export const HealthProtocolView = () => {
                 <input
                   type="text"
                   className="input"
-                  placeholder="e.g. 3 oiling , hair pack hair wash"
+                  placeholder="e.g. 3x Oiling, hair pack, hair wash"
                   value={formData.weekly}
                   onChange={(e) => setFormData({ ...formData, weekly: e.target.value })}
                   required
@@ -1449,7 +1438,7 @@ export const HealthProtocolView = () => {
                 <input
                   type="text"
                   className="input"
-                  placeholder="e.g. saturday henna and sunday avari podi in the next alternate : hair growth serum"
+                  placeholder="e.g. Two weeks once: Saturday henna and Sunday avari podi (In the next alternate: Hair growth serum)"
                   value={formData.biWeekly}
                   onChange={(e) => setFormData({ ...formData, biWeekly: e.target.value })}
                   required
@@ -1475,7 +1464,7 @@ export const HealthProtocolView = () => {
         </div>
       )}
 
-      {/* 7. Edit Exercise Modal */}
+      {/* 6. Edit Exercise Modal */}
       {activeModal === 'exercise' && (
         <div className="modal-overlay" onClick={() => setActiveModal(null)}>
           <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
@@ -1549,42 +1538,56 @@ export const HealthProtocolView = () => {
         </div>
       )}
 
-      {/* 8. Edit Sugar Modal */}
+      {/* 7. Edit Sugar Modal */}
       {activeModal === 'sugar' && (
         <div className="modal-overlay" onClick={() => setActiveModal(null)}>
-          <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-panel" style={{ maxWidth: '600px' }} onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3 className="modal-title">Edit Sugar Cutting Strategy</h3>
               <button type="button" className="btn-icon btn-ghost" onClick={() => setActiveModal(null)}><X size={18} /></button>
             </div>
             <form onSubmit={handleSaveSugar} className="modal-form">
-              <div className="input-group">
-                <label className="label">Week 1 Action</label>
-                <input
-                  type="text"
-                  className="input"
-                  value={formData.week1}
-                  onChange={(e) => setFormData({ ...formData, week1: e.target.value })}
-                />
+              <div className="modal-scroll-area">
+                {(formData.phases || []).map((p, idx) => (
+                  <div key={idx} className="sugar-edit-row">
+                    <input
+                      type="text"
+                      className="input"
+                      style={{ width: '110px' }}
+                      value={p.week}
+                      onChange={(e) => handleUpdateSugarPhaseRow(idx, 'week', e.target.value)}
+                      placeholder="e.g. Week 1"
+                    />
+                    <input
+                      type="text"
+                      className="input flex-1"
+                      value={p.action}
+                      onChange={(e) => handleUpdateSugarPhaseRow(idx, 'action', e.target.value)}
+                      placeholder="Action step (e.g. Remove added sugar...)"
+                      required
+                    />
+                    <button
+                      type="button"
+                      className="btn-icon btn-ghost text-danger"
+                      onClick={() => handleRemoveSugarPhaseRow(idx)}
+                      title="Remove Phase"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                ))}
               </div>
-              <div className="input-group">
-                <label className="label">Week 2 Action</label>
-                <input
-                  type="text"
-                  className="input"
-                  value={formData.week2}
-                  onChange={(e) => setFormData({ ...formData, week2: e.target.value })}
-                />
-              </div>
-              <div className="input-group">
-                <label className="label">Week 3 Action</label>
-                <input
-                  type="text"
-                  className="input"
-                  value={formData.week3}
-                  onChange={(e) => setFormData({ ...formData, week3: e.target.value })}
-                />
-              </div>
+
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={handleAddSugarPhaseRow}
+                style={{ alignSelf: 'flex-start' }}
+              >
+                <Plus size={14} />
+                <span>+ Add Phase</span>
+              </button>
+
               <div className="input-group">
                 <label className="label">Craving Hack</label>
                 <input
@@ -1608,7 +1611,7 @@ export const HealthProtocolView = () => {
         .health-protocol-view {
           display: flex;
           flex-direction: column;
-          gap: 1.5rem;
+          gap: 1.75rem;
           position: relative;
         }
 
@@ -1721,378 +1724,78 @@ export const HealthProtocolView = () => {
           color: var(--text-primary);
         }
 
-        /* Fasting & Water Grid */
-        .fasting-water-grid {
+        .title-actions {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        }
+
+        /* Calories Stat Grid */
+        .calories-stat-grid {
           display: grid;
           grid-template-columns: 1fr;
           gap: 1rem;
         }
 
         @media (min-width: 768px) {
-          .fasting-water-grid {
-            grid-template-columns: 1fr 1.25fr;
-          }
-        }
-
-        .fasting-card {
-          padding: 1.25rem;
-          display: flex;
-          flex-direction: column;
-          gap: 0.85rem;
-          border-left: 4px solid var(--accent-primary);
-          background: rgba(99, 102, 241, 0.03);
-        }
-
-        .fasting-header {
-          display: flex;
-          align-items: center;
-          gap: 0.75rem;
-        }
-
-        .fasting-icon-wrap {
-          width: 38px;
-          height: 38px;
-          border-radius: var(--radius-sm);
-          background: rgba(99, 102, 241, 0.15);
-          color: var(--accent-primary);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-shrink: 0;
-        }
-
-        .fasting-badge {
-          font-size: 0.68rem;
-          font-weight: 800;
-          color: var(--accent-primary);
-          text-transform: uppercase;
-        }
-
-        .fasting-title {
-          font-size: 1rem;
-          font-weight: 800;
-          color: var(--text-primary);
-        }
-
-        .fasting-details {
-          display: flex;
-          flex-direction: column;
-          gap: 0.5rem;
-        }
-
-        .fasting-notes {
-          font-size: 0.8rem;
-          color: var(--text-secondary);
-          line-height: 1.4;
-        }
-
-        .electrolyte-tip {
-          background: rgba(245, 158, 11, 0.1);
-          border: 1px solid rgba(245, 158, 11, 0.25);
-          border-radius: var(--radius-sm);
-          padding: 0.5rem 0.75rem;
-          font-size: 0.75rem;
-          color: var(--accent-warning);
-          line-height: 1.35;
-        }
-
-        .water-card {
-          padding: 1.25rem;
-          display: flex;
-          flex-direction: column;
-          gap: 0.75rem;
-          border-left: 4px solid var(--accent-cyan);
-          background: rgba(14, 165, 233, 0.03);
-        }
-
-        .water-header {
-          display: flex;
-          align-items: center;
-          gap: 0.75rem;
-        }
-
-        .water-icon-wrap {
-          width: 40px;
-          height: 40px;
-          border-radius: var(--radius-sm);
-          background: rgba(14, 165, 233, 0.15);
-          color: var(--accent-cyan);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-shrink: 0;
-        }
-
-        .water-header-text {
-          flex: 1;
-        }
-
-        .water-title-row {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 0.5rem;
-        }
-
-        .water-title {
-          font-size: 1rem;
-          font-weight: 800;
-          color: var(--text-primary);
-        }
-
-        .water-goal-badge {
-          font-size: 0.68rem;
-          font-weight: 800;
-          background: rgba(14, 165, 233, 0.15);
-          color: var(--accent-cyan);
-          padding: 0.15rem 0.5rem;
-          border-radius: 4px;
-        }
-
-        .water-sub {
-          font-size: 0.75rem;
-          color: var(--text-muted);
-        }
-
-        .water-progress-track {
-          width: 100%;
-          height: 8px;
-          background: rgba(255, 255, 255, 0.08);
-          border-radius: 999px;
-          overflow: hidden;
-        }
-
-        .water-progress-fill {
-          height: 100%;
-          background: linear-gradient(90deg, #0ea5e9, #38bdf8);
-          border-radius: 999px;
-          transition: width 0.3s ease;
-        }
-
-        .water-actions-row {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-        }
-
-        .water-percent-tag {
-          font-size: 0.85rem;
-          font-weight: 800;
-          color: var(--accent-cyan);
-        }
-
-        .btn-water-add {
-          background: rgba(14, 165, 233, 0.2);
-          border: 1px solid rgba(14, 165, 233, 0.4);
-          color: var(--accent-cyan);
-          font-weight: 700;
-        }
-
-        .btn-water-add:hover {
-          background: rgba(14, 165, 233, 0.3);
-        }
-
-        /* Meal Schedule List */
-        .meal-schedule-list {
-          display: flex;
-          flex-direction: column;
-          gap: 0.75rem;
-        }
-
-        .meal-schedule-card {
-          padding: 1.15rem 1.25rem;
-          display: flex;
-          flex-direction: column;
-          gap: 0.75rem;
-          border-left: 4px solid var(--accent-primary);
-          transition: all 0.2s ease;
-        }
-
-        .meal-schedule-card.meal-completed {
-          opacity: 0.85;
-          border-left-color: var(--accent-success);
-          background: rgba(16, 185, 129, 0.04);
-        }
-
-        .meal-card-top {
-          display: flex;
-          align-items: center;
-          gap: 0.75rem;
-          flex-wrap: wrap;
-        }
-
-        .meal-check-btn {
-          background: none;
-          border: none;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 0;
-        }
-
-        .meal-check-circle {
-          width: 22px;
-          height: 22px;
-          border-radius: 50%;
-          border: 2px solid rgba(255, 255, 255, 0.25);
-          transition: border-color 0.2s;
-        }
-
-        .meal-check-circle:hover {
-          border-color: var(--accent-primary);
-        }
-
-        .meal-check-btn.checked {
-          width: 22px;
-          height: 22px;
-          border-radius: 50%;
-          background: var(--accent-success);
-          color: white;
-        }
-
-        .meal-time-tag {
-          display: flex;
-          align-items: center;
-          gap: 0.3rem;
-          background: rgba(99, 102, 241, 0.15);
-          color: var(--accent-primary);
-          font-size: 0.72rem;
-          font-weight: 800;
-          padding: 0.2rem 0.55rem;
-          border-radius: 4px;
-        }
-
-        .meal-name {
-          font-size: 1.05rem;
-          font-weight: 800;
-          color: var(--text-primary);
-          flex: 1;
-        }
-
-        .meal-macros-pills {
-          display: flex;
-          align-items: center;
-          gap: 0.4rem;
-        }
-
-        .meal-cal-pill {
-          display: flex;
-          align-items: center;
-          gap: 0.25rem;
-          font-size: 0.72rem;
-          font-weight: 800;
-          background: rgba(245, 158, 11, 0.15);
-          color: var(--accent-warning);
-          padding: 0.15rem 0.5rem;
-          border-radius: 4px;
-        }
-
-        .meal-protein-pill {
-          font-size: 0.72rem;
-          font-weight: 700;
-          background: rgba(239, 68, 68, 0.15);
-          color: #ef4444;
-          padding: 0.15rem 0.5rem;
-          border-radius: 4px;
-        }
-
-        .meal-card-content {
-          display: flex;
-          flex-direction: column;
-          gap: 0.45rem;
-          padding-left: 2rem;
-        }
-
-        .meal-dishes-box {
-          font-size: 0.85rem;
-          line-height: 1.45;
-          color: var(--text-primary);
-        }
-
-        .dishes-label {
-          font-weight: 700;
-          color: var(--text-muted);
-          margin-right: 0.35rem;
-        }
-
-        .meal-benefits-box {
-          display: flex;
-          align-items: center;
-          gap: 0.45rem;
-          font-size: 0.78rem;
-          color: #ec4899;
-          background: rgba(236, 72, 153, 0.08);
-          border: 1px solid rgba(236, 72, 153, 0.2);
-          border-radius: var(--radius-sm);
-          padding: 0.4rem 0.65rem;
-          align-self: flex-start;
-        }
-
-        .calories-stat-grid {
-          display: grid;
-          grid-template-columns: 1fr;
-          gap: 0.85rem;
-        }
-
-        @media (min-width: 640px) {
           .calories-stat-grid {
             grid-template-columns: repeat(3, 1fr);
           }
         }
 
         .cal-card {
+          padding: 1.25rem;
           display: flex;
           flex-direction: column;
-          gap: 0.35rem;
-          padding: 1.25rem;
+          gap: 0.4rem;
           position: relative;
         }
 
+        .highlight-card {
+          border-color: var(--accent-primary);
+          background: rgba(99, 102, 241, 0.05);
+        }
+
+        .cheat-card {
+          border-color: rgba(245, 158, 11, 0.4);
+          background: rgba(245, 158, 11, 0.04);
+        }
+
         .card-top-tag {
-          position: absolute;
-          top: 0.75rem;
-          right: 0.75rem;
           font-size: 0.65rem;
           font-weight: 800;
-          padding: 0.15rem 0.45rem;
-          border-radius: 4px;
-          background: rgba(99, 102, 241, 0.15);
+          letter-spacing: 0.05em;
           color: var(--accent-primary);
         }
 
         .tag-amber {
-          background: rgba(245, 158, 11, 0.15);
           color: var(--accent-warning);
         }
 
         .cal-label {
-          font-size: 0.75rem;
-          font-weight: 700;
+          font-size: 0.8rem;
           color: var(--text-secondary);
+          font-weight: 700;
+          text-transform: uppercase;
         }
 
         .cal-val {
-          font-size: 1.35rem;
-          font-weight: 800;
+          font-size: 1.45rem;
+          font-weight: 900;
           color: var(--text-primary);
         }
 
-        .cal-val small {
-          font-size: 0.8rem;
-          font-weight: 600;
-          color: var(--text-muted);
-        }
-
         .cal-desc {
-          font-size: 0.72rem;
+          font-size: 0.78rem;
           color: var(--text-muted);
+          line-height: 1.4;
         }
 
+        /* Macros Grid */
         .macros-grid {
           display: grid;
           grid-template-columns: 1fr;
-          gap: 0.85rem;
+          gap: 1rem;
         }
 
         @media (min-width: 768px) {
@@ -2102,11 +1805,12 @@ export const HealthProtocolView = () => {
         }
 
         .macro-card {
-          border-top: 4px solid var(--accent-primary);
-          padding: 1rem 1.25rem;
+          padding: 1.25rem;
+          border-top-width: 4px;
           display: flex;
           flex-direction: column;
-          gap: 0.45rem;
+          gap: 0.6rem;
+          position: relative;
         }
 
         .macro-header {
@@ -2115,35 +1819,50 @@ export const HealthProtocolView = () => {
           justify-content: space-between;
         }
 
+        .macro-header-right {
+          display: flex;
+          align-items: center;
+          gap: 0.35rem;
+        }
+
         .macro-name {
-          font-size: 0.95rem;
+          font-size: 1.05rem;
           font-weight: 800;
         }
 
         .macro-badge {
+          padding: 0.2rem 0.5rem;
+          border-radius: var(--radius-full);
           font-size: 0.72rem;
           font-weight: 800;
-          padding: 0.15rem 0.45rem;
-          border-radius: 4px;
         }
 
         .macro-amount {
           font-size: 1.35rem;
-          font-weight: 800;
+          font-weight: 900;
           color: var(--text-primary);
         }
 
-        .macro-purpose, .macro-sources {
-          font-size: 0.78rem;
+        .macro-purpose {
+          font-size: 0.8rem;
           color: var(--text-secondary);
           line-height: 1.4;
+        }
+
+        .macro-sources {
+          font-size: 0.76rem;
+          color: var(--text-muted);
+          background: rgba(255, 255, 255, 0.03);
+          padding: 0.5rem 0.65rem;
+          border-radius: var(--radius-sm);
+          line-height: 1.35;
         }
 
         /* Micronutrients Grid */
         .micronutrients-grid {
           display: grid;
           grid-template-columns: 1fr;
-          gap: 0.75rem;
+          gap: 1rem;
         }
 
         @media (min-width: 640px) {
@@ -2159,18 +1878,12 @@ export const HealthProtocolView = () => {
         }
 
         .micro-card {
-          border-left: 4px solid var(--accent-primary);
-          padding: 1rem 1.2rem;
+          padding: 1.15rem;
+          border-left-width: 4px;
           display: flex;
           flex-direction: column;
-          gap: 0.5rem;
-          background: rgba(255, 255, 255, 0.02);
-          transition: transform 0.2s ease, border-color 0.2s ease;
-        }
-
-        .micro-card:hover {
-          transform: translateY(-2px);
-          background: rgba(255, 255, 255, 0.04);
+          gap: 0.6rem;
+          position: relative;
         }
 
         .micro-header {
@@ -2181,50 +1894,55 @@ export const HealthProtocolView = () => {
           gap: 0.4rem;
         }
 
+        .micro-header-right {
+          display: flex;
+          align-items: center;
+          gap: 0.4rem;
+        }
+
         .micro-title-wrap {
           display: flex;
           align-items: center;
-          gap: 0.5rem;
+          gap: 0.45rem;
         }
 
         .micro-dot {
-          width: 8px;
-          height: 8px;
+          width: 9px;
+          height: 9px;
           border-radius: 50%;
         }
 
         .micro-name {
-          font-size: 1rem;
+          font-size: 0.95rem;
           font-weight: 800;
           color: var(--text-primary);
         }
 
         .micro-target-tag {
           font-size: 0.72rem;
-          font-weight: 600;
-          color: var(--accent-warning);
-          background: rgba(245, 158, 11, 0.1);
-          padding: 0.15rem 0.5rem;
-          border-radius: 4px;
+          color: var(--text-secondary);
+          background: rgba(255, 255, 255, 0.05);
+          padding: 0.15rem 0.45rem;
+          border-radius: var(--radius-sm);
         }
 
         .micro-sources-box {
           font-size: 0.8rem;
           display: flex;
-          align-items: baseline;
-          gap: 0.35rem;
-          color: var(--text-secondary);
-          line-height: 1.4;
+          flex-direction: column;
+          gap: 0.15rem;
         }
 
         .sources-label {
           font-weight: 700;
-          color: var(--text-muted);
-          flex-shrink: 0;
+          color: var(--text-secondary);
+          font-size: 0.72rem;
         }
 
         .sources-text {
           color: var(--text-primary);
+          font-size: 0.82rem;
+          line-height: 1.4;
         }
 
         /* Care Regimes Grid */
@@ -2234,7 +1952,7 @@ export const HealthProtocolView = () => {
           gap: 1.25rem;
         }
 
-        @media (min-width: 768px) {
+        @media (min-width: 900px) {
           .care-regimes-grid {
             grid-template-columns: repeat(3, 1fr);
           }
@@ -2242,11 +1960,10 @@ export const HealthProtocolView = () => {
 
         .regime-card {
           padding: 1.35rem;
+          border-top-width: 4px;
           display: flex;
           flex-direction: column;
-          gap: 1.15rem;
-          border-top: 4px solid var(--accent-primary);
-          background: rgba(255, 255, 255, 0.02);
+          gap: 1rem;
         }
 
         .border-top-pink { border-top-color: #ec4899; }
@@ -2262,27 +1979,34 @@ export const HealthProtocolView = () => {
         .regime-title-wrap {
           display: flex;
           align-items: center;
-          gap: 0.75rem;
+          gap: 0.65rem;
+        }
+
+        .regime-actions {
+          display: flex;
+          align-items: center;
+          gap: 0.35rem;
         }
 
         .regime-icon-wrap {
-          width: 38px;
-          height: 38px;
+          width: 36px;
+          height: 36px;
           border-radius: var(--radius-sm);
           display: flex;
           align-items: center;
           justify-content: center;
+          color: white;
           flex-shrink: 0;
         }
 
-        .bg-pink { background: rgba(236, 72, 153, 0.15); color: #ec4899; }
-        .bg-amber { background: rgba(245, 158, 11, 0.15); color: var(--accent-warning); }
-        .bg-purple { background: rgba(139, 92, 246, 0.15); color: #8b5cf6; }
-        .bg-cyan { background: rgba(14, 165, 233, 0.15); color: var(--accent-cyan); }
-        .bg-rose { background: rgba(244, 63, 94, 0.15); color: #f43f5e; }
+        .bg-pink { background: linear-gradient(135deg, #ec4899, #db2777); }
+        .bg-amber { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        .bg-purple { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+        .bg-cyan { background: linear-gradient(135deg, #06b6d4, #0891b2); }
+        .bg-rose { background: linear-gradient(135deg, #f43f5e, #e11d48); }
 
         .regime-title {
-          font-size: 1.1rem;
+          font-size: 1.05rem;
           font-weight: 800;
           color: var(--text-primary);
         }
@@ -2290,6 +2014,7 @@ export const HealthProtocolView = () => {
         .regime-sub {
           font-size: 0.72rem;
           color: var(--text-muted);
+          font-weight: 600;
         }
 
         .regime-body {
@@ -2305,170 +2030,136 @@ export const HealthProtocolView = () => {
         }
 
         .regime-tag {
-          align-self: flex-start;
-          display: flex;
+          display: inline-flex;
           align-items: center;
-          gap: 0.35rem;
+          gap: 0.3rem;
           font-size: 0.68rem;
           font-weight: 800;
           padding: 0.15rem 0.5rem;
-          border-radius: 4px;
+          border-radius: var(--radius-full);
+          align-self: flex-start;
           text-transform: uppercase;
         }
 
-        .tag-daily {
-          background: rgba(16, 185, 129, 0.15);
-          color: var(--accent-success);
-        }
-
-        .tag-weekly {
-          background: rgba(99, 102, 241, 0.15);
-          color: var(--accent-primary);
-        }
-
-        .tag-biweekly {
-          background: rgba(236, 72, 153, 0.15);
-          color: #ec4899;
-        }
+        .tag-daily { background: rgba(99, 102, 241, 0.15); color: var(--accent-primary); }
+        .tag-weekly { background: rgba(245, 158, 11, 0.15); color: var(--accent-warning); }
+        .tag-biweekly { background: rgba(139, 92, 246, 0.15); color: #8b5cf6; }
 
         .regime-content {
-          font-size: 0.85rem;
+          font-size: 0.83rem;
           color: var(--text-primary);
           line-height: 1.45;
         }
 
         .regime-content p {
-          margin: 0.2rem 0;
+          margin-bottom: 0.2rem;
         }
 
         .regime-notes-box {
-          background: rgba(255, 255, 255, 0.03);
-          border: 1px solid var(--border-color);
-          border-radius: var(--radius-sm);
-          padding: 0.65rem 0.85rem;
-          font-size: 0.75rem;
+          font-size: 0.78rem;
           color: var(--text-secondary);
+          background: rgba(255, 255, 255, 0.03);
+          border: 1px dashed rgba(255, 255, 255, 0.1);
+          border-radius: var(--radius-sm);
+          padding: 0.55rem 0.75rem;
           line-height: 1.4;
         }
 
-        .edit-micro-card {
-          background: rgba(255, 255, 255, 0.02);
-          border: 1px solid var(--border-color);
-          border-radius: var(--radius-sm);
-          padding: 0.85rem;
-          display: flex;
-          flex-direction: column;
-          gap: 0.6rem;
-          margin-bottom: 0.75rem;
-        }
-
-        .micro-edit-top {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-        }
-
-        .micro-input-name {
-          width: 140px;
-          flex-shrink: 0;
-        }
-
-        .micro-input-target {
-          flex: 1;
-        }
-
-        .modal-scroll-area {
-          max-height: 55vh;
-          overflow-y: auto;
-          padding-right: 0.35rem;
-        }
-
+        /* Fitness & Sugar Grid */
         .protocol-cards-grid {
           display: grid;
           grid-template-columns: 1fr;
           gap: 1.25rem;
         }
 
-        @media (min-width: 768px) {
+        @media (min-width: 850px) {
           .protocol-cards-grid {
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: 1fr 1fr;
           }
         }
 
         .protocol-section-card {
-          padding: 1.5rem;
+          padding: 1.35rem;
           display: flex;
           flex-direction: column;
-          gap: 1.25rem;
+          gap: 1.15rem;
         }
 
         .proto-card-header {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          flex-wrap: wrap;
-          gap: 0.5rem;
         }
 
         .proto-header-left {
           display: flex;
           align-items: center;
-          gap: 0.85rem;
+          gap: 0.75rem;
+        }
+
+        .proto-actions {
+          display: flex;
+          align-items: center;
+          gap: 0.35rem;
         }
 
         .proto-icon-wrap {
-          width: 44px;
-          height: 44px;
+          width: 40px;
+          height: 40px;
           border-radius: var(--radius-sm);
           display: flex;
           align-items: center;
           justify-content: center;
+          color: white;
           flex-shrink: 0;
         }
 
         .proto-title {
-          font-size: 1.15rem;
+          font-size: 1.05rem;
           font-weight: 800;
           color: var(--text-primary);
         }
 
         .proto-sub {
-          font-size: 0.78rem;
+          font-size: 0.72rem;
           color: var(--text-muted);
         }
 
         .exercise-grid {
-          display: grid;
-          grid-template-columns: 1fr;
+          display: flex;
+          flex-direction: column;
           gap: 0.85rem;
         }
 
         .exercise-card {
           background: rgba(255, 255, 255, 0.02);
-          border: 1px solid var(--border-color);
+          border: 1px solid rgba(255, 255, 255, 0.06);
           border-radius: var(--radius-sm);
-          padding: 1rem;
+          padding: 0.85rem 1rem;
           display: flex;
           flex-direction: column;
-          gap: 0.45rem;
+          gap: 0.4rem;
         }
 
         .exercise-title {
-          font-size: 0.95rem;
-          font-weight: 700;
-          color: var(--accent-cyan);
+          font-size: 0.92rem;
+          font-weight: 800;
+          color: var(--text-primary);
         }
 
         .exercise-activities {
           font-size: 0.82rem;
-          color: var(--text-primary);
+          color: var(--text-secondary);
+          line-height: 1.4;
         }
 
         .exercise-benefits {
-          font-size: 0.75rem;
-          color: var(--text-muted);
+          font-size: 0.78rem;
+          color: #10b981;
+          line-height: 1.35;
         }
 
+        /* Sugar Strategy */
         .sugar-phases-list {
           display: flex;
           flex-direction: column;
@@ -2479,96 +2170,131 @@ export const HealthProtocolView = () => {
           display: flex;
           align-items: center;
           gap: 0.75rem;
-          padding: 0.6rem 0.85rem;
           background: rgba(255, 255, 255, 0.02);
+          border: 1px solid rgba(255, 255, 255, 0.06);
           border-radius: var(--radius-sm);
-          border: 1px solid var(--border-color);
+          padding: 0.65rem 0.85rem;
         }
 
         .phase-badge {
+          background: rgba(244, 63, 94, 0.15);
+          color: #f43f5e;
           font-size: 0.72rem;
           font-weight: 800;
           padding: 0.2rem 0.5rem;
-          border-radius: 4px;
-          background: rgba(244, 63, 94, 0.15);
-          color: #f43f5e;
+          border-radius: var(--radius-sm);
           flex-shrink: 0;
         }
 
         .phase-action {
-          font-size: 0.82rem;
+          font-size: 0.83rem;
           color: var(--text-primary);
-        }
-
-        .craving-hack-box {
-          background: rgba(16, 185, 129, 0.1);
-          border: 1px solid rgba(16, 185, 129, 0.3);
-          border-radius: var(--radius-sm);
-          padding: 0.85rem;
-          font-size: 0.82rem;
-          color: var(--accent-success);
-          font-weight: 600;
-          line-height: 1.4;
-        }
-
-        .modal-overlay {
-          position: fixed;
-          inset: 0;
-          background: rgba(0, 0, 0, 0.75);
-          backdrop-filter: blur(8px);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 1000;
-          padding: 1rem;
-        }
-
-        .modal-panel {
-          background: var(--bg-secondary);
-          border: 1px solid var(--border-color);
-          border-radius: var(--radius-md);
-          width: 100%;
-          max-width: 520px;
-          padding: 1.5rem;
-          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
-          max-height: 90vh;
-          overflow-y: auto;
-        }
-
-        .modal-header {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          margin-bottom: 1.25rem;
-        }
-
-        .modal-title {
-          font-size: 1.15rem;
-          font-weight: 800;
-          color: var(--text-primary);
-        }
-
-        .modal-form {
-          display: flex;
-          flex-direction: column;
-          gap: 1rem;
-        }
-
-        .form-row {
-          display: flex;
-          gap: 0.75rem;
-        }
-
-        .flex-1 {
           flex: 1;
         }
 
-        .modal-actions {
+        .craving-hack-box {
+          background: rgba(99, 102, 241, 0.06);
+          border: 1px solid rgba(99, 102, 241, 0.2);
+          border-radius: var(--radius-sm);
+          padding: 0.75rem 0.9rem;
+          font-size: 0.8rem;
+          color: var(--text-secondary);
+          line-height: 1.4;
+        }
+
+        /* Button & Icon Utilities */
+        .btn-icon-sm {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 26px;
+          height: 26px;
+          border-radius: var(--radius-sm);
+          border: none;
+          background: transparent;
+          cursor: pointer;
+          transition: background 0.15s ease;
+        }
+
+        .btn-icon-sm:hover {
+          background: rgba(239, 68, 68, 0.15);
+        }
+
+        .delete-item-btn {
+          opacity: 0.7;
+        }
+
+        .delete-item-btn:hover {
+          opacity: 1;
+        }
+
+        /* Modals & Subsections */
+        .modal-scroll-area {
+          max-height: 380px;
+          overflow-y: auto;
+          display: flex;
+          flex-direction: column;
+          gap: 0.75rem;
+          padding-right: 0.35rem;
+        }
+
+        .modal-subsection {
+          display: flex;
+          flex-direction: column;
+          gap: 0.75rem;
+          margin-top: 0.5rem;
+        }
+
+        .subsection-header {
           display: flex;
           align-items: center;
-          justify-content: flex-end;
-          gap: 0.75rem;
-          margin-top: 0.75rem;
+          justify-content: space-between;
+        }
+
+        .edit-macro-card {
+          background: rgba(255, 255, 255, 0.03);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: var(--radius-sm);
+          padding: 0.75rem;
+          display: flex;
+          flex-direction: column;
+          gap: 0.45rem;
+        }
+
+        .macro-edit-row {
+          display: flex;
+          gap: 0.45rem;
+          align-items: center;
+        }
+
+        .edit-micro-card {
+          background: rgba(255, 255, 255, 0.03);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: var(--radius-sm);
+          padding: 0.75rem;
+          display: flex;
+          flex-direction: column;
+          gap: 0.45rem;
+        }
+
+        .micro-edit-top {
+          display: flex;
+          gap: 0.45rem;
+          align-items: center;
+        }
+
+        .micro-input-name {
+          width: 140px;
+        }
+
+        .micro-input-target {
+          flex: 1;
+        }
+
+        .sugar-edit-row {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
         }
       `}</style>
     </div>

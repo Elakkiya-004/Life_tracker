@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import confetti from 'canvas-confetti';
 import { useAuth } from './AuthContext';
+
 import {
   getLocalData,
   setLocalData,
@@ -17,6 +18,7 @@ import {
   getEffectiveTrackerDate,
   pruneOldHistoryData,
 } from '../services/storage';
+
 import { initFirebase, syncToCloud, listenToCloud } from '../services/firebase';
 
 const AppContext = createContext();
