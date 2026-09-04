@@ -29,14 +29,14 @@ export const Sidebar = () => {
   } = useApp();
 
   const navItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'habits', label: 'Habits & Routines', icon: CheckCircle2, badge: `${todayCompletedHabits}/${(Array.isArray(habits) ? habits.length : 0)}` },
-    { id: 'protocol', label: 'Health & Diet Protocol', icon: HeartPulse, highlight: true },
-    { id: 'roadmap', label: 'Career Roadmap', icon: Compass, badge: `${roadmapCompletionPercent}%` },
-    { id: 'watchlists', label: 'MCU Watchlist', icon: Film, badge: `${marvelProgressPercent}%` },
-    { id: 'finance', label: 'Finance & Budget', icon: Wallet },
-    { id: 'analytics', label: 'Analytics & Score', icon: BarChart3 },
-    { id: 'settings', label: 'Settings & Cloud', icon: Settings },
+    { id: 'dashboard', path: '/', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'habits', path: '/habits', label: 'Habits & Routines', icon: CheckCircle2, badge: `${todayCompletedHabits}/${(Array.isArray(habits) ? habits.length : 0)}` },
+    { id: 'protocol', path: '/health', label: 'Health & Diet Protocol', icon: HeartPulse, highlight: true },
+    { id: 'roadmap', path: '/roadmap', label: 'Career Roadmap', icon: Compass, badge: `${roadmapCompletionPercent}%` },
+    { id: 'watchlists', path: '/mcu', label: 'MCU Watchlist', icon: Film, badge: `${marvelProgressPercent}%` },
+    { id: 'finance', path: '/finance', label: 'Finance & Budget', icon: Wallet },
+    { id: 'analytics', path: '/analytics', label: 'Analytics & Score', icon: BarChart3 },
+    { id: 'settings', path: '/settings', label: 'Settings & Cloud', icon: Settings },
   ];
 
   return (
@@ -69,10 +69,14 @@ export const Sidebar = () => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;
           return (
-            <button
+            <a
               key={item.id}
+              href={item.path}
               className={`nav-link ${isActive ? 'active' : ''}`}
-              onClick={() => setActiveTab(item.id)}
+              onClick={(e) => {
+                e.preventDefault();
+                setActiveTab(item.id);
+              }}
             >
               <div className="nav-link-content">
                 <Icon size={20} className="nav-icon" />
@@ -83,7 +87,7 @@ export const Sidebar = () => {
                   {item.badge}
                 </span>
               )}
-            </button>
+            </a>
           );
         })}
       </nav>

@@ -26,6 +26,52 @@ export const useApp = () => {
   return context;
 };
 
+export const PATH_TO_TAB = {
+  '/': 'dashboard',
+  '/dashboard': 'dashboard',
+  '/habits': 'habits',
+  '/health': 'protocol',
+  '/protocol': 'protocol',
+  '/diet': 'protocol',
+  '/roadmap': 'roadmap',
+  '/career': 'roadmap',
+  '/mcu': 'watchlists',
+  '/watchlists': 'watchlists',
+  '/marvel': 'watchlists',
+  '/finance': 'finance',
+  '/budget': 'finance',
+  '/analytics': 'analytics',
+  '/settings': 'settings',
+};
+
+export const TAB_TO_PATH = {
+  'dashboard': '/',
+  'habits': '/habits',
+  'protocol': '/health',
+  'health': '/health',
+  'roadmap': '/roadmap',
+  'career': '/roadmap',
+  'watchlists': '/mcu',
+  'mcu': '/mcu',
+  'marvel': '/mcu',
+  'finance': '/finance',
+  'budget': '/finance',
+  'analytics': '/analytics',
+  'settings': '/settings',
+};
+
+const getInitialTabFromLocation = () => {
+  try {
+    if (typeof window !== 'undefined' && window.location) {
+      const pathname = window.location.pathname.toLowerCase().replace(/\/$/, '') || '/';
+      return PATH_TO_TAB[pathname] || 'dashboard';
+    }
+    return 'dashboard';
+  } catch {
+    return 'dashboard';
+  }
+};
+
 export const AppProvider = ({ children }) => {
   // Safe state initialization with clean defaults (No static dummy data)
   const [habits, setHabits] = useState(() => {
@@ -102,10 +148,34 @@ export const AppProvider = ({ children }) => {
     return data && typeof data === 'object' ? { ...DEFAULT_SETTINGS, ...data } : DEFAULT_SETTINGS;
   });
   
-  const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' | 'roadmap' | 'habits' | 'watchlists' | 'finance' | 'analytics' | 'settings'
+  // Real browser URL routing state (Supports /habits, /health, /roadmap, /mcu, /finance, etc.)
+  const [activeTab, setActiveTabState] = useState(() => getInitialTabFromLocation());
   const [syncStatus, setSyncStatus] = useState('local'); // 'local' | 'synced' | 'syncing' | 'error'
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
+
+  // Sync activeTab changes to browser URL bar
+  const setActiveTab = useCallback((tabOrPath, shouldPushState = true) => {
+    const tabId = PATH_TO_TAB[tabOrPath] || tabOrPath || 'dashboard';
+    setActiveTabState(tabId);
+    if (shouldPushState && typeof window !== 'undefined' && window.history) {
+      const targetPath = TAB_TO_PATH[tabId] || `/${tabId}`;
+      if (window.location.pathname !== targetPath) {
+        window.history.pushState({ tab: tabId }, '', targetPath);
+      }
+    }
+  }, []);
+
+  // Listen for browser Back/Forward navigation
+  useEffect(() => {
+    const handlePopState = () => {
+      const currentTab = getInitialTabFromLocation();
+      setActiveTabState(currentTab);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
 
   // Trigger Confetti effect
   const triggerCelebration = useCallback(() => {

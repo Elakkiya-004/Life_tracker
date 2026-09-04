@@ -26,6 +26,7 @@ export const MobileDrawer = () => {
     setActiveTab, 
     todayCompletedHabits, 
     habits, 
+    roadmapCompletionPercent,
     marvelProgressPercent,
     syncStatus, 
     settings, 
@@ -45,14 +46,14 @@ export const MobileDrawer = () => {
   };
 
   const navItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'habits', label: 'Habits & Routines', icon: CheckCircle2, badge: `${todayCompletedHabits}/${(Array.isArray(habits) ? habits.length : 0)}` },
-    { id: 'protocol', label: 'Health & Diet Protocol', icon: HeartPulse, highlight: true },
-    { id: 'roadmap', label: 'Career Roadmap', icon: Compass },
-    { id: 'watchlists', label: 'MCU Watchlist', icon: Film, badge: `${marvelProgressPercent}%` },
-    { id: 'finance', label: 'Finance & Budget', icon: Wallet },
-    { id: 'analytics', label: 'Analytics & Score', icon: BarChart3 },
-    { id: 'settings', label: 'Settings & Cloud', icon: Settings },
+    { id: 'dashboard', path: '/', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'habits', path: '/habits', label: 'Habits & Routines', icon: CheckCircle2, badge: `${todayCompletedHabits}/${(Array.isArray(habits) ? habits.length : 0)}` },
+    { id: 'protocol', path: '/health', label: 'Health & Diet Protocol', icon: HeartPulse, highlight: true },
+    { id: 'roadmap', path: '/roadmap', label: 'Career Roadmap', icon: Compass, badge: `${roadmapCompletionPercent}%` },
+    { id: 'watchlists', path: '/mcu', label: 'MCU Watchlist', icon: Film, badge: `${marvelProgressPercent}%` },
+    { id: 'finance', path: '/finance', label: 'Finance & Budget', icon: Wallet },
+    { id: 'analytics', path: '/analytics', label: 'Analytics & Score', icon: BarChart3 },
+    { id: 'settings', path: '/settings', label: 'Settings & Cloud', icon: Settings },
   ];
 
   return (
@@ -98,10 +99,14 @@ export const MobileDrawer = () => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
             return (
-              <button
+              <a
                 key={item.id}
+                href={item.path}
                 className={`drawer-nav-item ${isActive ? 'active' : ''} ${item.highlight ? 'highlight' : ''}`}
-                onClick={() => handleNavClick(item.id)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleNavClick(item.id);
+                }}
               >
                 <div className="drawer-nav-left">
                   <Icon size={20} className="nav-icon" />
@@ -112,7 +117,7 @@ export const MobileDrawer = () => {
                     {item.badge}
                   </span>
                 )}
-              </button>
+              </a>
             );
           })}
         </nav>
