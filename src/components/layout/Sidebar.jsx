@@ -32,7 +32,9 @@ export const Sidebar = () => {
     setIsQuickAddOpen
   } = useApp();
 
-  const { currentUser, logout, isSuperAdmin, isMenuVisible } = useAuth();
+  const { currentUser, logout, isSuperAdmin, isMenuVisible, setIsProfileModalOpen } = useAuth();
+
+  const userAvatarIsImg = currentUser?.avatar && (currentUser.avatar.startsWith('data:image') || currentUser.avatar.startsWith('http'));
 
   const allNavItems = [
     ...(isSuperAdmin ? [
@@ -132,14 +134,27 @@ export const Sidebar = () => {
       <div className="sidebar-footer">
         {currentUser && (
           <div className="sidebar-user-card">
-            <div className="user-card-info">
-              <div className={`user-sidebar-avatar ${isSuperAdmin ? 'avatar-admin' : 'avatar-user'}`}>
-                {getInitials(currentUser.name)}
+            <div 
+              className="user-card-info cursor-pointer"
+              onClick={() => setIsProfileModalOpen(true)}
+              title="Click to edit profile"
+            >
+              <div 
+                className={`user-sidebar-avatar ${isSuperAdmin ? 'avatar-admin' : 'avatar-user'}`}
+                style={{ background: currentUser.avatarBg || undefined }}
+              >
+                {userAvatarIsImg ? (
+                  <img src={currentUser.avatar} alt={currentUser.name} className="sidebar-avatar-img" />
+                ) : currentUser.avatar ? (
+                  <span className="sidebar-avatar-emoji">{currentUser.avatar}</span>
+                ) : (
+                  getInitials(currentUser.name)
+                )}
               </div>
               <div className="user-sidebar-texts">
                 <span className="user-sidebar-name">{currentUser.name}</span>
                 <span className="user-sidebar-role">
-                  {isSuperAdmin ? '👑 Super Admin' : '👤 Member'}
+                  {isSuperAdmin ? '👑 Super Admin' : (currentUser.jobTitle || '👤 Member')}
                 </span>
               </div>
             </div>
@@ -409,11 +424,17 @@ export const Sidebar = () => {
           align-items: center;
           gap: 0.6rem;
           min-width: 0;
+          cursor: pointer;
+          transition: opacity 0.15s ease;
+        }
+
+        .user-card-info:hover {
+          opacity: 0.85;
         }
 
         .user-sidebar-avatar {
-          width: 32px;
-          height: 32px;
+          width: 34px;
+          height: 34px;
           border-radius: var(--radius-full);
           display: flex;
           align-items: center;
@@ -421,6 +442,18 @@ export const Sidebar = () => {
           font-weight: 800;
           font-size: 0.75rem;
           flex-shrink: 0;
+          overflow: hidden;
+        }
+
+        .sidebar-avatar-img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+
+        .sidebar-avatar-emoji {
+          font-size: 1.15rem;
+          line-height: 1;
         }
 
         .avatar-admin {

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { UserModal } from '../components/admin/UserModal';
+import { EmployeePermissionsModal } from '../components/admin/EmployeePermissionsModal';
 import { 
   ShieldCheck, 
   UserPlus, 
@@ -26,7 +27,9 @@ import {
   EyeOff,
   RotateCcw,
   Check,
-  SlidersHorizontal
+  SlidersHorizontal,
+  Globe,
+  Sliders as SlidersIcon
 } from 'lucide-react';
 
 const MENU_ICONS = {
@@ -56,6 +59,8 @@ export const AdminView = () => {
   const [roleFilter, setRoleFilter] = useState('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [userToEdit, setUserToEdit] = useState(null);
+  const [permissionsUser, setPermissionsUser] = useState(null);
+  const [isPermModalOpen, setIsPermModalOpen] = useState(false);
   const [toggleSuccessMsg, setToggleSuccessMsg] = useState(null);
 
   const totalUsers = usersList.length;
@@ -100,7 +105,8 @@ export const AdminView = () => {
     if (!user) return false;
     const matchSearch = 
       (user.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (user.email || '').toLowerCase().includes(searchQuery.toLowerCase());
+      (user.email || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (user.jobTitle || '').toLowerCase().includes(searchQuery.toLowerCase());
     
     const matchRole = roleFilter === 'all' || user.role === roleFilter;
     return matchSearch && matchRole;
@@ -114,6 +120,11 @@ export const AdminView = () => {
   const handleEditUser = (user) => {
     setUserToEdit(user);
     setIsModalOpen(true);
+  };
+
+  const handleOpenPermissions = (user) => {
+    setPermissionsUser(user);
+    setIsPermModalOpen(true);
   };
 
   const handleToggleStatus = async (user) => {
@@ -360,11 +371,11 @@ export const AdminView = () => {
           <table className="admin-users-table">
             <thead>
               <tr>
-                <th>User Account</th>
+                <th>Employee / User</th>
                 <th>Role</th>
-                <th>Access Status</th>
-                <th>Created Date</th>
-                <th>Created By</th>
+                <th>Navigation Access</th>
+                <th>Status</th>
+                <th>Created</th>
                 <th className="text-center">Actions</th>
               </tr>
             </thead>
@@ -379,20 +390,34 @@ export const AdminView = () => {
                 filteredUsers.map((user) => {
                   const isCurrentLoggedAdmin = user.email === currentUser?.email;
                   const isSuspended = user.status === 'disabled';
+                  const isCustomMenus = Array.isArray(user.allowedMenus);
+                  const userAvatarIsImg = user.avatar && (user.avatar.startsWith('data:image') || user.avatar.startsWith('http'));
 
                   return (
                     <tr key={user.uid} className={`user-row ${isSuspended ? 'row-suspended' : ''}`}>
-                      {/* Name & Email */}
+                      {/* Name & Avatar & Email */}
                       <td>
                         <div className="user-profile-cell">
-                          <div className={`user-avatar ${user.role === 'super_admin' ? 'avatar-admin' : 'avatar-user'}`}>
-                            {getInitials(user.name)}
+                          <div 
+                            className={`user-avatar ${user.role === 'super_admin' ? 'avatar-admin' : 'avatar-user'}`}
+                            style={{ background: user.avatarBg || undefined }}
+                          >
+                            {userAvatarIsImg ? (
+                              <img src={user.avatar} alt={user.name} className="user-table-avatar-img" />
+                            ) : user.avatar ? (
+                              <span className="user-table-emoji">{user.avatar}</span>
+                            ) : (
+                              getInitials(user.name)
+                            )}
                           </div>
                           <div className="user-details">
-                            <span className="user-name">
-                              {user.name}
+                            <div className="user-name-line">
+                              <span className="user-name">{user.name}</span>
                               {isCurrentLoggedAdmin && <span className="you-tag">(You)</span>}
-                            </span>
+                            </div>
+                            {user.jobTitle && (
+                              <span className="user-job-sub">{user.jobTitle}</span>
+                            )}
                             <span className="user-email">{user.email}</span>
                           </div>
                         </div>
@@ -401,8 +426,37 @@ export const AdminView = () => {
                       {/* Role Badge */}
                       <td>
                         <span className={`role-badge ${user.role === 'super_admin' ? 'role-super-admin' : 'role-regular-user'}`}>
-                          {user.role === 'super_admin' ? '👑 Super Admin' : '👤 Regular User'}
+                          {user.role === 'super_admin' ? '👑 Super Admin' : '👤 Regular Member'}
                         </span>
+                      </td>
+
+                      {/* Navigation Menu Access Column */}
+                      <td>
+                        {user.role === 'super_admin' ? (
+                          <span className="perm-badge badge-admin-all" title="Super Admins have unrestricted access to all 8 modules and Console">
+                            👑 Full (8/8)
+                          </span>
+                        ) : isCustomMenus ? (
+                          <button
+                            type="button"
+                            className="perm-btn btn-perm-custom"
+                            onClick={() => handleOpenPermissions(user)}
+                            title="Click to modify custom menu permissions for this employee"
+                          >
+                            <SlidersHorizontal size={13} />
+                            <span>Custom ({user.allowedMenus.length}/8)</span>
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            className="perm-btn btn-perm-global"
+                            onClick={() => handleOpenPermissions(user)}
+                            title="Click to customize menu permissions for this employee"
+                          >
+                            <Globe size={13} />
+                            <span>Global Rules ({enabledMenusCount}/8)</span>
+                          </button>
+                        )}
                       </td>
 
                       {/* Status Badge */}
@@ -429,16 +483,21 @@ export const AdminView = () => {
                         </span>
                       </td>
 
-                      {/* Created By */}
-                      <td>
-                        <span className="text-xs text-sub">
-                          {user.createdBy || 'System'}
-                        </span>
-                      </td>
-
                       {/* Actions */}
                       <td>
                         <div className="actions-cell">
+                          {/* Menu Permissions Button (For regular users) */}
+                          {user.role !== 'super_admin' && (
+                            <button
+                              className="btn-action btn-perms-action"
+                              onClick={() => handleOpenPermissions(user)}
+                              title="Configure Menus for this Employee"
+                            >
+                              <SlidersHorizontal size={13} />
+                              <span>Menus</span>
+                            </button>
+                          )}
+
                           {/* Toggle Active / Suspend */}
                           {!isCurrentLoggedAdmin && (
                             <button
@@ -446,7 +505,7 @@ export const AdminView = () => {
                               onClick={() => handleToggleStatus(user)}
                               title={isSuspended ? 'Reactivate User Account' : 'Suspend User Account'}
                             >
-                              {isSuspended ? <CheckCircle2 size={15} /> : <UserX size={15} />}
+                              {isSuspended ? <CheckCircle2 size={14} /> : <UserX size={14} />}
                               <span>{isSuspended ? 'Activate' : 'Suspend'}</span>
                             </button>
                           )}
@@ -489,13 +548,13 @@ export const AdminView = () => {
         <div className="info-text-content">
           <h4 className="info-heading">Role-Based Access Control (RBAC) System Architecture</h4>
           <p className="info-sub text-xs text-sub">
-            • <strong>Super Admin</strong>: Can create, manage, suspend, or reset passwords for all users.<br />
-            • <strong>Regular Users</strong>: Can log in with their credentials to access the <strong>Dashboard</strong>, <strong>Habits & Routines</strong>, <strong>Health Protocol</strong>, <strong>16-Week Career Roadmap</strong>, <strong>MCU Watchlist</strong>, and <strong>₹18,000 Budget Jars</strong>. User data is saved in isolated private cloud documents.
+            • <strong>Super Admin</strong>: Has unrestricted access to all 8 modules and the Super Admin Console (`/admin`) to create users, reset passwords, and toggle menu visibility.<br />
+            • <strong>Per-Employee Menu Toggles</strong>: Super Admin can assign specific modules (e.g. Habits, Roadmap, Budget) individually per employee or apply global visibility toggles.
           </p>
         </div>
       </div>
 
-      {/* User Modal */}
+      {/* User Create / Reset Password Modal */}
       <UserModal
         isOpen={isModalOpen}
         onClose={() => {
@@ -503,6 +562,16 @@ export const AdminView = () => {
           setUserToEdit(null);
         }}
         userToEdit={userToEdit}
+      />
+
+      {/* Employee Menu Permissions Modal */}
+      <EmployeePermissionsModal
+        isOpen={isPermModalOpen}
+        onClose={() => {
+          setIsPermModalOpen(false);
+          setPermissionsUser(null);
+        }}
+        employee={permissionsUser}
       />
 
       <style>{`
@@ -730,9 +799,33 @@ export const AdminView = () => {
           gap: 0.15rem;
         }
 
+        .user-name-line {
+          display: flex;
+          align-items: center;
+          gap: 0.35rem;
+        }
+
         .user-name {
           font-weight: 700;
           color: var(--text-main);
+        }
+
+        .user-job-sub {
+          font-size: 0.7rem;
+          color: var(--primary-color);
+          font-weight: 600;
+        }
+
+        .user-table-avatar-img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          border-radius: var(--radius-full);
+        }
+
+        .user-table-emoji {
+          font-size: 1.15rem;
+          line-height: 1;
         }
 
         .you-tag {
@@ -744,6 +837,66 @@ export const AdminView = () => {
         .user-email {
           font-size: 0.75rem;
           color: var(--text-muted);
+        }
+
+        .perm-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.35rem;
+          font-size: 0.72rem;
+          font-weight: 700;
+          padding: 0.25rem 0.55rem;
+          border-radius: var(--radius-full);
+        }
+
+        .badge-admin-all {
+          background: rgba(245, 158, 11, 0.15);
+          color: #f59e0b;
+          border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .perm-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.4rem;
+          font-size: 0.72rem;
+          font-weight: 700;
+          padding: 0.25rem 0.6rem;
+          border-radius: var(--radius-full);
+          border: 1px solid transparent;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .btn-perm-custom {
+          background: rgba(99, 102, 241, 0.15);
+          color: #818cf8;
+          border-color: rgba(99, 102, 241, 0.35);
+        }
+
+        .btn-perm-custom:hover {
+          background: rgba(99, 102, 241, 0.25);
+          transform: translateY(-1px);
+        }
+
+        .btn-perm-global {
+          background: rgba(14, 165, 233, 0.12);
+          color: #0ea5e9;
+          border-color: rgba(14, 165, 233, 0.3);
+        }
+
+        .btn-perm-global:hover {
+          background: rgba(14, 165, 233, 0.22);
+          transform: translateY(-1px);
+        }
+
+        .btn-perms-action {
+          background: rgba(99, 102, 241, 0.12);
+          color: #818cf8;
+        }
+
+        .btn-perms-action:hover {
+          background: rgba(99, 102, 241, 0.25);
         }
 
         .role-badge {

@@ -159,6 +159,10 @@ export const AuthProvider = ({ children }) => {
         email: foundUser.email,
         role: foundUser.role || 'user',
         status: foundUser.status || 'active',
+        avatar: foundUser.avatar || null,
+        avatarBg: foundUser.avatarBg || null,
+        jobTitle: foundUser.jobTitle || '',
+        bio: foundUser.bio || '',
         allowedMenus: foundUser.allowedMenus || null,
         createdAt: foundUser.createdAt || new Date().toISOString(),
         lastLoginAt: new Date().toISOString(),
@@ -181,8 +185,63 @@ export const AuthProvider = ({ children }) => {
     setLocalData(STORAGE_KEYS.AUTH_USER, null);
   }, []);
 
+  // Profile Modal State
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+
+  // Update Current User Profile (Avatar / Photo, Name, Job Title, Bio, Password)
+  const updateCurrentUserProfile = useCallback(async ({ name, avatar, avatarBg, jobTitle, bio, currentPassword, newPassword }) => {
+    if (!currentUser) return { success: false, error: 'No user is currently logged in.' };
+
+    const targetUser = usersList.find(u => u && u.email?.toLowerCase() === currentUser.email?.toLowerCase());
+    if (!targetUser) return { success: false, error: 'User record not found.' };
+
+    // If changing password, verify current password
+    let updatedPassword = targetUser.password;
+    if (newPassword && newPassword.trim()) {
+      if (!currentPassword || currentPassword !== targetUser.password) {
+        return { success: false, error: 'Current password does not match.' };
+      }
+      if (newPassword.trim().length < 4) {
+        return { success: false, error: 'New password must be at least 4 characters long.' };
+      }
+      updatedPassword = newPassword.trim();
+    }
+
+    const updatedUser = {
+      ...targetUser,
+      name: name !== undefined ? name.trim() : targetUser.name,
+      avatar: avatar !== undefined ? avatar : (targetUser.avatar || null),
+      avatarBg: avatarBg !== undefined ? avatarBg : (targetUser.avatarBg || null),
+      jobTitle: jobTitle !== undefined ? jobTitle.trim() : (targetUser.jobTitle || ''),
+      bio: bio !== undefined ? bio.trim() : (targetUser.bio || ''),
+      password: updatedPassword,
+      updatedAt: new Date().toISOString(),
+    };
+
+    const updatedSession = {
+      ...currentUser,
+      name: updatedUser.name,
+      avatar: updatedUser.avatar,
+      avatarBg: updatedUser.avatarBg,
+      jobTitle: updatedUser.jobTitle,
+      bio: updatedUser.bio,
+    };
+
+    const updatedList = usersList.map(u => u.uid === targetUser.uid ? updatedUser : u);
+
+    setCurrentUser(updatedSession);
+    setLocalData(STORAGE_KEYS.AUTH_USER, updatedSession);
+
+    setUsersList(updatedList);
+    setLocalData(STORAGE_KEYS.USERS_DIRECTORY, updatedList);
+
+    await syncUserToDirectoryCloud(updatedUser);
+
+    return { success: true, user: updatedSession };
+  }, [currentUser, usersList]);
+
   // Super Admin: Create / Add New User with optional allowedMenus
-  const createUser = useCallback(async ({ name, email, password, role = 'user', allowedMenus = null }) => {
+  const createUser = useCallback(async ({ name, email, password, role = 'user', avatar = null, avatarBg = null, jobTitle = '', bio = '', allowedMenus = null }) => {
     if (!currentUser || currentUser.role !== 'super_admin') {
       return { success: false, error: 'Unauthorized: Only Super Admin can create users.' };
     }
@@ -208,6 +267,10 @@ export const AuthProvider = ({ children }) => {
       password: cleanPass,
       role: role === 'super_admin' ? 'super_admin' : 'user',
       status: 'active',
+      avatar: avatar || null,
+      avatarBg: avatarBg || null,
+      jobTitle: jobTitle || (role === 'super_admin' ? 'System Administrator' : 'Member'),
+      bio: bio || '',
       allowedMenus: Array.isArray(allowedMenus) ? allowedMenus : null,
       createdAt: new Date().toISOString(),
       createdBy: currentUser.email,
@@ -272,8 +335,9 @@ export const AuthProvider = ({ children }) => {
 
     // Update session if editing self
     if (currentUser.uid === uid) {
-      setCurrentUser(updatedUser);
-      setLocalData(STORAGE_KEYS.AUTH_USER, updatedUser);
+      const updatedSession = { ...currentUser, allowedMenus: updatedUser.allowedMenus };
+      setCurrentUser(updatedSession);
+      setLocalData(STORAGE_KEYS.AUTH_USER, updatedSession);
     }
 
     return { success: true };
@@ -367,8 +431,11 @@ export const AuthProvider = ({ children }) => {
     availableMenus: AVAILABLE_MENUS,
     isLoading,
     authError,
+    isProfileModalOpen,
+    setIsProfileModalOpen,
     login,
     logout,
+    updateCurrentUserProfile,
     createUser,
     toggleMenuPermission,
     updateAllMenuPermissions,

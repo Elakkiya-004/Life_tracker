@@ -38,7 +38,7 @@ export const MobileDrawer = () => {
     setIsQuickAddOpen
   } = useApp();
 
-  const { currentUser, logout, isSuperAdmin, isMenuVisible } = useAuth();
+  const { currentUser, logout, isSuperAdmin, isMenuVisible, setIsProfileModalOpen } = useAuth();
 
   if (!isMobileDrawerOpen) return null;
 
@@ -50,6 +50,8 @@ export const MobileDrawer = () => {
   const toggleTheme = () => {
     updateSettings({ theme: settings.theme === 'light' ? 'dark' : 'light' });
   };
+
+  const userAvatarIsImg = currentUser?.avatar && (currentUser.avatar.startsWith('data:image') || currentUser.avatar.startsWith('http'));
 
   const allNavItems = [
     ...(isSuperAdmin ? [
@@ -98,14 +100,30 @@ export const MobileDrawer = () => {
 
         {/* Logged in User Pill */}
         {currentUser && (
-          <div className="drawer-user-pill">
-            <div className={`drawer-user-avatar ${isSuperAdmin ? 'avatar-admin' : 'avatar-user'}`}>
-              {getInitials(currentUser.name)}
+          <div 
+            className="drawer-user-pill cursor-pointer"
+            onClick={() => {
+              setIsMobileDrawerOpen(false);
+              setIsProfileModalOpen(true);
+            }}
+            title="Click to edit profile"
+          >
+            <div 
+              className={`drawer-user-avatar ${isSuperAdmin ? 'avatar-admin' : 'avatar-user'}`}
+              style={{ background: currentUser.avatarBg || undefined }}
+            >
+              {userAvatarIsImg ? (
+                <img src={currentUser.avatar} alt={currentUser.name} className="drawer-avatar-img" />
+              ) : currentUser.avatar ? (
+                <span className="drawer-avatar-emoji">{currentUser.avatar}</span>
+              ) : (
+                getInitials(currentUser.name)
+              )}
             </div>
             <div className="drawer-user-info">
               <span className="drawer-user-name">{currentUser.name}</span>
               <span className="drawer-user-role">
-                {isSuperAdmin ? '👑 Super Admin' : '👤 Regular User'}
+                {isSuperAdmin ? '👑 Super Admin' : (currentUser.jobTitle || '👤 Member')}
               </span>
             </div>
           </div>
@@ -264,11 +282,17 @@ export const MobileDrawer = () => {
           border: 1px solid var(--border-color);
           border-radius: var(--radius-md);
           margin-top: 0.85rem;
+          cursor: pointer;
+          transition: opacity 0.15s ease;
+        }
+
+        .drawer-user-pill:hover {
+          opacity: 0.85;
         }
 
         .drawer-user-avatar {
-          width: 32px;
-          height: 32px;
+          width: 34px;
+          height: 34px;
           border-radius: var(--radius-full);
           display: flex;
           align-items: center;
@@ -276,6 +300,18 @@ export const MobileDrawer = () => {
           font-weight: 800;
           font-size: 0.75rem;
           flex-shrink: 0;
+          overflow: hidden;
+        }
+
+        .drawer-avatar-img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+
+        .drawer-avatar-emoji {
+          font-size: 1.15rem;
+          line-height: 1;
         }
 
         .avatar-admin {

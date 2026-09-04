@@ -28,7 +28,7 @@ export const Header = () => {
     pushToCloud 
   } = useApp();
 
-  const { currentUser, logout, isSuperAdmin } = useAuth();
+  const { currentUser, logout, isSuperAdmin, setIsProfileModalOpen } = useAuth();
 
   const toggleTheme = () => {
     updateSettings({ theme: settings.theme === 'light' ? 'dark' : 'light' });
@@ -48,6 +48,13 @@ export const Header = () => {
   }).format(new Date());
 
   const userName = currentUser?.name || settings.userName || 'Champion';
+  const userAvatarIsImg = currentUser?.avatar && (currentUser.avatar.startsWith('data:image') || currentUser.avatar.startsWith('http'));
+
+  const getInitials = (name = '') => {
+    const parts = name.trim().split(' ');
+    if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+    return (name[0] || 'U').toUpperCase();
+  };
 
   return (
     <header className="app-header">
@@ -61,11 +68,38 @@ export const Header = () => {
           <Menu size={22} />
         </button>
 
+        {/* User Profile Avatar Trigger */}
+        {currentUser && (
+          <button 
+            type="button" 
+            className="header-avatar-btn"
+            onClick={() => setIsProfileModalOpen(true)}
+            title="Edit Profile & Account Settings"
+          >
+            <div 
+              className="header-avatar-circle"
+              style={{ background: currentUser.avatarBg || (isSuperAdmin ? 'linear-gradient(135deg, #6366f1, #f59e0b)' : 'linear-gradient(135deg, #0ea5e9, #10b981)') }}
+            >
+              {userAvatarIsImg ? (
+                <img src={currentUser.avatar} alt={userName} className="header-avatar-img" />
+              ) : currentUser.avatar ? (
+                <span className="header-avatar-emoji">{currentUser.avatar}</span>
+              ) : (
+                <span className="header-avatar-initials">{getInitials(userName)}</span>
+              )}
+            </div>
+          </button>
+        )}
+
         <div className="header-titles">
           <div className="date-badge">
             <span>{formattedDate}</span>
           </div>
-          <h2 className="greeting-text">
+          <h2 
+            className="greeting-text cursor-pointer"
+            onClick={() => setIsProfileModalOpen(true)}
+            title="Click to edit profile"
+          >
             {getGreeting()}, <span className="user-highlight">{userName}</span> 👋
             {isSuperAdmin && <span className="admin-badge-mini">👑 Super Admin</span>}
           </h2>
@@ -143,6 +177,52 @@ export const Header = () => {
           display: flex;
           align-items: center;
           gap: 0.75rem;
+        }
+
+        .header-avatar-btn {
+          background: transparent;
+          border: none;
+          padding: 0;
+          cursor: pointer;
+          border-radius: var(--radius-full);
+          transition: transform 0.15s ease;
+        }
+
+        .header-avatar-btn:hover {
+          transform: scale(1.08);
+        }
+
+        .header-avatar-circle {
+          width: 38px;
+          height: 38px;
+          border-radius: var(--radius-full);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          overflow: hidden;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+          border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .header-avatar-img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+
+        .header-avatar-emoji {
+          font-size: 1.3rem;
+          line-height: 1;
+        }
+
+        .header-avatar-initials {
+          font-size: 0.95rem;
+          font-weight: 800;
+          color: #ffffff;
+        }
+
+        .cursor-pointer {
+          cursor: pointer;
         }
 
         .mobile-menu-btn {

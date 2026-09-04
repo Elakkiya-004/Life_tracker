@@ -6,6 +6,7 @@ import { Header } from './Header';
 import { BottomNav } from './BottomNav';
 import { MobileDrawer } from './MobileDrawer';
 import { QuickAddModal } from '../common/QuickAddModal';
+import { ProfileModal } from '../profile/ProfileModal';
 
 import { LoginView } from '../../views/LoginView';
 import { AdminView } from '../../views/AdminView';
@@ -19,7 +20,7 @@ import { AnalyticsView } from '../../views/AnalyticsView';
 import { SettingsView } from '../../views/SettingsView';
 
 export const Layout = () => {
-  const { currentUser, isMenuVisible, isSuperAdmin } = useAuth();
+  const { currentUser, isMenuVisible, isSuperAdmin, isProfileModalOpen, setIsProfileModalOpen } = useAuth();
   const { activeTab } = useApp();
 
   // If user is not logged in, show Login Portal
@@ -102,6 +103,12 @@ export const Layout = () => {
 
       {/* Universal Quick Action Modal */}
       <QuickAddModal />
+
+      {/* User & Admin Profile Edit Modal */}
+      <ProfileModal
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+      />
     </div>
   );
 };

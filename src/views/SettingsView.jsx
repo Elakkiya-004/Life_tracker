@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
 import { exportAllData, importAllData } from '../services/storage';
 import { 
   User, 
@@ -9,15 +10,18 @@ import {
   Upload, 
   Smartphone, 
   Database, 
-  Sparkles,
-  CheckCircle,
-  HelpCircle,
-  Film,
-  RotateCcw,
-  Plus,
-  Trash2,
-  Moon,
-  ListTodo
+  Sparkles, 
+  CheckCircle, 
+  HelpCircle, 
+  Film, 
+  RotateCcw, 
+  Plus, 
+  Trash2, 
+  Moon, 
+  ListTodo,
+  Edit3,
+  Shield,
+  Briefcase
 } from 'lucide-react';
 
 export const SettingsView = () => {
@@ -34,20 +38,18 @@ export const SettingsView = () => {
     resetHabitsToDefault
   } = useApp();
 
-  const [userName, setUserName] = useState(settings.userName || '');
+  const { currentUser, setIsProfileModalOpen, isSuperAdmin } = useAuth();
+
   const [currency, setCurrency] = useState(settings.currency || '$');
-  const [monthlyBudget, setMonthlyBudget] = useState(settings.monthlyBudget || 1500);
   const [habitRolloverMode, setHabitRolloverMode] = useState(settings.habitRolloverMode || 'fresh_checks');
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [newListTitle, setNewListTitle] = useState('');
   const [isAddingList, setIsAddingList] = useState(false);
 
-  const handleSaveProfile = (e) => {
+  const handleSavePreferences = (e) => {
     e.preventDefault();
     updateSettings({
-      userName: userName.trim() || 'Champion',
       currency,
-      monthlyBudget: parseFloat(monthlyBudget) || 1500,
       habitRolloverMode,
     });
     setSaveSuccess(true);
@@ -86,27 +88,71 @@ export const SettingsView = () => {
     setIsAddingList(false);
   };
 
+  const getInitials = (name = '') => {
+    const parts = name.trim().split(' ');
+    if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+    return (name[0] || 'U').toUpperCase();
+  };
+
+  const userAvatarIsImg = currentUser?.avatar && (currentUser.avatar.startsWith('data:image') || currentUser.avatar.startsWith('http'));
+
   return (
     <div className="settings-container">
-      {/* Profile & General Settings */}
+      {/* Account Profile Identity Card */}
+      {currentUser && (
+        <div className="settings-profile-hero card">
+          <div className="profile-hero-left">
+            <div 
+              className="profile-hero-avatar"
+              style={{ background: currentUser.avatarBg || undefined }}
+            >
+              {userAvatarIsImg ? (
+                <img src={currentUser.avatar} alt={currentUser.name} className="profile-hero-avatar-img" />
+              ) : currentUser.avatar ? (
+                <span className="profile-hero-emoji">{currentUser.avatar}</span>
+              ) : (
+                <span className="profile-hero-initials">{getInitials(currentUser.name)}</span>
+              )}
+            </div>
+
+            <div className="profile-hero-details">
+              <div className="profile-name-row">
+                <h3 className="profile-hero-name">{currentUser.name}</h3>
+                <span className={`profile-hero-role-pill ${isSuperAdmin ? 'role-pill-admin' : 'role-pill-user'}`}>
+                  {isSuperAdmin ? '👑 Super Admin' : '👤 Regular Member'}
+                </span>
+              </div>
+              <span className="profile-hero-email text-sub text-xs">{currentUser.email}</span>
+              {currentUser.jobTitle && (
+                <span className="profile-hero-job text-xs font-semibold text-primary">
+                  {currentUser.jobTitle}
+                </span>
+              )}
+              {currentUser.bio && (
+                <p className="profile-hero-bio text-xs text-sub mt-1">"{currentUser.bio}"</p>
+              )}
+            </div>
+          </div>
+
+          <button 
+            type="button" 
+            className="btn btn-primary btn-sm btn-edit-profile"
+            onClick={() => setIsProfileModalOpen(true)}
+          >
+            <Edit3 size={15} />
+            <span>Edit Profile & Password</span>
+          </button>
+        </div>
+      )}
+
+      {/* App Preferences */}
       <div className="settings-card card">
         <div className="settings-card-header">
           <User size={20} className="text-primary" />
-          <h3 className="title-md">Profile & Preferences</h3>
+          <h3 className="title-md">App Preferences</h3>
         </div>
 
-        <form onSubmit={handleSaveProfile} className="settings-form">
-          <div className="input-group">
-            <label className="label">Your Name</label>
-            <input
-              type="text"
-              className="input"
-              value={userName}
-              onChange={(e) => setUserName(e.target.value)}
-              placeholder="e.g. Alex"
-            />
-          </div>
-
+        <form onSubmit={handleSavePreferences} className="settings-form">
           <div className="form-row">
             <div className="input-group flex-1">
               <label className="label">Currency Symbol</label>
@@ -339,6 +385,102 @@ export const SettingsView = () => {
           flex-direction: column;
           gap: 1.5rem;
           max-width: 800px;
+        }
+
+        .settings-profile-hero {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 1.5rem;
+          background: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(14, 165, 233, 0.08));
+          border-color: rgba(99, 102, 241, 0.25);
+          gap: 1rem;
+          flex-wrap: wrap;
+        }
+
+        .profile-hero-left {
+          display: flex;
+          align-items: center;
+          gap: 1.15rem;
+        }
+
+        .profile-hero-avatar {
+          width: 58px;
+          height: 58px;
+          border-radius: var(--radius-full);
+          background: linear-gradient(135deg, var(--accent-primary), var(--accent-purple));
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          overflow: hidden;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+          border: 2px solid rgba(255, 255, 255, 0.15);
+          flex-shrink: 0;
+        }
+
+        .profile-hero-avatar-img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+
+        .profile-hero-emoji {
+          font-size: 1.8rem;
+          line-height: 1;
+        }
+
+        .profile-hero-initials {
+          font-size: 1.3rem;
+          font-weight: 800;
+          color: #ffffff;
+        }
+
+        .profile-hero-details {
+          display: flex;
+          flex-direction: column;
+          gap: 0.2rem;
+        }
+
+        .profile-name-row {
+          display: flex;
+          align-items: center;
+          gap: 0.6rem;
+          flex-wrap: wrap;
+        }
+
+        .profile-hero-name {
+          font-size: 1.25rem;
+          font-weight: 800;
+          color: var(--text-primary);
+        }
+
+        .profile-hero-role-pill {
+          font-size: 0.7rem;
+          font-weight: 700;
+          padding: 0.15rem 0.55rem;
+          border-radius: var(--radius-full);
+        }
+
+        .role-pill-admin {
+          background: rgba(245, 158, 11, 0.18);
+          color: #f59e0b;
+          border: 1px solid rgba(245, 158, 11, 0.35);
+        }
+
+        .role-pill-user {
+          background: rgba(14, 165, 233, 0.18);
+          color: #0ea5e9;
+          border: 1px solid rgba(14, 165, 233, 0.35);
+        }
+
+        .profile-hero-job {
+          letter-spacing: 0.02em;
+        }
+
+        .btn-edit-profile {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.45rem;
         }
 
         .settings-card {

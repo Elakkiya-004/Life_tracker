@@ -41,6 +41,20 @@ export const DEFAULT_MENU_PERMISSIONS = {
   settings: true,
 };
 
+// Preset avatars for quick profile picture selection
+export const PRESET_AVATARS = [
+  { id: 'av-1', label: 'Tech Pro', emoji: '💻', bg: 'linear-gradient(135deg, #6366f1, #a855f7)' },
+  { id: 'av-2', label: 'Rocket', emoji: '🚀', bg: 'linear-gradient(135deg, #ec4899, #f43f5e)' },
+  { id: 'av-3', label: 'Lion King', emoji: '🦁', bg: 'linear-gradient(135deg, #f59e0b, #d97706)' },
+  { id: 'av-4', label: 'Cyber Fox', emoji: '🦊', bg: 'linear-gradient(135deg, #f97316, #ef4444)' },
+  { id: 'av-5', label: 'Crown Admin', emoji: '👑', bg: 'linear-gradient(135deg, #eab308, #ca8a04)' },
+  { id: 'av-6', label: 'Diamond', emoji: '💎', bg: 'linear-gradient(135deg, #06b6d4, #3b82f6)' },
+  { id: 'av-7', label: 'Health Champion', emoji: '⚡', bg: 'linear-gradient(135deg, #10b981, #059669)' },
+  { id: 'av-8', label: 'Shield Defender', emoji: '🛡️', bg: 'linear-gradient(135deg, #8b5cf6, #6366f1)' },
+  { id: 'av-9', label: 'Marvel Hero', emoji: '🦾', bg: 'linear-gradient(135deg, #ef4444, #991b1b)' },
+  { id: 'av-10', label: 'Target Achiever', emoji: '🎯', bg: 'linear-gradient(135deg, #14b8a6, #0d9488)' },
+];
+
 // Seeded Users for RBAC Authentication System
 export const DEFAULT_USERS = [
   {
@@ -50,6 +64,11 @@ export const DEFAULT_USERS = [
     password: 'admin123',
     role: 'super_admin',
     status: 'active',
+    avatar: '👑',
+    avatarBg: 'linear-gradient(135deg, #6366f1, #f59e0b)',
+    jobTitle: 'System Administrator',
+    bio: 'Oversees workspace governance and user management.',
+    allowedMenus: null, // null means inherits global defaults
     createdAt: '2026-09-01T00:00:00.000Z',
     createdBy: 'System Root',
   },
@@ -60,6 +79,11 @@ export const DEFAULT_USERS = [
     password: 'user123',
     role: 'user',
     status: 'active',
+    avatar: '💻',
+    avatarBg: 'linear-gradient(135deg, #0ea5e9, #10b981)',
+    jobTitle: 'Software Engineer',
+    bio: 'Dedicated to daily habits, 16-week career roadmap, and financial discipline.',
+    allowedMenus: null, // null means inherits global defaults
     createdAt: '2026-09-02T00:00:00.000Z',
     createdBy: 'admin@lifetracker.com',
   }
