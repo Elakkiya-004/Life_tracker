@@ -13,6 +13,7 @@ import {
   DEFAULT_SETTINGS,
   DEFAULT_HEALTH_PROTOCOL,
   sanitizeHealthProtocol,
+  seedDatabaseIfEmpty,
   getEffectiveTrackerDate,
   pruneOldHistoryData,
 } from '../services/storage';
@@ -327,6 +328,7 @@ export const AppProvider = ({ children }) => {
     const fbResult = initFirebase();
     if (fbResult.success) {
       setSyncStatus('synced');
+      seedDatabaseIfEmpty();
 
       const unsubscribe = listenToCloud(currentUserId, (cloudData) => {
         if (!cloudData) return;

@@ -1,5 +1,8 @@
 import * as XLSX from 'xlsx';
-import { DEFAULT_HEALTH_PROTOCOL, sanitizeHealthProtocol } from './healthProtocolData';
+import { 
+  DB_HEALTH_PROTOCOL_TEMPLATE as DEFAULT_HEALTH_PROTOCOL, 
+  sanitizeHealthProtocol 
+} from './cloudDatabase';
 
 /**
  * Helper to normalize string for flexible header/key comparison

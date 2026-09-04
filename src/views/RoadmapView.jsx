@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { DEFAULT_ROADMAP, ROADMAP_OUTCOMES } from '../services/roadmapData';
+import { DEFAULT_ROADMAP, ROADMAP_OUTCOMES } from '../services/storage';
 import { RoadmapModal } from '../components/roadmap/RoadmapModal';
 import { 
   Compass, 

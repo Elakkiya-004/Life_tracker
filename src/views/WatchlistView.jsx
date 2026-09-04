@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { DEFAULT_CUSTOM_LISTS } from '../services/marvelData';
+import { DEFAULT_CUSTOM_LISTS } from '../services/storage';
 import { WatchlistModal } from '../components/watchlist/WatchlistModal';
 import { 
   Film, 
