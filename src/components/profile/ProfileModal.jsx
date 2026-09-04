@@ -30,7 +30,6 @@ export const ProfileModal = ({ isOpen, onClose }) => {
 
   // Password fields
   const [showPasswordSection, setShowPasswordSection] = useState(false);
-  const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
@@ -47,7 +46,6 @@ export const ProfileModal = ({ isOpen, onClose }) => {
       setAvatarBg(currentUser.avatarBg || null);
 
       setShowPasswordSection(false);
-      setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
       setError(null);
@@ -108,12 +106,7 @@ export const ProfileModal = ({ isOpen, onClose }) => {
     }
 
     // Password validation if attempting password change
-    if (showPasswordSection && (newPassword || currentPassword)) {
-      if (!currentPassword) {
-        setError('Please enter your current password to confirm change.');
-        setIsSubmitting(false);
-        return;
-      }
+    if (showPasswordSection && newPassword) {
       if (newPassword.length < 4) {
         setError('New password must be at least 4 characters long.');
         setIsSubmitting(false);
@@ -132,7 +125,6 @@ export const ProfileModal = ({ isOpen, onClose }) => {
       avatarBg,
       jobTitle: jobTitle.trim(),
       bio: bio.trim(),
-      currentPassword: showPasswordSection && newPassword ? currentPassword : null,
       newPassword: showPasswordSection && newPassword ? newPassword : null,
     });
 
@@ -351,20 +343,6 @@ export const ProfileModal = ({ isOpen, onClose }) => {
 
           {showPasswordSection && (
             <div className="password-fields-box">
-              <div className="input-group">
-                <label className="label">Current Password *</label>
-                <div className="input-with-icon">
-                  <Lock size={16} className="input-icon" />
-                  <input
-                    type="password"
-                    className="input pl-9"
-                    value={currentPassword}
-                    onChange={(e) => setCurrentPassword(e.target.value)}
-                    placeholder="Enter your current password"
-                  />
-                </div>
-              </div>
-
               <div className="form-row">
                 <div className="input-group flex-1">
                   <label className="label">New Password (min 4 chars) *</label>
@@ -375,7 +353,7 @@ export const ProfileModal = ({ isOpen, onClose }) => {
                       className="input pl-9"
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
-                      placeholder="New password"
+                      placeholder="Enter new password"
                       minLength={4}
                     />
                   </div>

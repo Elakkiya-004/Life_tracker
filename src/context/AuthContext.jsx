@@ -189,18 +189,15 @@ export const AuthProvider = ({ children }) => {
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   // Update Current User Profile (Avatar / Photo, Name, Job Title, Bio, Password)
-  const updateCurrentUserProfile = useCallback(async ({ name, avatar, avatarBg, jobTitle, bio, currentPassword, newPassword }) => {
+  const updateCurrentUserProfile = useCallback(async ({ name, avatar, avatarBg, jobTitle, bio, newPassword }) => {
     if (!currentUser) return { success: false, error: 'No user is currently logged in.' };
 
     const targetUser = usersList.find(u => u && u.email?.toLowerCase() === currentUser.email?.toLowerCase());
     if (!targetUser) return { success: false, error: 'User record not found.' };
 
-    // If changing password, verify current password
+    // If changing password, update directly
     let updatedPassword = targetUser.password;
     if (newPassword && newPassword.trim()) {
-      if (!currentPassword || currentPassword !== targetUser.password) {
-        return { success: false, error: 'Current password does not match.' };
-      }
       if (newPassword.trim().length < 4) {
         return { success: false, error: 'New password must be at least 4 characters long.' };
       }
