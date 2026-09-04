@@ -196,3 +196,37 @@ export const DEFAULT_HEALTH_PROTOCOL = {
     notes: 'Air dry naturally, wide-tooth detangling comb, warm oil massage.'
   }
 };
+
+/**
+ * Sanitize health protocol object to fix any corruptions from legacy spreadsheets
+ */
+export const sanitizeHealthProtocol = (raw) => {
+  if (!raw || typeof raw !== 'object') return DEFAULT_HEALTH_PROTOCOL;
+  const protocol = JSON.parse(JSON.stringify(raw));
+
+  // Sanitize calories
+  if (protocol.calories) {
+    // If fatLossTarget contains kg/week, it was accidentally overwritten with expectedLoss
+    if (typeof protocol.calories.fatLossTarget === 'string' && protocol.calories.fatLossTarget.includes('kg/')) {
+      protocol.calories.fatLossTarget = '1350–1450 kcal/day';
+    }
+    if (!protocol.calories.expectedLoss) {
+      protocol.calories.expectedLoss = '0.5–0.7 kg/week (healthy & sustainable)';
+    }
+
+    if (Array.isArray(protocol.calories.macros)) {
+      protocol.calories.macros = protocol.calories.macros.map(m => {
+        if (!m) return m;
+        let cleanAmount = String(m.amount || '').replace(/\s*\([^)]*\)/g, '').trim();
+        let cleanFoods = String(m.foods || '').replace(/^.*Sources:\s*/i, '').replace(/^Purpose:[^|]*\|\s*Sources:\s*/i, '').trim();
+        return {
+          ...m,
+          amount: cleanAmount || m.amount,
+          foods: cleanFoods || m.foods
+        };
+      });
+    }
+  }
+
+  return protocol;
+};

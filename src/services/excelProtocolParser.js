@@ -1,5 +1,5 @@
 import * as XLSX from 'xlsx';
-import { DEFAULT_HEALTH_PROTOCOL } from './healthProtocolData';
+import { DEFAULT_HEALTH_PROTOCOL, sanitizeHealthProtocol } from './healthProtocolData';
 
 /**
  * Helper to normalize string for flexible header/key comparison
@@ -31,24 +31,24 @@ const getFieldValue = (row, aliases = []) => {
 export const exportHealthProtocolToExcel = (protocol = DEFAULT_HEALTH_PROTOCOL, userName = 'Custom') => {
   try {
     const wb = XLSX.utils.book_new();
-    const cleanProtocol = { ...DEFAULT_HEALTH_PROTOCOL, ...protocol };
+    const cleanProtocol = sanitizeHealthProtocol({ ...DEFAULT_HEALTH_PROTOCOL, ...protocol });
 
     // --- SHEET 1: Meal Schedule ---
     const mealRows = (cleanProtocol.mealSchedule || []).map((m, idx) => ({
-      'Meal Number': idx + 1,
+      'Meal #': idx + 1,
       'Time': m.time || '',
-      'Meal Name': m.name || '',
+      'Meal Title': m.name || '',
       'Dishes & Ingredients': m.dishes || '',
       'Calories (kcal)': m.calories || 0,
-      'Protein': m.protein || '',
+      'Protein (g)': String(m.protein || '').replace(/\s*\([^)]*\)/g, '').trim(),
       'Hair & Skin Benefits': m.hairSkinBenefits || ''
     }));
 
     const wsMeals = XLSX.utils.json_to_sheet(mealRows);
     wsMeals['!cols'] = [
-      { wch: 12 }, // Meal Number
+      { wch: 8 },  // Meal #
       { wch: 14 }, // Time
-      { wch: 32 }, // Meal Name
+      { wch: 32 }, // Meal Title
       { wch: 65 }, // Dishes & Ingredients
       { wch: 16 }, // Calories
       { wch: 14 }, // Protein
@@ -60,42 +60,48 @@ export const exportHealthProtocolToExcel = (protocol = DEFAULT_HEALTH_PROTOCOL, 
     const cal = cleanProtocol.calories || {};
     const macroRows = [
       {
-        'Metric / Target': 'Maintenance Calories',
-        'Value': `${cal.maintenance || 1850} kcal/day`,
-        'Category / Type': 'Baseline',
-        'Notes & Food Sources': 'Daily energy needed with zero weight change'
+        'Metric / Macro Name': 'Maintenance Calories',
+        'Target Amount / Calories': `${cal.maintenance || 1850} kcal/day`,
+        'Ratio / Percentage': '—',
+        'Health & Body Purpose': 'Daily energy needed for zero weight change',
+        'Top Food Sources & Guidelines': 'Whole balanced diet'
       },
       {
-        'Metric / Target': 'Fat Loss Target',
-        'Value': cal.fatLossTarget || '1350–1450 kcal/day',
-        'Category / Type': 'Deficit Goal',
-        'Notes & Food Sources': 'Optimal daily intake for steady fat burn'
+        'Metric / Macro Name': 'Daily Fat Loss Target',
+        'Target Amount / Calories': cal.fatLossTarget || '1350–1450 kcal/day',
+        'Ratio / Percentage': '—',
+        'Health & Body Purpose': 'Optimal daily calorie intake for steady fat burn',
+        'Top Food Sources & Guidelines': 'High protein, high fiber, whole foods'
       },
       {
-        'Metric / Target': 'Expected Fat Loss',
-        'Value': cal.expectedLoss || '0.5–0.7 kg/week',
-        'Category / Type': 'Weekly Rate',
-        'Notes & Food Sources': 'Healthy and sustainable fat reduction pace'
+        'Metric / Macro Name': 'Expected Fat Loss Rate',
+        'Target Amount / Calories': cal.expectedLoss || '0.5–0.7 kg/week',
+        'Ratio / Percentage': '—',
+        'Health & Body Purpose': 'Sustainable and healthy fat reduction pace',
+        'Top Food Sources & Guidelines': 'Maintains lean muscle mass'
       },
       {
-        'Metric / Target': 'Cheat Day Target',
-        'Value': cal.cheatDay?.target || '1800–1900 kcal',
-        'Category / Type': '1 Day / Week',
-        'Notes & Food Sources': cal.cheatDay?.rules || 'No binge eating • Protein + Fiber first'
+        'Metric / Macro Name': 'Cheat Day Target',
+        'Target Amount / Calories': cal.cheatDay?.target || '1800–1900 kcal',
+        'Ratio / Percentage': '1 Day / Week',
+        'Health & Body Purpose': 'Prevents metabolic adaptation and refreshes leptin',
+        'Top Food Sources & Guidelines': cal.cheatDay?.rules || 'No binge eating • Protein + Fiber first • Stop at 80% fullness'
       },
       ...(cal.macros || []).map(m => ({
-        'Metric / Target': `${m.name} Target`,
-        'Value': `${m.amount} (${m.percentage})`,
-        'Category / Type': 'Macro Ratio',
-        'Notes & Food Sources': `Purpose: ${m.purpose} | Sources: ${m.foods}`
+        'Metric / Macro Name': `${m.name}`,
+        'Target Amount / Calories': String(m.amount || '').replace(/\s*\([^)]*\)/g, '').trim(),
+        'Ratio / Percentage': m.percentage || '',
+        'Health & Body Purpose': m.purpose || '',
+        'Top Food Sources & Guidelines': String(m.foods || '').replace(/^.*Sources:\s*/i, '').trim()
       }))
     ];
 
     const wsMacros = XLSX.utils.json_to_sheet(macroRows);
     wsMacros['!cols'] = [
-      { wch: 26 },
-      { wch: 22 },
+      { wch: 24 },
+      { wch: 24 },
       { wch: 18 },
+      { wch: 50 },
       { wch: 60 },
     ];
     XLSX.utils.book_append_sheet(wb, wsMacros, 'Macros_And_Calories');
@@ -155,51 +161,51 @@ export const exportHealthProtocolToExcel = (protocol = DEFAULT_HEALTH_PROTOCOL, 
     const regimeRows = [
       {
         'Category': 'Skin Care',
-        'Frequency': 'Daily AM & PM',
+        'Frequency / Schedule': 'Daily AM & PM',
         'Routine & Steps': skin.daily || 'Cleanse, hydrate, sunscreen AM, barrier repair PM',
-        'Special Notes': skin.notes || 'Gentle circular motion; use soothing gel'
+        'Special Guidelines': skin.notes || 'Gentle circular motion; use soothing gel'
       },
       {
         'Category': 'Skin Care',
-        'Frequency': 'Weekly Sunday',
+        'Frequency / Schedule': 'Weekly Sunday',
         'Routine & Steps': skin.weeklySunday || 'Face shaving and scrub',
-        'Special Notes': 'Always disinfect razor and hydrate immediately'
+        'Special Guidelines': 'Always disinfect razor and hydrate immediately'
       },
       {
         'Category': 'Skin Care',
-        'Frequency': 'Weekly Tuesday & Friday',
+        'Frequency / Schedule': 'Weekly Tuesday & Friday',
         'Routine & Steps': skin.weeklyTueFri || 'Face pack',
-        'Special Notes': 'Multani mitti, turmeric or soothing sandalwood'
+        'Special Guidelines': 'Multani mitti, turmeric or soothing sandalwood'
       },
       {
         'Category': 'Body Care',
-        'Frequency': 'Weekly Sunday',
+        'Frequency / Schedule': 'Weekly Sunday',
         'Routine & Steps': body.sunday || 'Oiling, scrub, shaving',
-        'Special Notes': body.notes || 'Warm oil massage before bath'
+        'Special Guidelines': body.notes || 'Warm oil massage before bath'
       },
       {
         'Category': 'Body Care',
-        'Frequency': 'Weekly Tuesday & Friday',
+        'Frequency / Schedule': 'Weekly Tuesday & Friday',
         'Routine & Steps': body.tueFri || 'Exfoliating body wash',
-        'Special Notes': 'Gentle loofah with exfoliating wash'
+        'Special Guidelines': 'Gentle loofah with exfoliating wash'
       },
       {
         'Category': 'Hair Care',
-        'Frequency': 'Daily',
+        'Frequency / Schedule': 'Daily',
         'Routine & Steps': hair.daily || 'Serum and hair growth water',
-        'Special Notes': hair.notes || 'Air dry naturally, wide-tooth detangling comb'
+        'Special Guidelines': hair.notes || 'Air dry naturally, wide-tooth detangling comb'
       },
       {
         'Category': 'Hair Care',
-        'Frequency': 'Weekly (3x)',
+        'Frequency / Schedule': 'Weekly (3x)',
         'Routine & Steps': hair.weekly || '3x Oiling, hair pack, hair wash',
-        'Special Notes': 'Warm coconut/rosemary oil massage'
+        'Special Guidelines': 'Warm coconut/rosemary oil massage'
       },
       {
         'Category': 'Hair Care',
-        'Frequency': 'Bi-Weekly (Two Weeks Once)',
+        'Frequency / Schedule': 'Bi-Weekly (Two Weeks Once)',
         'Routine & Steps': hair.biWeekly || 'Saturday henna and Sunday avari podi (In the next alternate: Hair growth serum)',
-        'Special Notes': 'Natural organic herbs for deep root nourishment'
+        'Special Guidelines': 'Natural organic herbs for deep root nourishment'
       }
     ];
 
@@ -268,7 +274,7 @@ export const exportHealthProtocolToExcel = (protocol = DEFAULT_HEALTH_PROTOCOL, 
  * Quick helper to download empty/sample template
  */
 export const downloadSampleDietTemplate = () => {
-  return exportHealthProtocolToExcel(DEFAULT_HEALTH_PROTOCOL, 'Template');
+  return exportHealthProtocolToExcel(DEFAULT_HEALTH_PROTOCOL, 'Sample_Template');
 };
 
 /**
@@ -319,16 +325,16 @@ export const parseHealthProtocolFromExcel = async (file) => {
           if (Array.isArray(mealRows) && mealRows.length > 0) {
             const parsedMeals = [];
             mealRows.forEach((row, idx) => {
-              const name = getFieldValue(row, ['Meal Name', 'Meal', 'Title', 'Item', 'Name']);
+              const name = getFieldValue(row, ['Meal Title', 'Meal Name', 'Meal', 'Title', 'Item', 'Name']);
               const time = getFieldValue(row, ['Time', 'Timing', 'Schedule', 'When']);
               const dishes = getFieldValue(row, ['Dishes & Ingredients', 'Dishes', 'Ingredients', 'Food', 'Menu', 'Description', 'Items']);
               const rawCal = getFieldValue(row, ['Calories (kcal)', 'Calories', 'Cal', 'Kcal', 'Energy']);
-              const rawProtein = getFieldValue(row, ['Protein', 'Protein (g)', 'Prot']);
+              const rawProtein = getFieldValue(row, ['Protein (g)', 'Protein', 'Prot']);
               const benefits = getFieldValue(row, ['Hair & Skin Benefits', 'Benefits', 'Hair & Skin', 'Target', 'Purpose', 'Notes']);
 
               if (name || dishes || time) {
                 const calNum = parseInt(String(rawCal).replace(/[^0-9]/g, ''), 10) || 0;
-                let proteinStr = String(rawProtein || '').trim();
+                let proteinStr = String(rawProtein || '').replace(/\s*\([^)]*\)/g, '').trim();
                 if (proteinStr && !proteinStr.toLowerCase().endsWith('g')) {
                   proteinStr = `${proteinStr} g`;
                 }
@@ -365,37 +371,50 @@ export const parseHealthProtocolFromExcel = async (file) => {
 
           if (Array.isArray(macroRows) && macroRows.length > 0) {
             macroRows.forEach(row => {
-              const metric = getFieldValue(row, ['Metric / Target', 'Metric', 'Target', 'Name', 'Item']).toLowerCase();
-              const val = getFieldValue(row, ['Value', 'Target Value', 'Amount', 'Number', 'Goal']);
-              const notes = getFieldValue(row, ['Notes & Food Sources', 'Notes', 'Foods', 'Sources', 'Description']);
+              const metric = getFieldValue(row, ['Metric / Macro Name', 'Metric / Target', 'Metric', 'Target', 'Name', 'Item', 'Macro / Metric Name', 'Macro']).toLowerCase();
+              const val = getFieldValue(row, ['Target Amount / Calories', 'Value', 'Target Value', 'Amount', 'Number', 'Goal', 'Target Amount', 'Calories']);
+              const ratio = getFieldValue(row, ['Ratio / Percentage', 'Ratio', 'Percentage', '%', 'Category / Type']);
+              const purpose = getFieldValue(row, ['Health & Body Purpose', 'Purpose', 'Target / Purpose', 'Benefits']);
+              const notes = getFieldValue(row, ['Top Food Sources & Guidelines', 'Notes & Food Sources', 'Notes', 'Foods', 'Sources', 'Top Food Sources', 'Description', 'Food Sources']);
 
               if (metric.includes('maintenance')) {
                 const num = parseInt(val.replace(/[^0-9]/g, ''), 10);
                 if (num > 500) newProtocol.calories.maintenance = num;
-              } else if (metric.includes('fat loss') || (metric.includes('target') && metric.includes('calor'))) {
-                if (val) newProtocol.calories.fatLossTarget = val;
-              } else if (metric.includes('loss') || metric.includes('expected')) {
+              } else if (metric.includes('expected') || metric.includes('rate') || (metric.includes('loss') && !metric.includes('target') && !metric.includes('calorie') && !metric.includes('daily'))) {
                 if (val) newProtocol.calories.expectedLoss = val;
+              } else if (metric.includes('fat loss') || metric.includes('daily calorie') || (metric.includes('target') && !metric.includes('cheat') && !metric.includes('protein') && !metric.includes('carb') && !metric.includes('fat'))) {
+                if (val && !val.toLowerCase().includes('kg')) {
+                  newProtocol.calories.fatLossTarget = val;
+                }
               } else if (metric.includes('cheat')) {
                 if (val) newProtocol.calories.cheatDay.target = val;
-                if (notes) newProtocol.calories.cheatDay.rules = notes;
+                if (notes || purpose) newProtocol.calories.cheatDay.rules = notes || purpose;
               } else if (metric.includes('protein')) {
                 const mObj = newProtocol.calories.macros.find(m => m.id === 'protein');
-                if (mObj && val) {
-                  mObj.amount = val;
-                  if (notes) mObj.foods = notes;
+                if (mObj) {
+                  const cleanAmount = val.replace(/\s*\([^)]*\)/g, '').trim();
+                  if (cleanAmount) mObj.amount = cleanAmount;
+                  if (ratio && ratio !== '—') mObj.percentage = ratio;
+                  if (purpose) mObj.purpose = purpose;
+                  if (notes) mObj.foods = notes.replace(/^.*Sources:\s*/i, '').trim();
                 }
               } else if (metric.includes('carb')) {
                 const mObj = newProtocol.calories.macros.find(m => m.id === 'carbs');
-                if (mObj && val) {
-                  mObj.amount = val;
-                  if (notes) mObj.foods = notes;
+                if (mObj) {
+                  const cleanAmount = val.replace(/\s*\([^)]*\)/g, '').trim();
+                  if (cleanAmount) mObj.amount = cleanAmount;
+                  if (ratio && ratio !== '—') mObj.percentage = ratio;
+                  if (purpose) mObj.purpose = purpose;
+                  if (notes) mObj.foods = notes.replace(/^.*Sources:\s*/i, '').trim();
                 }
-              } else if (metric.includes('fat')) {
+              } else if (metric === 'fats' || metric.includes('healthy fat') || (metric.includes('fat') && !metric.includes('loss') && !metric.includes('cheat'))) {
                 const mObj = newProtocol.calories.macros.find(m => m.id === 'fats');
-                if (mObj && val) {
-                  mObj.amount = val;
-                  if (notes) mObj.foods = notes;
+                if (mObj) {
+                  const cleanAmount = val.replace(/\s*\([^)]*\)/g, '').trim();
+                  if (cleanAmount) mObj.amount = cleanAmount;
+                  if (ratio && ratio !== '—') mObj.percentage = ratio;
+                  if (purpose) mObj.purpose = purpose;
+                  if (notes) mObj.foods = notes.replace(/^.*Sources:\s*/i, '').trim();
                 }
               }
             });
@@ -485,9 +504,9 @@ export const parseHealthProtocolFromExcel = async (file) => {
           if (Array.isArray(regimeRows) && regimeRows.length > 0) {
             regimeRows.forEach(row => {
               const cat = getFieldValue(row, ['Category', 'Type', 'Area']).toLowerCase();
-              const freq = getFieldValue(row, ['Frequency', 'Frequency / Day', 'When', 'Timing']).toLowerCase();
+              const freq = getFieldValue(row, ['Frequency / Schedule', 'Frequency', 'Frequency / Day', 'When', 'Timing']).toLowerCase();
               const steps = getFieldValue(row, ['Routine & Steps', 'Routine', 'Steps', 'Action', 'Regime']);
-              const notes = getFieldValue(row, ['Special Notes', 'Notes', 'Tips', 'Guidelines']);
+              const notes = getFieldValue(row, ['Special Guidelines', 'Special Notes', 'Notes', 'Tips', 'Guidelines']);
 
               if (cat.includes('skin')) {
                 if (freq.includes('daily') || freq.includes('am') || freq.includes('pm')) {
@@ -574,22 +593,23 @@ export const parseHealthProtocolFromExcel = async (file) => {
             const parsedMeals = [];
 
             rawRows.forEach((row, idx) => {
-              const name = getFieldValue(row, ['Meal Name', 'Meal', 'Title', 'Item', 'Name', 'Food']);
+              const name = getFieldValue(row, ['Meal Title', 'Meal Name', 'Meal', 'Title', 'Item', 'Name', 'Food']);
               const time = getFieldValue(row, ['Time', 'Timing', 'Schedule', 'When']);
               const dishes = getFieldValue(row, ['Dishes & Ingredients', 'Dishes', 'Ingredients', 'Menu', 'Description', 'Items']);
               const rawCal = getFieldValue(row, ['Calories (kcal)', 'Calories', 'Cal', 'Kcal', 'Energy']);
-              const rawProtein = getFieldValue(row, ['Protein', 'Protein (g)', 'Prot']);
+              const rawProtein = getFieldValue(row, ['Protein (g)', 'Protein', 'Prot']);
               const benefits = getFieldValue(row, ['Hair & Skin Benefits', 'Benefits', 'Hair & Skin', 'Target', 'Notes']);
 
               if (name || dishes || time) {
                 const calNum = parseInt(String(rawCal).replace(/[^0-9]/g, ''), 10) || 0;
+                let cleanProt = String(rawProtein || '').replace(/\s*\([^)]*\)/g, '').trim();
                 parsedMeals.push({
                   id: `meal-custom-${idx + 1}`,
                   time: time || `${(idx + 1) * 3}:00 PM`,
                   name: name || `Meal ${idx + 1}`,
                   dishes: dishes || name || 'Custom healthy dish',
                   calories: calNum,
-                  protein: rawProtein ? (rawProtein.endsWith('g') ? rawProtein : `${rawProtein} g`) : '15 g',
+                  protein: cleanProt ? (cleanProt.endsWith('g') ? cleanProt : `${cleanProt} g`) : '15 g',
                   hairSkinBenefits: benefits || 'Nutritional balance & cell renewal'
                 });
               }
@@ -601,17 +621,20 @@ export const parseHealthProtocolFromExcel = async (file) => {
           }
         }
 
+        // Pass through sanitizer to guarantee 100% clean schema without duplications
+        const sanitizedProtocol = sanitizeHealthProtocol(newProtocol);
+
         // Compute summary statistics
-        const totalMealsParsed = (newProtocol.mealSchedule || []).length;
-        const totalCaloriesFromMeals = (newProtocol.mealSchedule || []).reduce((sum, m) => sum + (m.calories || 0), 0);
-        const totalProteinFromMeals = (newProtocol.mealSchedule || []).reduce((sum, m) => {
+        const totalMealsParsed = (sanitizedProtocol.mealSchedule || []).length;
+        const totalCaloriesFromMeals = (sanitizedProtocol.mealSchedule || []).reduce((sum, m) => sum + (m.calories || 0), 0);
+        const totalProteinFromMeals = (sanitizedProtocol.mealSchedule || []).reduce((sum, m) => {
           const pVal = parseInt(String(m.protein || '').replace(/[^0-9]/g, ''), 10) || 0;
           return sum + pVal;
         }, 0);
 
         resolve({
           success: true,
-          protocol: newProtocol,
+          protocol: sanitizedProtocol,
           stats: {
             fileName: file.name,
             sheetsParsed,

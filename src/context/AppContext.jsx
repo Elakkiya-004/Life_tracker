@@ -12,6 +12,7 @@ import {
   DEFAULT_CUSTOM_LISTS,
   DEFAULT_SETTINGS,
   DEFAULT_HEALTH_PROTOCOL,
+  sanitizeHealthProtocol,
   getEffectiveTrackerDate,
   pruneOldHistoryData,
 } from '../services/storage';
@@ -155,14 +156,16 @@ export const AppProvider = ({ children }) => {
   const [healthProtocol, setHealthProtocol] = useState(() => {
     const userKey = `${STORAGE_KEYS.HEALTH_PROTOCOL}_${currentUser?.uid || 'default_user'}`;
     const data = getLocalData(userKey, null) || getLocalData(STORAGE_KEYS.HEALTH_PROTOCOL, DEFAULT_HEALTH_PROTOCOL);
-    return data && typeof data === 'object' ? data : DEFAULT_HEALTH_PROTOCOL;
+    const initial = data && typeof data === 'object' ? data : DEFAULT_HEALTH_PROTOCOL;
+    return sanitizeHealthProtocol(initial);
   });
 
   // Reload protocol when current user switches
   useEffect(() => {
     const userKey = `${STORAGE_KEYS.HEALTH_PROTOCOL}_${currentUser?.uid || 'default_user'}`;
     const saved = getLocalData(userKey, null) || getLocalData(STORAGE_KEYS.HEALTH_PROTOCOL, DEFAULT_HEALTH_PROTOCOL);
-    setHealthProtocol(saved && typeof saved === 'object' ? saved : DEFAULT_HEALTH_PROTOCOL);
+    const clean = saved && typeof saved === 'object' ? saved : DEFAULT_HEALTH_PROTOCOL;
+    setHealthProtocol(sanitizeHealthProtocol(clean));
   }, [currentUser?.uid]);
 
   const [dailyHistory, setDailyHistory] = useState(() => {
@@ -357,7 +360,7 @@ export const AppProvider = ({ children }) => {
           syncToCloud(currentUserId, { customLists: DEFAULT_CUSTOM_LISTS });
         }
 
-        if (cloudData.healthProtocol) setHealthProtocol(cloudData.healthProtocol);
+        if (cloudData.healthProtocol) setHealthProtocol(sanitizeHealthProtocol(cloudData.healthProtocol));
         if (cloudData.dailyHistory) setDailyHistory(cloudData.dailyHistory);
         if (cloudData.settings) setSettings(prev => ({ ...prev, ...cloudData.settings }));
       });

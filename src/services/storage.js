@@ -1,7 +1,7 @@
 // Local Storage Service with Seed Data and Backup/Restore capabilities
 import { DEFAULT_ROADMAP } from './roadmapData';
 import { DEFAULT_CUSTOM_LISTS } from './marvelData';
-import { DEFAULT_HEALTH_PROTOCOL } from './healthProtocolData';
+import { DEFAULT_HEALTH_PROTOCOL, sanitizeHealthProtocol } from './healthProtocolData';
 
 const STORAGE_KEYS = {
   HABITS: 'life_tracker_habits_v2',
@@ -269,4 +269,4 @@ export const importAllData = (jsonString) => {
   }
 };
 
-export { STORAGE_KEYS, DEFAULT_ROADMAP, DEFAULT_CUSTOM_LISTS, DEFAULT_HEALTH_PROTOCOL };
+export { STORAGE_KEYS, DEFAULT_ROADMAP, DEFAULT_CUSTOM_LISTS, DEFAULT_HEALTH_PROTOCOL, sanitizeHealthProtocol };
