@@ -157,18 +157,25 @@ export const AppProvider = ({ children }) => {
   });
 
   const [healthProtocol, setHealthProtocol] = useState(() => {
-    const userKey = `${STORAGE_KEYS.HEALTH_PROTOCOL}_${currentUser?.uid || 'default_user'}`;
-    const data = getLocalData(userKey, null) || getLocalData(STORAGE_KEYS.HEALTH_PROTOCOL, DEFAULT_HEALTH_PROTOCOL);
-    const initial = data && typeof data === 'object' ? data : DEFAULT_HEALTH_PROTOCOL;
-    return sanitizeHealthProtocol(initial);
+    const uid = currentUser?.uid || 'default_user';
+    const userKey = `${STORAGE_KEYS.HEALTH_PROTOCOL}_${uid}`;
+    const data = getLocalData(userKey, null);
+    if (data && typeof data === 'object') {
+      return sanitizeHealthProtocol(data);
+    }
+    return DEFAULT_HEALTH_PROTOCOL;
   });
 
   // Reload protocol when current user switches
   useEffect(() => {
-    const userKey = `${STORAGE_KEYS.HEALTH_PROTOCOL}_${currentUser?.uid || 'default_user'}`;
-    const saved = getLocalData(userKey, null) || getLocalData(STORAGE_KEYS.HEALTH_PROTOCOL, DEFAULT_HEALTH_PROTOCOL);
-    const clean = saved && typeof saved === 'object' ? saved : DEFAULT_HEALTH_PROTOCOL;
-    setHealthProtocol(sanitizeHealthProtocol(clean));
+    const uid = currentUser?.uid || 'default_user';
+    const userKey = `${STORAGE_KEYS.HEALTH_PROTOCOL}_${uid}`;
+    const saved = getLocalData(userKey, null);
+    if (saved && typeof saved === 'object') {
+      setHealthProtocol(sanitizeHealthProtocol(saved));
+    } else {
+      setHealthProtocol(DEFAULT_HEALTH_PROTOCOL);
+    }
   }, [currentUser?.uid]);
 
   const [dailyHistory, setDailyHistory] = useState(() => {
@@ -314,8 +321,11 @@ export const AppProvider = ({ children }) => {
   }, [customLists]);
 
   useEffect(() => {
-    if (healthProtocol) setLocalData(STORAGE_KEYS.HEALTH_PROTOCOL, healthProtocol);
-  }, [healthProtocol]);
+    if (healthProtocol) {
+      const uid = currentUser?.uid || 'default_user';
+      setLocalData(`${STORAGE_KEYS.HEALTH_PROTOCOL}_${uid}`, healthProtocol);
+    }
+  }, [healthProtocol, currentUser?.uid]);
 
   useEffect(() => {
     if (dailyHistory) setLocalData(STORAGE_KEYS.DAILY_HISTORY, dailyHistory);
@@ -364,7 +374,11 @@ export const AppProvider = ({ children }) => {
           syncToCloud(currentUserId, { customLists: DEFAULT_CUSTOM_LISTS });
         }
 
-        if (cloudData.healthProtocol) setHealthProtocol(sanitizeHealthProtocol(cloudData.healthProtocol));
+        if (cloudData.healthProtocol) {
+          const clean = sanitizeHealthProtocol(cloudData.healthProtocol);
+          setHealthProtocol(clean);
+          setLocalData(`${STORAGE_KEYS.HEALTH_PROTOCOL}_${currentUserId}`, clean);
+        }
         if (cloudData.dailyHistory) setDailyHistory(cloudData.dailyHistory);
         if (cloudData.settings) setSettings(prev => ({ ...prev, ...cloudData.settings }));
       });
@@ -886,17 +900,19 @@ export const AppProvider = ({ children }) => {
   // Health Protocol Operations
   const updateHealthProtocol = (newProtocol) => {
     setHealthProtocol(prev => {
-      const updated = typeof newProtocol === 'function' ? newProtocol(prev || DEFAULT_HEALTH_PROTOCOL) : { ...(prev || DEFAULT_HEALTH_PROTOCOL), ...newProtocol };
-      const userKey = `${STORAGE_KEYS.HEALTH_PROTOCOL}_${currentUser?.uid || 'default_user'}`;
-      setLocalData(userKey, updated);
-      setLocalData(STORAGE_KEYS.HEALTH_PROTOCOL, updated);
-      pushToCloud({ habits, transactions, jars, roadmap, customLists, healthProtocol: updated, dailyHistory, settings });
-      return updated;
+      const updated = typeof newProtocol === 'function' ? newProtocol(prev || DEFAULT_HEALTH_PROTOCOL) : newProtocol;
+      const uid = currentUser?.uid || 'default_user';
+      const userKey = `${STORAGE_KEYS.HEALTH_PROTOCOL}_${uid}`;
+      const clean = sanitizeHealthProtocol(updated);
+      setLocalData(userKey, clean);
+      pushToCloud({ habits, transactions, jars, roadmap, customLists, healthProtocol: clean, dailyHistory, settings });
+      return clean;
     });
   };
 
   const importHealthProtocolFromExcel = (parsedProtocol, stats = null) => {
-    const userKey = `${STORAGE_KEYS.HEALTH_PROTOCOL}_${currentUser?.uid || 'default_user'}`;
+    const uid = currentUser?.uid || 'default_user';
+    const userKey = `${STORAGE_KEYS.HEALTH_PROTOCOL}_${uid}`;
     const enrichedProtocol = {
       ...DEFAULT_HEALTH_PROTOCOL,
       ...parsedProtocol,
@@ -909,31 +925,45 @@ export const AppProvider = ({ children }) => {
         uploaderEmail: currentUser?.email || 'user',
       }
     };
-    setHealthProtocol(enrichedProtocol);
-    setLocalData(userKey, enrichedProtocol);
-    setLocalData(STORAGE_KEYS.HEALTH_PROTOCOL, enrichedProtocol);
-    pushToCloud({ habits, transactions, jars, roadmap, customLists, healthProtocol: enrichedProtocol, dailyHistory, settings });
+    const clean = sanitizeHealthProtocol(enrichedProtocol);
+    setHealthProtocol(clean);
+    setLocalData(userKey, clean);
+    pushToCloud({ habits, transactions, jars, roadmap, customLists, healthProtocol: clean, dailyHistory, settings });
     triggerCelebration();
-    return enrichedProtocol;
+    return clean;
   };
 
   const resetHealthProtocolToDefault = () => {
-    const userKey = `${STORAGE_KEYS.HEALTH_PROTOCOL}_${currentUser?.uid || 'default_user'}`;
+    const uid = currentUser?.uid || 'default_user';
+    const userKey = `${STORAGE_KEYS.HEALTH_PROTOCOL}_${uid}`;
     setHealthProtocol(DEFAULT_HEALTH_PROTOCOL);
     setLocalData(userKey, DEFAULT_HEALTH_PROTOCOL);
-    setLocalData(STORAGE_KEYS.HEALTH_PROTOCOL, DEFAULT_HEALTH_PROTOCOL);
     pushToCloud({ habits, transactions, jars, roadmap, customLists, healthProtocol: DEFAULT_HEALTH_PROTOCOL, dailyHistory, settings });
     return DEFAULT_HEALTH_PROTOCOL;
   };
 
-  const updateUserHealthProtocol = async (targetUid, newProtocol) => {
+  const updateUserHealthProtocol = async (targetUid, newProtocol, stats = null) => {
     if (!targetUid) return;
+    const enrichedProtocol = {
+      ...DEFAULT_HEALTH_PROTOCOL,
+      ...newProtocol,
+      meta: {
+        isCustom: true,
+        planName: stats?.fileName ? stats.fileName.replace(/\.[^/.]+$/, '').replace(/_/g, ' ') : 'Custom Diet Protocol',
+        uploadedAt: new Date().toISOString(),
+        fileName: stats?.fileName || 'custom_diet_protocol.xlsx',
+        source: 'excel_upload_admin',
+        uploaderEmail: currentUser?.email || 'admin',
+      }
+    };
+    const clean = sanitizeHealthProtocol(enrichedProtocol);
     const userKey = `${STORAGE_KEYS.HEALTH_PROTOCOL}_${targetUid}`;
-    setLocalData(userKey, newProtocol);
+    setLocalData(userKey, clean);
     if (currentUser?.uid === targetUid) {
-      setHealthProtocol(newProtocol);
+      setHealthProtocol(clean);
     }
-    await syncToCloud(targetUid, { healthProtocol: newProtocol });
+    await syncToCloud(targetUid, { healthProtocol: clean });
+    return clean;
   };
 
   const addProtocolTasksToToday = (dayKey) => {

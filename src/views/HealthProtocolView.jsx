@@ -18,11 +18,8 @@ import {
   Clock,
   X,
   UploadCloud,
-  FileSpreadsheet,
   Download,
   RotateCcw,
-  CheckCircle2,
-  AlertTriangle,
   FileDown
 } from 'lucide-react';
 import { 
@@ -37,7 +34,6 @@ export const HealthProtocolView = () => {
     updateHealthProtocol, 
     importHealthProtocolFromExcel,
     resetHealthProtocolToDefault,
-    triggerCelebration
   } = useApp();
 
   const { currentUser } = useAuth();
@@ -57,58 +53,15 @@ export const HealthProtocolView = () => {
 
   const calories = protocol.calories || {};
   const macros = Array.isArray(calories.macros) ? calories.macros : [];
+  const micronutrients = Array.isArray(protocol.micronutrients) ? protocol.micronutrients : [];
 
-  const micronutrients = Array.isArray(protocol.micronutrients) && protocol.micronutrients.length > 0 
-    ? protocol.micronutrients 
-    : [
-        { id: 'iron', name: 'Iron', color: '#f43f5e', target: 'Bloating, fatigue, hair fall', sources: 'Dates, spinach, beetroot, jaggery' },
-        { id: 'b12', name: 'Vitamin B12', color: '#8b5cf6', target: 'Mood swings, low energy', sources: 'Curd, paneer, fortified foods' },
-        { id: 'vit_d', name: 'Vitamin D', color: '#f59e0b', target: 'Joint pain, low mood', sources: 'Sunlight + supplementation if deficient' },
-        { id: 'magnesium', name: 'Magnesium', color: '#6366f1', target: 'Sleep, stress, cravings', sources: 'Pumpkin seeds, peanuts' },
-        { id: 'zinc', name: 'Zinc', color: '#0ea5e9', target: 'Hair strength & skin healing', sources: 'Nuts, seeds, legumes' },
-      ];
+  const exerciseRoutine = protocol.exerciseRoutine || {};
+  const sugarCutting = protocol.sugarCutting || {};
+  const sugarPhases = Array.isArray(sugarCutting.phases) ? sugarCutting.phases : [];
 
-  const exerciseRoutine = protocol.exerciseRoutine || {
-    morning: {
-      title: '🌅 Morning Cardio (30–40 Mins)',
-      activities: 'Cycling or brisk outdoor walking',
-      benefits: 'Fat burning zone, insulin sensitivity & stimulates natural gut motility'
-    },
-    evening: {
-      title: '💪 Evening Bodyweight Routine (20 Mins)',
-      activities: 'Squats (3x15), Glute bridges (3x15), Wall push-ups (3x12), Planks (3x30s)',
-      benefits: 'Tones glutes/core, improves posture, activates metabolism. Consistency > Intensity.'
-    }
-  };
-
-  const sugarCutting = protocol.sugarCutting || {
-    phases: [
-      { week: 'Week 1', action: 'Remove added sugar from tea & coffee', status: 'Phase 1' },
-      { week: 'Week 2', action: 'Replace sweets & bakery snacks with fresh fruits / dates', status: 'Phase 2' },
-      { week: 'Week 3', action: 'Sugar strictly limited to festival / weekly cheat day', status: 'Phase 3' }
-    ],
-    cravingHack: '🧠 Craving Hack: Drink 1 glass warm water + take 5 slow deep breaths. Cravings fade in 90 seconds.'
-  };
-  
-  const skinCare = protocol.skinCare || {
-    daily: 'AM and PM (Cleanse, hydrate, sunscreen AM, barrier repair PM)',
-    weeklySunday: 'Sunday: Face shaving and scrub',
-    weeklyTueFri: 'Tuesday & Friday: Face pack',
-    notes: 'Gentle circular motion for scrub; use soothing gel after face shaving.'
-  };
-
-  const bodyCare = protocol.bodyCare || {
-    sunday: 'Sunday: Oiling, scrub, shaving',
-    tueFri: 'Tuesday & Friday: Exfoliating body wash',
-    notes: 'Warm oil before bath on Sundays; gentle loofah with exfoliating wash on Tue/Fri.'
-  };
-
-  const hairCare = protocol.hairCare || {
-    daily: 'Serum and hair growth water',
-    weekly: '3x Oiling, hair pack, hair wash',
-    biWeekly: 'Two weeks once: Saturday henna and Sunday avari podi (In the next alternate: Hair growth serum)',
-    notes: 'Air dry naturally, wide-tooth detangling comb, warm oil massage.'
-  };
+  const skinCare = protocol.skinCare || {};
+  const bodyCare = protocol.bodyCare || {};
+  const hairCare = protocol.hairCare || {};
 
   const showToast = (msg) => {
     setNotificationMsg(msg);
@@ -138,9 +91,9 @@ export const HealthProtocolView = () => {
         meta: { isCustom: true, planName: 'Empty Protocol', uploadedAt: new Date().toISOString() },
         calories: {
           maintenance: 0,
-          fatLossTarget: '0 kcal/day',
-          expectedLoss: '0 kg/week',
-          cheatDay: { target: '0 kcal', rules: '' },
+          fatLossTarget: '',
+          expectedLoss: '',
+          cheatDay: { target: '', rules: '' },
           macros: []
         },
         micronutrients: [],
@@ -160,11 +113,11 @@ export const HealthProtocolView = () => {
   // --- 1. MACROS & CALORIES ACTIONS ---
   const handleOpenEditCalories = () => {
     setFormData({
-      maintenance: calories.maintenance || 1850,
-      fatLossTarget: calories.fatLossTarget || '1350–1450 kcal/day',
-      expectedLoss: calories.expectedLoss || '0.5–0.7 kg/week (healthy & sustainable)',
-      cheatTarget: calories.cheatDay?.target || '1800–1900 kcal',
-      cheatRules: calories.cheatDay?.rules || 'No binge eating • Protein + Fiber first • Stop at 80% fullness',
+      maintenance: calories.maintenance ?? 1850,
+      fatLossTarget: calories.fatLossTarget ?? '1350–1450 kcal/day',
+      expectedLoss: calories.expectedLoss ?? '0.5–0.7 kg/week (healthy & sustainable)',
+      cheatTarget: calories.cheatDay?.target ?? '1800–1900 kcal',
+      cheatRules: calories.cheatDay?.rules ?? 'No binge eating • Protein + Fiber first • Stop at 80% fullness',
       macros: macros.map(m => ({ ...m })),
     });
     setActiveModal('calories');
@@ -211,7 +164,7 @@ export const HealthProtocolView = () => {
       ...prev,
       calories: {
         ...prev.calories,
-        maintenance: Number(formData.maintenance) || 1850,
+        maintenance: Number(formData.maintenance) || 0,
         fatLossTarget: formData.fatLossTarget,
         expectedLoss: formData.expectedLoss,
         cheatDay: {
@@ -282,7 +235,7 @@ export const HealthProtocolView = () => {
 
   const handleSaveMicronutrients = (e) => {
     e.preventDefault();
-    const cleanItems = formData.items.filter(item => item.name.trim() !== '');
+    const cleanItems = (formData.items || []).filter(item => item.name.trim() !== '');
     updateHealthProtocol(prev => ({
       ...prev,
       micronutrients: cleanItems,
@@ -458,8 +411,8 @@ export const HealthProtocolView = () => {
   // --- 7. SUGAR CUTTING ACTIONS ---
   const handleOpenEditSugar = () => {
     setFormData({
-      phases: (sugarCutting.phases || []).map(p => ({ ...p })),
-      cravingHack: sugarCutting.cravingHack || '🧠 Craving Hack: Drink 1 glass warm water + take 5 slow deep breaths. Cravings fade in 90 seconds.',
+      phases: sugarPhases.map(p => ({ ...p })),
+      cravingHack: sugarCutting.cravingHack || '',
     });
     setActiveModal('sugar');
   };
@@ -504,7 +457,7 @@ export const HealthProtocolView = () => {
   };
 
   const handleDeleteSugarPhaseDirect = (idx) => {
-    const updatedPhases = (sugarCutting.phases || []).filter((_, i) => i !== idx);
+    const updatedPhases = sugarPhases.filter((_, i) => i !== idx);
     updateHealthProtocol(prev => ({
       ...prev,
       sugarCutting: {
@@ -514,6 +467,8 @@ export const HealthProtocolView = () => {
     }));
     showToast('🗑️ Removed sugar cutting phase.');
   };
+
+  const hasExercise = exerciseRoutine.morning?.activities || exerciseRoutine.evening?.activities;
 
   return (
     <div className="health-protocol-view">
@@ -647,59 +602,75 @@ export const HealthProtocolView = () => {
         <div className="calories-stat-grid">
           <div className="card cal-card">
             <span className="cal-label">Maintenance Calories</span>
-            <span className="cal-val">~{calories.maintenance || 1850} <small>kcal/day</small></span>
+            <span className="cal-val">{calories.maintenance ? `~${calories.maintenance}` : '0'} <small>kcal/day</small></span>
             <span className="cal-desc">Zero weight change baseline</span>
           </div>
 
           <div className="card cal-card highlight-card">
             <div className="card-top-tag">FAT LOSS TARGET</div>
             <span className="cal-label">Daily Calorie Target</span>
-            <span className="cal-val text-primary">{calories.fatLossTarget || '1350–1450 kcal/day'}</span>
-            <span className="cal-desc text-success">📉 Expected fat loss: {calories.expectedLoss || '0.5–0.7 kg/week (healthy & sustainable)'}</span>
+            <span className="cal-val text-primary">{calories.fatLossTarget || 'Not set'}</span>
+            <span className="cal-desc text-success">📉 Expected fat loss: {calories.expectedLoss || 'Not set'}</span>
           </div>
 
           <div className="card cal-card cheat-card">
             <div className="card-top-tag tag-amber">1 DAY / WEEK</div>
             <span className="cal-label">Cheat Day Budget</span>
-            <span className="cal-val text-amber">{calories.cheatDay?.target || '1800–1900 kcal'}</span>
-            <span className="cal-desc">{calories.cheatDay?.rules || 'No binge eating • Protein + Fiber first • Stop at 80% fullness'}</span>
+            <span className="cal-val text-amber">{calories.cheatDay?.target || 'Not set'}</span>
+            <span className="cal-desc">{calories.cheatDay?.rules || 'Not set'}</span>
           </div>
         </div>
 
         {/* Macros Breakdown Cards */}
-        <div className="macros-grid">
-          {macros.map((m) => (
-            <div 
-              key={m.id || m.name} 
-              className="card macro-card"
-              style={{ borderTopColor: m.color || 'var(--accent-primary)' }}
-            >
-              <div className="macro-header">
-                <span className="macro-name" style={{ color: m.color || 'var(--accent-primary)' }}>{m.name}</span>
-                <div className="macro-header-right">
-                  <span className="macro-badge" style={{ backgroundColor: `${m.color || '#6366f1'}20`, color: m.color || 'var(--accent-primary)' }}>
-                    {m.percentage}
-                  </span>
-                  <button
-                    type="button"
-                    className="btn-icon-sm btn-ghost text-danger delete-item-btn"
-                    onClick={() => handleDeleteMacroDirect(m.name)}
-                    title={`Delete ${m.name} macro`}
-                  >
-                    <Trash2 size={13} />
-                  </button>
+        {macros.length === 0 ? (
+          <div className="card empty-section-placeholder">
+            <p className="text-sub text-sm">No macronutrient targets configured.</p>
+            <button type="button" className="btn btn-secondary btn-sm" onClick={handleOpenEditCalories}>
+              <Plus size={14} />
+              <span>Add Macronutrients</span>
+            </button>
+          </div>
+        ) : (
+          <div className="macros-grid">
+            {macros.map((m) => (
+              <div 
+                key={m.id || m.name} 
+                className="card macro-card"
+                style={{ borderTopColor: m.color || 'var(--accent-primary)' }}
+              >
+                <div className="macro-header">
+                  <span className="macro-name" style={{ color: m.color || 'var(--accent-primary)' }}>{m.name}</span>
+                  <div className="macro-header-right">
+                    {m.percentage && (
+                      <span className="macro-badge" style={{ backgroundColor: `${m.color || '#6366f1'}20`, color: m.color || 'var(--accent-primary)' }}>
+                        {m.percentage}
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      className="btn-icon-sm btn-ghost text-danger delete-item-btn"
+                      onClick={() => handleDeleteMacroDirect(m.name)}
+                      title={`Delete ${m.name} macro`}
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
                 </div>
+                <div className="macro-amount">{m.amount || '—'}</div>
+                {m.purpose && (
+                  <div className="macro-purpose">
+                    <strong>Target:</strong> {m.purpose}
+                  </div>
+                )}
+                {m.foods && (
+                  <div className="macro-sources">
+                    <strong>Top Sources:</strong> {m.foods}
+                  </div>
+                )}
               </div>
-              <div className="macro-amount">{m.amount}</div>
-              <div className="macro-purpose">
-                <strong>Target:</strong> {m.purpose}
-              </div>
-              <div className="macro-sources">
-                <strong>Top Sources:</strong> {m.foods}
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* ========================================================================= */}
@@ -723,37 +694,49 @@ export const HealthProtocolView = () => {
           </div>
         </div>
 
-        <div className="micronutrients-grid">
-          {micronutrients.map((micro) => (
-            <div 
-              key={micro.id || micro.name} 
-              className="card micro-card"
-              style={{ borderLeftColor: micro.color || 'var(--accent-primary)' }}
-            >
-              <div className="micro-header">
-                <div className="micro-title-wrap">
-                  <span className="micro-dot" style={{ backgroundColor: micro.color || 'var(--accent-primary)' }} />
-                  <span className="micro-name">{micro.name}</span>
+        {micronutrients.length === 0 ? (
+          <div className="card empty-section-placeholder">
+            <p className="text-sub text-sm">No micronutrient focus items added.</p>
+            <button type="button" className="btn btn-secondary btn-sm" onClick={handleOpenEditMicronutrients}>
+              <Plus size={14} />
+              <span>Add Micronutrient Focus</span>
+            </button>
+          </div>
+        ) : (
+          <div className="micronutrients-grid">
+            {micronutrients.map((micro) => (
+              <div 
+                key={micro.id || micro.name} 
+                className="card micro-card"
+                style={{ borderLeftColor: micro.color || 'var(--accent-primary)' }}
+              >
+                <div className="micro-header">
+                  <div className="micro-title-wrap">
+                    <span className="micro-dot" style={{ backgroundColor: micro.color || 'var(--accent-primary)' }} />
+                    <span className="micro-name">{micro.name}</span>
+                  </div>
+                  <div className="micro-header-right">
+                    {micro.target && <span className="micro-target-tag">{micro.target}</span>}
+                    <button
+                      type="button"
+                      className="btn-icon-sm btn-ghost text-danger delete-item-btn"
+                      onClick={() => handleDeleteMicronutrientDirect(micro.id, micro.name)}
+                      title={`Delete ${micro.name}`}
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
                 </div>
-                <div className="micro-header-right">
-                  <span className="micro-target-tag">{micro.target}</span>
-                  <button
-                    type="button"
-                    className="btn-icon-sm btn-ghost text-danger delete-item-btn"
-                    onClick={() => handleDeleteMicronutrientDirect(micro.id, micro.name)}
-                    title={`Delete ${micro.name}`}
-                  >
-                    <Trash2 size={13} />
-                  </button>
-                </div>
+                {micro.sources && (
+                  <div className="micro-sources-box">
+                    <span className="sources-label">Sources:</span>
+                    <span className="sources-text">{micro.sources}</span>
+                  </div>
+                )}
               </div>
-              <div className="micro-sources-box">
-                <span className="sources-label">Sources:</span>
-                <span className="sources-text">{micro.sources}</span>
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* ========================================================================= */}
@@ -809,7 +792,7 @@ export const HealthProtocolView = () => {
                   <span>Daily</span>
                 </div>
                 <div className="regime-content">
-                  <strong>AM & PM:</strong> {skinCare.daily || 'Not specified'}
+                  <strong>AM & PM:</strong> {skinCare.daily ? skinCare.daily : <span className="text-sub italic">Not configured</span>}
                 </div>
               </div>
 
@@ -819,8 +802,14 @@ export const HealthProtocolView = () => {
                   <span>Weekly</span>
                 </div>
                 <div className="regime-content">
-                  <p>• <strong>Sunday:</strong> {skinCare.weeklySunday || 'Face shaving and scrub'}</p>
-                  <p>• <strong>Tuesday & Friday:</strong> {skinCare.weeklyTueFri || 'Face pack'}</p>
+                  {skinCare.weeklySunday || skinCare.weeklyTueFri ? (
+                    <>
+                      {skinCare.weeklySunday && <p>• <strong>Sunday:</strong> {skinCare.weeklySunday}</p>}
+                      {skinCare.weeklyTueFri && <p>• <strong>Tuesday & Friday:</strong> {skinCare.weeklyTueFri}</p>}
+                    </>
+                  ) : (
+                    <span className="text-sub italic">Not configured</span>
+                  )}
                 </div>
               </div>
 
@@ -872,7 +861,7 @@ export const HealthProtocolView = () => {
                   <span>Sunday</span>
                 </div>
                 <div className="regime-content">
-                  <strong>Sunday Routine:</strong> {bodyCare.sunday || 'Oiling, scrub, shaving'}
+                  <strong>Sunday Routine:</strong> {bodyCare.sunday ? bodyCare.sunday : <span className="text-sub italic">Not configured</span>}
                 </div>
               </div>
 
@@ -882,7 +871,7 @@ export const HealthProtocolView = () => {
                   <span>Tue & Fri</span>
                 </div>
                 <div className="regime-content">
-                  <strong>Tuesday & Friday:</strong> {bodyCare.tueFri || 'Exfoliating body wash'}
+                  <strong>Tuesday & Friday:</strong> {bodyCare.tueFri ? bodyCare.tueFri : <span className="text-sub italic">Not configured</span>}
                 </div>
               </div>
 
@@ -934,7 +923,7 @@ export const HealthProtocolView = () => {
                   <span>Daily</span>
                 </div>
                 <div className="regime-content">
-                  <strong>Daily:</strong> {hairCare.daily || 'Serum and hair growth water'}
+                  <strong>Daily:</strong> {hairCare.daily ? hairCare.daily : <span className="text-sub italic">Not configured</span>}
                 </div>
               </div>
 
@@ -944,7 +933,7 @@ export const HealthProtocolView = () => {
                   <span>Weekly</span>
                 </div>
                 <div className="regime-content">
-                  <strong>Weekly Routine:</strong> {hairCare.weekly || '3x Oiling, hair pack, hair wash'}
+                  <strong>Weekly Routine:</strong> {hairCare.weekly ? hairCare.weekly : <span className="text-sub italic">Not configured</span>}
                 </div>
               </div>
 
@@ -954,7 +943,7 @@ export const HealthProtocolView = () => {
                   <span>Two Weeks Once</span>
                 </div>
                 <div className="regime-content">
-                  <strong>Bi-Weekly Cycle:</strong> {hairCare.biWeekly || 'Two weeks once: Saturday henna and Sunday avari podi (In the next alternate: Hair growth serum)'}
+                  <strong>Bi-Weekly Cycle:</strong> {hairCare.biWeekly ? hairCare.biWeekly : <span className="text-sub italic">Not configured</span>}
                 </div>
               </div>
 
@@ -1004,19 +993,33 @@ export const HealthProtocolView = () => {
             </div>
           </div>
 
-          <div className="exercise-grid">
-            <div className="exercise-card">
-              <span className="exercise-title">{exerciseRoutine.morning?.title || '🌅 Morning Cardio (30–40 Mins)'}</span>
-              <p className="exercise-activities"><strong>Activities:</strong> {exerciseRoutine.morning?.activities || 'Cycling or brisk outdoor walking'}</p>
-              <span className="exercise-benefits">✨ {exerciseRoutine.morning?.benefits || 'Fat burning zone, insulin sensitivity & stimulates natural gut motility'}</span>
+          {!hasExercise ? (
+            <div className="empty-section-placeholder">
+              <p className="text-sub text-sm">No exercise routines configured.</p>
+              <button type="button" className="btn btn-secondary btn-sm" onClick={handleOpenEditExercise}>
+                <Plus size={14} />
+                <span>Configure Exercise Routine</span>
+              </button>
             </div>
+          ) : (
+            <div className="exercise-grid">
+              {exerciseRoutine.morning?.activities && (
+                <div className="exercise-card">
+                  <span className="exercise-title">{exerciseRoutine.morning?.title || '🌅 Morning Cardio (30–40 Mins)'}</span>
+                  <p className="exercise-activities"><strong>Activities:</strong> {exerciseRoutine.morning.activities}</p>
+                  {exerciseRoutine.morning.benefits && <span className="exercise-benefits">✨ {exerciseRoutine.morning.benefits}</span>}
+                </div>
+              )}
 
-            <div className="exercise-card">
-              <span className="exercise-title">{exerciseRoutine.evening?.title || '💪 Evening Bodyweight Routine (20 Mins)'}</span>
-              <p className="exercise-activities"><strong>Activities:</strong> {exerciseRoutine.evening?.activities || 'Squats (3x15), Glute bridges (3x15), Wall push-ups (3x12), Planks (3x30s)'}</p>
-              <span className="exercise-benefits">✨ {exerciseRoutine.evening?.benefits || 'Tones glutes/core, improves posture, activates metabolism. Consistency > Intensity.'}</span>
+              {exerciseRoutine.evening?.activities && (
+                <div className="exercise-card">
+                  <span className="exercise-title">{exerciseRoutine.evening?.title || '💪 Evening Bodyweight Routine (20 Mins)'}</span>
+                  <p className="exercise-activities"><strong>Activities:</strong> {exerciseRoutine.evening.activities}</p>
+                  {exerciseRoutine.evening.benefits && <span className="exercise-benefits">✨ {exerciseRoutine.evening.benefits}</span>}
+                </div>
+              )}
             </div>
-          </div>
+          )}
         </div>
 
         {/* Sugar Cutting Strategy */}
@@ -1043,27 +1046,37 @@ export const HealthProtocolView = () => {
             </div>
           </div>
 
-          <div className="sugar-phases-list">
-            {(sugarCutting.phases || []).map((p, i) => (
-              <div key={i} className="phase-row">
-                <span className="phase-badge">{p.week}</span>
-                <span className="phase-action">{p.action}</span>
-                <button
-                  type="button"
-                  className="btn-icon-sm btn-ghost text-danger delete-phase-btn"
-                  onClick={() => handleDeleteSugarPhaseDirect(i)}
-                  title={`Delete ${p.week}`}
-                >
-                  <Trash2 size={13} />
-                </button>
-              </div>
-            ))}
-            {sugarCutting.cravingHack && (
-              <div className="craving-hack-box">
-                {sugarCutting.cravingHack}
-              </div>
-            )}
-          </div>
+          {sugarPhases.length === 0 && !sugarCutting.cravingHack ? (
+            <div className="empty-section-placeholder">
+              <p className="text-sub text-sm">No sugar cutting strategy configured.</p>
+              <button type="button" className="btn btn-secondary btn-sm" onClick={handleOpenEditSugar}>
+                <Plus size={14} />
+                <span>Add Sugar Strategy</span>
+              </button>
+            </div>
+          ) : (
+            <div className="sugar-phases-list">
+              {sugarPhases.map((p, i) => (
+                <div key={i} className="phase-row">
+                  <span className="phase-badge">{p.week}</span>
+                  <span className="phase-action">{p.action}</span>
+                  <button
+                    type="button"
+                    className="btn-icon-sm btn-ghost text-danger delete-phase-btn"
+                    onClick={() => handleDeleteSugarPhaseDirect(i)}
+                    title={`Delete ${p.week}`}
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                </div>
+              ))}
+              {sugarCutting.cravingHack && (
+                <div className="craving-hack-box">
+                  {sugarCutting.cravingHack}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -1301,7 +1314,6 @@ export const HealthProtocolView = () => {
                   placeholder="e.g. AM and PM (Cleanse, hydrate, sunscreen AM, barrier repair PM)"
                   value={formData.daily}
                   onChange={(e) => setFormData({ ...formData, daily: e.target.value })}
-                  required
                 />
               </div>
 
@@ -1313,7 +1325,6 @@ export const HealthProtocolView = () => {
                   placeholder="e.g. Sunday: Face shaving and scrub"
                   value={formData.weeklySunday}
                   onChange={(e) => setFormData({ ...formData, weeklySunday: e.target.value })}
-                  required
                 />
               </div>
 
@@ -1325,7 +1336,6 @@ export const HealthProtocolView = () => {
                   placeholder="e.g. Tuesday & Friday: Face pack"
                   value={formData.weeklyTueFri}
                   onChange={(e) => setFormData({ ...formData, weeklyTueFri: e.target.value })}
-                  required
                 />
               </div>
 
@@ -1365,7 +1375,6 @@ export const HealthProtocolView = () => {
                   placeholder="e.g. Sunday: Oiling, scrub, shaving"
                   value={formData.sunday}
                   onChange={(e) => setFormData({ ...formData, sunday: e.target.value })}
-                  required
                 />
               </div>
 
@@ -1377,7 +1386,6 @@ export const HealthProtocolView = () => {
                   placeholder="e.g. Tuesday & Friday: Exfoliating body wash"
                   value={formData.tueFri}
                   onChange={(e) => setFormData({ ...formData, tueFri: e.target.value })}
-                  required
                 />
               </div>
 
@@ -1417,7 +1425,6 @@ export const HealthProtocolView = () => {
                   placeholder="e.g. Serum and hair growth water"
                   value={formData.daily}
                   onChange={(e) => setFormData({ ...formData, daily: e.target.value })}
-                  required
                 />
               </div>
 
@@ -1429,7 +1436,6 @@ export const HealthProtocolView = () => {
                   placeholder="e.g. 3x Oiling, hair pack, hair wash"
                   value={formData.weekly}
                   onChange={(e) => setFormData({ ...formData, weekly: e.target.value })}
-                  required
                 />
               </div>
 
@@ -1438,10 +1444,9 @@ export const HealthProtocolView = () => {
                 <input
                   type="text"
                   className="input"
-                  placeholder="e.g. Two weeks once: Saturday henna and Sunday avari podi (In the next alternate: Hair growth serum)"
+                  placeholder="e.g. Two weeks once: Saturday henna and Sunday avari podi"
                   value={formData.biWeekly}
                   onChange={(e) => setFormData({ ...formData, biWeekly: e.target.value })}
-                  required
                 />
               </div>
 
@@ -1789,6 +1794,18 @@ export const HealthProtocolView = () => {
           font-size: 0.78rem;
           color: var(--text-muted);
           line-height: 1.4;
+        }
+
+        .empty-section-placeholder {
+          padding: 1.5rem;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 0.75rem;
+          background: rgba(255, 255, 255, 0.02);
+          border: 1px dashed rgba(255, 255, 255, 0.12);
+          border-radius: var(--radius-sm);
         }
 
         /* Macros Grid */

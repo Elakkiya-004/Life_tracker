@@ -605,9 +605,9 @@ export const AdminView = () => {
           setIsDietModalOpen(false);
           setDietUploadUser(null);
         }}
-        onApply={async (newProto) => {
+        onApply={async (newProto, stats) => {
           if (dietUploadUser?.uid) {
-            await updateUserHealthProtocol(dietUploadUser.uid, newProto);
+            await updateUserHealthProtocol(dietUploadUser.uid, newProto, stats);
             setToggleSuccessMsg(`🎉 Diet Protocol updated from Excel for ${dietUploadUser.name}!`);
             setTimeout(() => setToggleSuccessMsg(null), 3500);
           }
