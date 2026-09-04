@@ -27,6 +27,7 @@ import {
   downloadSampleDietTemplate 
 } from '../services/excelProtocolParser';
 import { ExcelUploadModal } from '../components/health/ExcelUploadModal';
+import { Modal } from '../components/common/Modal';
 
 export const HealthProtocolView = () => {
   const { 
@@ -1085,532 +1086,511 @@ export const HealthProtocolView = () => {
       {/* ========================================================================= */}
 
       {/* 1. Edit Calories & Macros Modal */}
-      {activeModal === 'calories' && (
-        <div className="modal-overlay" onClick={() => setActiveModal(null)}>
-          <div className="modal-panel" style={{ maxWidth: '680px' }} onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3 className="modal-title">Edit Calorie & Macro Targets</h3>
-              <button type="button" className="btn-icon btn-ghost" onClick={() => setActiveModal(null)}><X size={18} /></button>
+      <Modal
+        isOpen={activeModal === 'calories'}
+        onClose={() => setActiveModal(null)}
+        title="Edit Calorie & Macro Targets"
+        maxWidth="680px"
+      >
+        <form onSubmit={handleSaveCalories} className="modal-form">
+          <div className="form-row">
+            <div className="input-group flex-1">
+              <label className="label">Maintenance Calories (kcal)</label>
+              <input
+                type="number"
+                className="input"
+                value={formData.maintenance}
+                onChange={(e) => setFormData({ ...formData, maintenance: e.target.value })}
+              />
             </div>
-            <form onSubmit={handleSaveCalories} className="modal-form">
-              <div className="form-row">
-                <div className="input-group flex-1">
-                  <label className="label">Maintenance Calories (kcal)</label>
-                  <input
-                    type="number"
-                    className="input"
-                    value={formData.maintenance}
-                    onChange={(e) => setFormData({ ...formData, maintenance: e.target.value })}
-                  />
-                </div>
-                <div className="input-group flex-1">
-                  <label className="label">Fat Loss Target (kcal/day)</label>
-                  <input
-                    type="text"
-                    className="input"
-                    value={formData.fatLossTarget}
-                    onChange={(e) => setFormData({ ...formData, fatLossTarget: e.target.value })}
-                  />
-                </div>
-              </div>
-
-              <div className="form-row">
-                <div className="input-group flex-1">
-                  <label className="label">Expected Loss</label>
-                  <input
-                    type="text"
-                    className="input"
-                    value={formData.expectedLoss}
-                    onChange={(e) => setFormData({ ...formData, expectedLoss: e.target.value })}
-                  />
-                </div>
-                <div className="input-group flex-1">
-                  <label className="label">Cheat Day Target (kcal)</label>
-                  <input
-                    type="text"
-                    className="input"
-                    value={formData.cheatTarget}
-                    onChange={(e) => setFormData({ ...formData, cheatTarget: e.target.value })}
-                  />
-                </div>
-              </div>
-
-              <div className="input-group">
-                <label className="label">Cheat Day Rules</label>
-                <input
-                  type="text"
-                  className="input"
-                  value={formData.cheatRules}
-                  onChange={(e) => setFormData({ ...formData, cheatRules: e.target.value })}
-                />
-              </div>
-
-              {/* Editable Macros Sub-list */}
-              <div className="modal-subsection">
-                <div className="subsection-header">
-                  <label className="label" style={{ marginBottom: 0 }}>Macronutrients Breakdown</label>
-                  <button
-                    type="button"
-                    className="btn btn-secondary btn-sm"
-                    onClick={handleAddMacroRow}
-                  >
-                    <Plus size={13} />
-                    <span>Add Macro</span>
-                  </button>
-                </div>
-
-                <div className="modal-scroll-area">
-                  {(formData.macros || []).map((m, idx) => (
-                    <div key={idx} className="edit-macro-card">
-                      <div className="macro-edit-row">
-                        <input
-                          type="text"
-                          className="input flex-1"
-                          placeholder="Macro (e.g. Protein)"
-                          value={m.name}
-                          onChange={(e) => handleUpdateMacroRow(idx, 'name', e.target.value)}
-                          required
-                        />
-                        <input
-                          type="text"
-                          className="input"
-                          style={{ width: '90px' }}
-                          placeholder="Ratio %"
-                          value={m.percentage}
-                          onChange={(e) => handleUpdateMacroRow(idx, 'percentage', e.target.value)}
-                        />
-                        <input
-                          type="text"
-                          className="input"
-                          style={{ width: '110px' }}
-                          placeholder="Amount (g)"
-                          value={m.amount}
-                          onChange={(e) => handleUpdateMacroRow(idx, 'amount', e.target.value)}
-                          required
-                        />
-                        <button
-                          type="button"
-                          className="btn-icon btn-ghost text-danger"
-                          onClick={() => handleRemoveMacroRow(idx)}
-                          title="Remove Macro"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                      <input
-                        type="text"
-                        className="input"
-                        placeholder="Target Purpose (e.g. Hair strength, muscle renewal)"
-                        value={m.purpose}
-                        onChange={(e) => handleUpdateMacroRow(idx, 'purpose', e.target.value)}
-                      />
-                      <input
-                        type="text"
-                        className="input"
-                        placeholder="Top Food Sources (e.g. Paneer, curd, dal, sprouts)"
-                        value={m.foods}
-                        onChange={(e) => handleUpdateMacroRow(idx, 'foods', e.target.value)}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="modal-actions">
-                <button type="button" className="btn btn-secondary" onClick={() => setActiveModal(null)}>Cancel</button>
-                <button type="submit" className="btn btn-primary">Save Targets</button>
-              </div>
-            </form>
+            <div className="input-group flex-1">
+              <label className="label">Fat Loss Target (kcal/day)</label>
+              <input
+                type="text"
+                className="input"
+                value={formData.fatLossTarget}
+                onChange={(e) => setFormData({ ...formData, fatLossTarget: e.target.value })}
+              />
+            </div>
           </div>
-        </div>
-      )}
 
-      {/* 2. Edit Micronutrients Modal */}
-      {activeModal === 'micronutrients' && (
-        <div className="modal-overlay" onClick={() => setActiveModal(null)}>
-          <div className="modal-panel" style={{ maxWidth: '650px' }} onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3 className="modal-title">Edit Micronutrients Focus</h3>
-              <button type="button" className="btn-icon btn-ghost" onClick={() => setActiveModal(null)}><X size={18} /></button>
+          <div className="form-row">
+            <div className="input-group flex-1">
+              <label className="label">Expected Loss</label>
+              <input
+                type="text"
+                className="input"
+                value={formData.expectedLoss}
+                onChange={(e) => setFormData({ ...formData, expectedLoss: e.target.value })}
+              />
             </div>
-            <form onSubmit={handleSaveMicronutrients} className="modal-form">
-              <div className="modal-scroll-area">
-                {(formData.items || []).map((item, idx) => (
-                  <div key={idx} className="edit-micro-card">
-                    <div className="micro-edit-top">
-                      <input
-                        type="text"
-                        className="input micro-input-name"
-                        placeholder="Nutrient Name (e.g. Iron)"
-                        value={item.name}
-                        onChange={(e) => handleUpdateMicronutrientRow(idx, 'name', e.target.value)}
-                        required
-                      />
-                      <input
-                        type="text"
-                        className="input micro-input-target"
-                        placeholder="Target symptoms (e.g. Bloating, fatigue, hair fall)"
-                        value={item.target}
-                        onChange={(e) => handleUpdateMicronutrientRow(idx, 'target', e.target.value)}
-                        required
-                      />
-                      <button
-                        type="button"
-                        className="btn-icon btn-ghost text-danger"
-                        onClick={() => handleRemoveMicronutrientRow(idx)}
-                        title="Remove nutrient"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
+            <div className="input-group flex-1">
+              <label className="label">Cheat Day Target (kcal)</label>
+              <input
+                type="text"
+                className="input"
+                value={formData.cheatTarget}
+                onChange={(e) => setFormData({ ...formData, cheatTarget: e.target.value })}
+              />
+            </div>
+          </div>
 
-                    <div className="micro-edit-bottom">
-                      <input
-                        type="text"
-                        className="input"
-                        placeholder="Food sources (e.g. Dates, spinach, beetroot, jaggery)"
-                        value={item.sources}
-                        onChange={(e) => handleUpdateMicronutrientRow(idx, 'sources', e.target.value)}
-                        required
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
+          <div className="input-group">
+            <label className="label">Cheat Day Rules</label>
+            <input
+              type="text"
+              className="input"
+              value={formData.cheatRules}
+              onChange={(e) => setFormData({ ...formData, cheatRules: e.target.value })}
+            />
+          </div>
 
+          {/* Editable Macros Sub-list */}
+          <div className="modal-subsection">
+            <div className="subsection-header">
+              <label className="label" style={{ marginBottom: 0 }}>Macronutrients Breakdown</label>
               <button
                 type="button"
                 className="btn btn-secondary btn-sm"
-                onClick={handleAddMicronutrientRow}
-                style={{ alignSelf: 'flex-start' }}
+                onClick={handleAddMacroRow}
               >
-                <Plus size={15} />
-                <span>+ Add Another Micronutrient</span>
+                <Plus size={13} />
+                <span>Add Macro</span>
               </button>
-
-              <div className="modal-actions">
-                <button type="button" className="btn btn-secondary" onClick={() => setActiveModal(null)}>Cancel</button>
-                <button type="submit" className="btn btn-primary">Save Micronutrients</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* 3. Edit Skin Care Modal */}
-      {activeModal === 'skincare' && (
-        <div className="modal-overlay" onClick={() => setActiveModal(null)}>
-          <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3 className="modal-title">Edit Skin Care Regime</h3>
-              <button type="button" className="btn-icon btn-ghost" onClick={() => setActiveModal(null)}><X size={18} /></button>
             </div>
-            <form onSubmit={handleSaveSkinCare} className="modal-form">
-              <div className="input-group">
-                <label className="label">Daily AM & PM Routine</label>
-                <input
-                  type="text"
-                  className="input"
-                  placeholder="e.g. AM and PM (Cleanse, hydrate, sunscreen AM, barrier repair PM)"
-                  value={formData.daily}
-                  onChange={(e) => setFormData({ ...formData, daily: e.target.value })}
-                />
-              </div>
 
-              <div className="input-group">
-                <label className="label">Weekly - Sunday Routine</label>
-                <input
-                  type="text"
-                  className="input"
-                  placeholder="e.g. Sunday: Face shaving and scrub"
-                  value={formData.weeklySunday}
-                  onChange={(e) => setFormData({ ...formData, weeklySunday: e.target.value })}
-                />
-              </div>
-
-              <div className="input-group">
-                <label className="label">Weekly - Tuesday & Friday Routine</label>
-                <input
-                  type="text"
-                  className="input"
-                  placeholder="e.g. Tuesday & Friday: Face pack"
-                  value={formData.weeklyTueFri}
-                  onChange={(e) => setFormData({ ...formData, weeklyTueFri: e.target.value })}
-                />
-              </div>
-
-              <div className="input-group">
-                <label className="label">Notes / Guidelines</label>
-                <textarea
-                  className="textarea"
-                  rows={2}
-                  value={formData.notes}
-                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                />
-              </div>
-
-              <div className="modal-actions">
-                <button type="button" className="btn btn-secondary" onClick={() => setActiveModal(null)}>Cancel</button>
-                <button type="submit" className="btn btn-primary">Save Skin Care</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* 4. Edit Body Care Modal */}
-      {activeModal === 'bodycare' && (
-        <div className="modal-overlay" onClick={() => setActiveModal(null)}>
-          <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3 className="modal-title">Edit Body Care Regime</h3>
-              <button type="button" className="btn-icon btn-ghost" onClick={() => setActiveModal(null)}><X size={18} /></button>
-            </div>
-            <form onSubmit={handleSaveBodyCare} className="modal-form">
-              <div className="input-group">
-                <label className="label">Sunday Routine</label>
-                <input
-                  type="text"
-                  className="input"
-                  placeholder="e.g. Sunday: Oiling, scrub, shaving"
-                  value={formData.sunday}
-                  onChange={(e) => setFormData({ ...formData, sunday: e.target.value })}
-                />
-              </div>
-
-              <div className="input-group">
-                <label className="label">Tuesday & Friday Routine</label>
-                <input
-                  type="text"
-                  className="input"
-                  placeholder="e.g. Tuesday & Friday: Exfoliating body wash"
-                  value={formData.tueFri}
-                  onChange={(e) => setFormData({ ...formData, tueFri: e.target.value })}
-                />
-              </div>
-
-              <div className="input-group">
-                <label className="label">Notes / Guidelines</label>
-                <textarea
-                  className="textarea"
-                  rows={2}
-                  value={formData.notes}
-                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                />
-              </div>
-
-              <div className="modal-actions">
-                <button type="button" className="btn btn-secondary" onClick={() => setActiveModal(null)}>Cancel</button>
-                <button type="submit" className="btn btn-primary">Save Body Care</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* 5. Edit Hair Care Modal */}
-      {activeModal === 'haircare' && (
-        <div className="modal-overlay" onClick={() => setActiveModal(null)}>
-          <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3 className="modal-title">Edit Hair Care Regime</h3>
-              <button type="button" className="btn-icon btn-ghost" onClick={() => setActiveModal(null)}><X size={18} /></button>
-            </div>
-            <form onSubmit={handleSaveHairCare} className="modal-form">
-              <div className="input-group">
-                <label className="label">Daily Routine</label>
-                <input
-                  type="text"
-                  className="input"
-                  placeholder="e.g. Serum and hair growth water"
-                  value={formData.daily}
-                  onChange={(e) => setFormData({ ...formData, daily: e.target.value })}
-                />
-              </div>
-
-              <div className="input-group">
-                <label className="label">Weekly Routine</label>
-                <input
-                  type="text"
-                  className="input"
-                  placeholder="e.g. 3x Oiling, hair pack, hair wash"
-                  value={formData.weekly}
-                  onChange={(e) => setFormData({ ...formData, weekly: e.target.value })}
-                />
-              </div>
-
-              <div className="input-group">
-                <label className="label">Two Weeks Once (Bi-Weekly Cycle)</label>
-                <input
-                  type="text"
-                  className="input"
-                  placeholder="e.g. Two weeks once: Saturday henna and Sunday avari podi"
-                  value={formData.biWeekly}
-                  onChange={(e) => setFormData({ ...formData, biWeekly: e.target.value })}
-                />
-              </div>
-
-              <div className="input-group">
-                <label className="label">Notes / Guidelines</label>
-                <textarea
-                  className="textarea"
-                  rows={2}
-                  value={formData.notes}
-                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                />
-              </div>
-
-              <div className="modal-actions">
-                <button type="button" className="btn btn-secondary" onClick={() => setActiveModal(null)}>Cancel</button>
-                <button type="submit" className="btn btn-primary">Save Hair Care</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* 6. Edit Exercise Modal */}
-      {activeModal === 'exercise' && (
-        <div className="modal-overlay" onClick={() => setActiveModal(null)}>
-          <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3 className="modal-title">Edit Exercise Routine</h3>
-              <button type="button" className="btn-icon btn-ghost" onClick={() => setActiveModal(null)}><X size={18} /></button>
-            </div>
-            <form onSubmit={handleSaveExercise} className="modal-form">
-              <div className="input-group">
-                <label className="label">Morning Cardio Title</label>
-                <input
-                  type="text"
-                  className="input"
-                  value={formData.morningTitle}
-                  onChange={(e) => setFormData({ ...formData, morningTitle: e.target.value })}
-                />
-              </div>
-              <div className="input-group">
-                <label className="label">Morning Activities</label>
-                <input
-                  type="text"
-                  className="input"
-                  value={formData.morningActivities}
-                  onChange={(e) => setFormData({ ...formData, morningActivities: e.target.value })}
-                />
-              </div>
-              <div className="input-group">
-                <label className="label">Morning Benefits / Notes</label>
-                <input
-                  type="text"
-                  className="input"
-                  value={formData.morningBenefits}
-                  onChange={(e) => setFormData({ ...formData, morningBenefits: e.target.value })}
-                />
-              </div>
-
-              <div className="input-group">
-                <label className="label">Evening Routine Title</label>
-                <input
-                  type="text"
-                  className="input"
-                  value={formData.eveningTitle}
-                  onChange={(e) => setFormData({ ...formData, eveningTitle: e.target.value })}
-                />
-              </div>
-              <div className="input-group">
-                <label className="label">Evening Activities</label>
-                <input
-                  type="text"
-                  className="input"
-                  value={formData.eveningActivities}
-                  onChange={(e) => setFormData({ ...formData, eveningActivities: e.target.value })}
-                />
-              </div>
-              <div className="input-group">
-                <label className="label">Evening Benefits / Notes</label>
-                <input
-                  type="text"
-                  className="input"
-                  value={formData.eveningBenefits}
-                  onChange={(e) => setFormData({ ...formData, eveningBenefits: e.target.value })}
-                />
-              </div>
-
-              <div className="modal-actions">
-                <button type="button" className="btn btn-secondary" onClick={() => setActiveModal(null)}>Cancel</button>
-                <button type="submit" className="btn btn-primary">Save Routine</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* 7. Edit Sugar Modal */}
-      {activeModal === 'sugar' && (
-        <div className="modal-overlay" onClick={() => setActiveModal(null)}>
-          <div className="modal-panel" style={{ maxWidth: '600px' }} onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3 className="modal-title">Edit Sugar Cutting Strategy</h3>
-              <button type="button" className="btn-icon btn-ghost" onClick={() => setActiveModal(null)}><X size={18} /></button>
-            </div>
-            <form onSubmit={handleSaveSugar} className="modal-form">
-              <div className="modal-scroll-area">
-                {(formData.phases || []).map((p, idx) => (
-                  <div key={idx} className="sugar-edit-row">
+            <div className="modal-scroll-area">
+              {(formData.macros || []).map((m, idx) => (
+                <div key={idx} className="edit-macro-card">
+                  <div className="macro-edit-row">
+                    <input
+                      type="text"
+                      className="input flex-1"
+                      placeholder="Macro (e.g. Protein)"
+                      value={m.name}
+                      onChange={(e) => handleUpdateMacroRow(idx, 'name', e.target.value)}
+                      required
+                    />
+                    <input
+                      type="text"
+                      className="input"
+                      style={{ width: '90px' }}
+                      placeholder="Ratio %"
+                      value={m.percentage}
+                      onChange={(e) => handleUpdateMacroRow(idx, 'percentage', e.target.value)}
+                    />
                     <input
                       type="text"
                       className="input"
                       style={{ width: '110px' }}
-                      value={p.week}
-                      onChange={(e) => handleUpdateSugarPhaseRow(idx, 'week', e.target.value)}
-                      placeholder="e.g. Week 1"
-                    />
-                    <input
-                      type="text"
-                      className="input flex-1"
-                      value={p.action}
-                      onChange={(e) => handleUpdateSugarPhaseRow(idx, 'action', e.target.value)}
-                      placeholder="Action step (e.g. Remove added sugar...)"
+                      placeholder="Amount (g)"
+                      value={m.amount}
+                      onChange={(e) => handleUpdateMacroRow(idx, 'amount', e.target.value)}
                       required
                     />
                     <button
                       type="button"
                       className="btn-icon btn-ghost text-danger"
-                      onClick={() => handleRemoveSugarPhaseRow(idx)}
-                      title="Remove Phase"
+                      onClick={() => handleRemoveMacroRow(idx)}
+                      title="Remove Macro"
                     >
                       <Trash2 size={16} />
                     </button>
                   </div>
-                ))}
+                  <input
+                    type="text"
+                    className="input"
+                    placeholder="Target Purpose (e.g. Hair strength, muscle renewal)"
+                    value={m.purpose}
+                    onChange={(e) => handleUpdateMacroRow(idx, 'purpose', e.target.value)}
+                  />
+                  <input
+                    type="text"
+                    className="input"
+                    placeholder="Top Food Sources (e.g. Paneer, curd, dal, sprouts)"
+                    value={m.foods}
+                    onChange={(e) => handleUpdateMacroRow(idx, 'foods', e.target.value)}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="modal-actions">
+            <button type="button" className="btn btn-secondary" onClick={() => setActiveModal(null)}>Cancel</button>
+            <button type="submit" className="btn btn-primary">Save Targets</button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* 2. Edit Micronutrients Modal */}
+      <Modal
+        isOpen={activeModal === 'micronutrients'}
+        onClose={() => setActiveModal(null)}
+        title="Edit Micronutrients Focus"
+        maxWidth="650px"
+      >
+        <form onSubmit={handleSaveMicronutrients} className="modal-form">
+          <div className="modal-scroll-area">
+            {(formData.items || []).map((item, idx) => (
+              <div key={idx} className="edit-micro-card">
+                <div className="micro-edit-top">
+                  <input
+                    type="text"
+                    className="input micro-input-name"
+                    placeholder="Nutrient Name (e.g. Iron)"
+                    value={item.name}
+                    onChange={(e) => handleUpdateMicronutrientRow(idx, 'name', e.target.value)}
+                    required
+                  />
+                  <input
+                    type="text"
+                    className="input micro-input-target"
+                    placeholder="Target symptoms (e.g. Bloating, fatigue, hair fall)"
+                    value={item.target}
+                    onChange={(e) => handleUpdateMicronutrientRow(idx, 'target', e.target.value)}
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="btn-icon btn-ghost text-danger"
+                    onClick={() => handleRemoveMicronutrientRow(idx)}
+                    title="Remove nutrient"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+
+                <div className="micro-edit-bottom">
+                  <input
+                    type="text"
+                    className="input"
+                    placeholder="Food sources (e.g. Dates, spinach, beetroot, jaggery)"
+                    value={item.sources}
+                    onChange={(e) => handleUpdateMicronutrientRow(idx, 'sources', e.target.value)}
+                    required
+                  />
+                </div>
               </div>
+            ))}
+          </div>
 
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm"
-                onClick={handleAddSugarPhaseRow}
-                style={{ alignSelf: 'flex-start' }}
-              >
-                <Plus size={14} />
-                <span>+ Add Phase</span>
-              </button>
+          <button
+            type="button"
+            className="btn btn-secondary btn-sm"
+            onClick={handleAddMicronutrientRow}
+            style={{ alignSelf: 'flex-start' }}
+          >
+            <Plus size={15} />
+            <span>+ Add Another Micronutrient</span>
+          </button>
 
-              <div className="input-group">
-                <label className="label">Craving Hack</label>
+          <div className="modal-actions">
+            <button type="button" className="btn btn-secondary" onClick={() => setActiveModal(null)}>Cancel</button>
+            <button type="submit" className="btn btn-primary">Save Micronutrients</button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* 3. Edit Skin Care Modal */}
+      <Modal
+        isOpen={activeModal === 'skincare'}
+        onClose={() => setActiveModal(null)}
+        title="Edit Skin Care Regime"
+        maxWidth="560px"
+      >
+        <form onSubmit={handleSaveSkinCare} className="modal-form">
+          <div className="input-group">
+            <label className="label">Daily AM & PM Routine</label>
+            <input
+              type="text"
+              className="input"
+              placeholder="e.g. AM and PM (Cleanse, hydrate, sunscreen AM, barrier repair PM)"
+              value={formData.daily}
+              onChange={(e) => setFormData({ ...formData, daily: e.target.value })}
+            />
+          </div>
+
+          <div className="input-group">
+            <label className="label">Weekly - Sunday Routine</label>
+            <input
+              type="text"
+              className="input"
+              placeholder="e.g. Sunday: Face shaving and scrub"
+              value={formData.weeklySunday}
+              onChange={(e) => setFormData({ ...formData, weeklySunday: e.target.value })}
+            />
+          </div>
+
+          <div className="input-group">
+            <label className="label">Weekly - Tuesday & Friday Routine</label>
+            <input
+              type="text"
+              className="input"
+              placeholder="e.g. Tuesday & Friday: Face pack"
+              value={formData.weeklyTueFri}
+              onChange={(e) => setFormData({ ...formData, weeklyTueFri: e.target.value })}
+            />
+          </div>
+
+          <div className="input-group">
+            <label className="label">Notes / Guidelines</label>
+            <textarea
+              className="textarea"
+              rows={3}
+              value={formData.notes}
+              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+            />
+          </div>
+
+          <div className="modal-actions">
+            <button type="button" className="btn btn-secondary" onClick={() => setActiveModal(null)}>Cancel</button>
+            <button type="submit" className="btn btn-primary">Save Skin Care</button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* 4. Edit Body Care Modal */}
+      <Modal
+        isOpen={activeModal === 'bodycare'}
+        onClose={() => setActiveModal(null)}
+        title="Edit Body Care Regime"
+        maxWidth="560px"
+      >
+        <form onSubmit={handleSaveBodyCare} className="modal-form">
+          <div className="input-group">
+            <label className="label">Sunday Routine</label>
+            <input
+              type="text"
+              className="input"
+              placeholder="e.g. Sunday: Oiling, scrub, shaving"
+              value={formData.sunday}
+              onChange={(e) => setFormData({ ...formData, sunday: e.target.value })}
+            />
+          </div>
+
+          <div className="input-group">
+            <label className="label">Tuesday & Friday Routine</label>
+            <input
+              type="text"
+              className="input"
+              placeholder="e.g. Tuesday & Friday: Exfoliating body wash"
+              value={formData.tueFri}
+              onChange={(e) => setFormData({ ...formData, tueFri: e.target.value })}
+            />
+          </div>
+
+          <div className="input-group">
+            <label className="label">Notes / Guidelines</label>
+            <textarea
+              className="textarea"
+              rows={3}
+              value={formData.notes}
+              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+            />
+          </div>
+
+          <div className="modal-actions">
+            <button type="button" className="btn btn-secondary" onClick={() => setActiveModal(null)}>Cancel</button>
+            <button type="submit" className="btn btn-primary">Save Body Care</button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* 5. Edit Hair Care Modal */}
+      <Modal
+        isOpen={activeModal === 'haircare'}
+        onClose={() => setActiveModal(null)}
+        title="Edit Hair Care Regime"
+        maxWidth="560px"
+      >
+        <form onSubmit={handleSaveHairCare} className="modal-form">
+          <div className="input-group">
+            <label className="label">Daily Routine</label>
+            <input
+              type="text"
+              className="input"
+              placeholder="e.g. Serum and hair growth water"
+              value={formData.daily}
+              onChange={(e) => setFormData({ ...formData, daily: e.target.value })}
+            />
+          </div>
+
+          <div className="input-group">
+            <label className="label">Weekly Routine</label>
+            <input
+              type="text"
+              className="input"
+              placeholder="e.g. 3x Oiling, hair pack, hair wash"
+              value={formData.weekly}
+              onChange={(e) => setFormData({ ...formData, weekly: e.target.value })}
+            />
+          </div>
+
+          <div className="input-group">
+            <label className="label">Two Weeks Once (Bi-Weekly Cycle)</label>
+            <input
+              type="text"
+              className="input"
+              placeholder="e.g. Two weeks once: Saturday henna and Sunday avari podi"
+              value={formData.biWeekly}
+              onChange={(e) => setFormData({ ...formData, biWeekly: e.target.value })}
+            />
+          </div>
+
+          <div className="input-group">
+            <label className="label">Notes / Guidelines</label>
+            <textarea
+              className="textarea"
+              rows={3}
+              value={formData.notes}
+              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+            />
+          </div>
+
+          <div className="modal-actions">
+            <button type="button" className="btn btn-secondary" onClick={() => setActiveModal(null)}>Cancel</button>
+            <button type="submit" className="btn btn-primary">Save Hair Care</button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* 6. Edit Exercise Modal */}
+      <Modal
+        isOpen={activeModal === 'exercise'}
+        onClose={() => setActiveModal(null)}
+        title="Edit Exercise Routine"
+        maxWidth="580px"
+      >
+        <form onSubmit={handleSaveExercise} className="modal-form">
+          <div className="input-group">
+            <label className="label">Morning Cardio Title</label>
+            <input
+              type="text"
+              className="input"
+              value={formData.morningTitle}
+              onChange={(e) => setFormData({ ...formData, morningTitle: e.target.value })}
+            />
+          </div>
+          <div className="input-group">
+            <label className="label">Morning Activities</label>
+            <input
+              type="text"
+              className="input"
+              value={formData.morningActivities}
+              onChange={(e) => setFormData({ ...formData, morningActivities: e.target.value })}
+            />
+          </div>
+          <div className="input-group">
+            <label className="label">Morning Benefits / Notes</label>
+            <input
+              type="text"
+              className="input"
+              value={formData.morningBenefits}
+              onChange={(e) => setFormData({ ...formData, morningBenefits: e.target.value })}
+            />
+          </div>
+
+          <div className="input-group">
+            <label className="label">Evening Routine Title</label>
+            <input
+              type="text"
+              className="input"
+              value={formData.eveningTitle}
+              onChange={(e) => setFormData({ ...formData, eveningTitle: e.target.value })}
+            />
+          </div>
+          <div className="input-group">
+            <label className="label">Evening Activities</label>
+            <input
+              type="text"
+              className="input"
+              value={formData.eveningActivities}
+              onChange={(e) => setFormData({ ...formData, eveningActivities: e.target.value })}
+            />
+          </div>
+          <div className="input-group">
+            <label className="label">Evening Benefits / Notes</label>
+            <input
+              type="text"
+              className="input"
+              value={formData.eveningBenefits}
+              onChange={(e) => setFormData({ ...formData, eveningBenefits: e.target.value })}
+            />
+          </div>
+
+          <div className="modal-actions">
+            <button type="button" className="btn btn-secondary" onClick={() => setActiveModal(null)}>Cancel</button>
+            <button type="submit" className="btn btn-primary">Save Routine</button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* 7. Edit Sugar Modal */}
+      <Modal
+        isOpen={activeModal === 'sugar'}
+        onClose={() => setActiveModal(null)}
+        title="Edit Sugar Cutting Strategy"
+        maxWidth="600px"
+      >
+        <form onSubmit={handleSaveSugar} className="modal-form">
+          <div className="modal-scroll-area">
+            {(formData.phases || []).map((p, idx) => (
+              <div key={idx} className="sugar-edit-row">
                 <input
                   type="text"
                   className="input"
-                  value={formData.cravingHack}
-                  onChange={(e) => setFormData({ ...formData, cravingHack: e.target.value })}
+                  style={{ width: '110px' }}
+                  value={p.week}
+                  onChange={(e) => handleUpdateSugarPhaseRow(idx, 'week', e.target.value)}
+                  placeholder="e.g. Week 1"
                 />
+                <input
+                  type="text"
+                  className="input flex-1"
+                  value={p.action}
+                  onChange={(e) => handleUpdateSugarPhaseRow(idx, 'action', e.target.value)}
+                  placeholder="Action step (e.g. Remove added sugar...)"
+                  required
+                />
+                <button
+                  type="button"
+                  className="btn-icon btn-ghost text-danger"
+                  onClick={() => handleRemoveSugarPhaseRow(idx)}
+                  title="Remove Phase"
+                >
+                  <Trash2 size={16} />
+                </button>
               </div>
-
-              <div className="modal-actions">
-                <button type="button" className="btn btn-secondary" onClick={() => setActiveModal(null)}>Cancel</button>
-                <button type="submit" className="btn btn-primary">Save Strategy</button>
-              </div>
-            </form>
+            ))}
           </div>
-        </div>
-      )}
+
+          <button
+            type="button"
+            className="btn btn-secondary btn-sm"
+            onClick={handleAddSugarPhaseRow}
+            style={{ alignSelf: 'flex-start' }}
+          >
+            <Plus size={14} />
+            <span>+ Add Phase</span>
+          </button>
+
+          <div className="input-group">
+            <label className="label">Craving Hack</label>
+            <input
+              type="text"
+              className="input"
+              value={formData.cravingHack}
+              onChange={(e) => setFormData({ ...formData, cravingHack: e.target.value })}
+            />
+          </div>
+
+          <div className="modal-actions">
+            <button type="button" className="btn btn-secondary" onClick={() => setActiveModal(null)}>Cancel</button>
+            <button type="submit" className="btn btn-primary">Save Strategy</button>
+          </div>
+        </form>
+      </Modal>
 
       <style>{`
         .health-protocol-view {
