@@ -10,9 +10,17 @@ import {
   Sparkles, 
   Compass, 
   CheckCircle2, 
+  Circle,
   Wallet, 
   ArrowRight,
-  Calendar
+  Calendar,
+  Code2,
+  Layers,
+  Smartphone,
+  FolderGit2,
+  Briefcase,
+  Award,
+  Table
 } from 'lucide-react';
 
 const MOTIVATIONAL_QUOTES = [
@@ -28,6 +36,7 @@ export const DashboardView = () => {
     habits = [], 
     roadmap = [],
     roadmapCompletionPercent = 0,
+    toggleRoadmapTask,
     todayCompletedHabits = 0, 
     todayHabitProgress = 0, 
     currentMonthIncome = 0,
@@ -113,22 +122,23 @@ export const DashboardView = () => {
         </div>
       </div>
 
-      {/* Highlights: Career Roadmap */}
+      {/* 🎯 16-Week Career Curriculum Current Milestone Widget */}
       {currentWeek && (
-        <div className="highlights-grid">
-          <div className="card highlight-card roadmap-highlight">
-            <div className="highlight-left">
-              <div className="highlight-icon-wrap bg-cyan-glow">
+        <div className="card roadmap-dashboard-card">
+          <div className="roadmap-dash-header">
+            <div className="roadmap-dash-title-group">
+              <div className="dash-badge-icon">
                 <Compass size={22} className="text-cyan" />
               </div>
-              <div className="highlight-texts">
-                <div className="highlight-tag-row">
+              <div>
+                <div className="roadmap-badge-row">
                   <span className="badge badge-primary">{currentWeek.period} Target</span>
-                  <span className="text-xs text-sub">{roadmapCompletionPercent}% Roadmap</span>
+                  <span className="text-xs text-sub">{currentWeek.dateRange || currentWeek.month}</span>
+                  <span className="badge badge-roadmap">{currentWeek.completedTasks?.length || 0}/5 Done</span>
                 </div>
-                <h4 className="highlight-main-title">
-                  🧠 {currentWeek.dsa ? currentWeek.dsa.split(',')[0] : 'DSA Mastery'} • 💻 {currentWeek.fullstack ? currentWeek.fullstack.split(',')[0] : 'Full Stack'}
-                </h4>
+                <h3 className="roadmap-dash-heading">
+                  16-Week Master Curriculum • {currentWeek.period} Focus
+                </h3>
               </div>
             </div>
 
@@ -136,9 +146,126 @@ export const DashboardView = () => {
               className="btn btn-secondary btn-sm"
               onClick={() => setActiveTab('roadmap')}
             >
-              <span>Roadmap</span>
+              <Table size={14} />
+              <span>Full 16-Week Table</span>
               <ArrowRight size={14} />
             </button>
+          </div>
+
+          {/* 5 Tracks Grid */}
+          <div className="roadmap-dash-grid">
+            {/* 1. DSA */}
+            {currentWeek.dsa && (
+              <div 
+                className={`dash-task-item ${currentWeek.completedTasks?.includes('dsa') ? 'done' : ''}`}
+                onClick={() => toggleRoadmapTask(currentWeek.id, 'dsa')}
+                title="Click to toggle DSA complete"
+              >
+                <div className="dash-task-check">
+                  {currentWeek.completedTasks?.includes('dsa') ? (
+                    <CheckCircle2 size={16} className="text-emerald" />
+                  ) : (
+                    <Circle size={16} className="text-muted" />
+                  )}
+                </div>
+                <div className="dash-task-content">
+                  <span className="dash-track-label dsa">🧠 DSA Focus</span>
+                  <span className="dash-task-text">{currentWeek.dsa}</span>
+                </div>
+              </div>
+            )}
+
+            {/* 2. Full Stack */}
+            {currentWeek.fullstack && (
+              <div 
+                className={`dash-task-item ${currentWeek.completedTasks?.includes('fullstack') ? 'done' : ''}`}
+                onClick={() => toggleRoadmapTask(currentWeek.id, 'fullstack')}
+                title="Click to toggle Full Stack complete"
+              >
+                <div className="dash-task-check">
+                  {currentWeek.completedTasks?.includes('fullstack') ? (
+                    <CheckCircle2 size={16} className="text-emerald" />
+                  ) : (
+                    <Circle size={16} className="text-muted" />
+                  )}
+                </div>
+                <div className="dash-task-content">
+                  <span className="dash-track-label fullstack">💻 Full Stack</span>
+                  <span className="dash-task-text">{currentWeek.fullstack}</span>
+                </div>
+              </div>
+            )}
+
+            {/* 3. React Native */}
+            {currentWeek.mobile && (
+              <div 
+                className={`dash-task-item ${currentWeek.completedTasks?.includes('mobile') ? 'done' : ''}`}
+                onClick={() => toggleRoadmapTask(currentWeek.id, 'mobile')}
+                title="Click to toggle React Native complete"
+              >
+                <div className="dash-task-check">
+                  {currentWeek.completedTasks?.includes('mobile') ? (
+                    <CheckCircle2 size={16} className="text-emerald" />
+                  ) : (
+                    <Circle size={16} className="text-muted" />
+                  )}
+                </div>
+                <div className="dash-task-content">
+                  <span className="dash-track-label mobile">📱 React Native</span>
+                  <span className="dash-task-text">{currentWeek.mobile}</span>
+                </div>
+              </div>
+            )}
+
+            {/* 4. Project */}
+            {currentWeek.project && (
+              <div 
+                className={`dash-task-item ${currentWeek.completedTasks?.includes('project') ? 'done' : ''}`}
+                onClick={() => toggleRoadmapTask(currentWeek.id, 'project')}
+                title="Click to toggle Project complete"
+              >
+                <div className="dash-task-check">
+                  {currentWeek.completedTasks?.includes('project') ? (
+                    <CheckCircle2 size={16} className="text-emerald" />
+                  ) : (
+                    <Circle size={16} className="text-muted" />
+                  )}
+                </div>
+                <div className="dash-task-content">
+                  <span className="dash-track-label project">🚀 Project / Build</span>
+                  <span className="dash-task-text">{currentWeek.project}</span>
+                </div>
+              </div>
+            )}
+
+            {/* 5. Career */}
+            {currentWeek.career && (
+              <div 
+                className={`dash-task-item ${currentWeek.completedTasks?.includes('career') ? 'done' : ''}`}
+                onClick={() => toggleRoadmapTask(currentWeek.id, 'career')}
+                title="Click to toggle Career Prep complete"
+              >
+                <div className="dash-task-check">
+                  {currentWeek.completedTasks?.includes('career') ? (
+                    <CheckCircle2 size={16} className="text-emerald" />
+                  ) : (
+                    <Circle size={16} className="text-muted" />
+                  )}
+                </div>
+                <div className="dash-task-content">
+                  <span className="dash-track-label career">👔 Career / Mock</span>
+                  <span className="dash-task-text">{currentWeek.career}</span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* End-of-Dec Deliverables Footer Strip */}
+          <div className="roadmap-dash-footer">
+            <Award size={16} className="text-primary" />
+            <span className="text-xs text-sub">
+              <strong>End-of-Dec Goal:</strong> 60–80 DSA Qs • React+TS+Node+Postgres+Prisma • RN Mobile App • Docker+VPS DevOps • 1 Polished Portfolio
+            </span>
           </div>
         </div>
       )}
@@ -422,96 +549,137 @@ export const DashboardView = () => {
           font-weight: 600;
         }
 
-        .highlights-grid {
-          display: grid;
-          grid-template-columns: 1fr;
+        /* 🎯 ROADMAP DASHBOARD CARD */
+        .roadmap-dashboard-card {
+          display: flex;
+          flex-direction: column;
           gap: 1rem;
+          padding: 1.35rem;
+          background: linear-gradient(135deg, rgba(14, 165, 233, 0.08), rgba(99, 102, 241, 0.06));
+          border: 1px solid rgba(14, 165, 233, 0.25);
         }
 
-        @media (min-width: 900px) {
-          .highlights-grid {
-            grid-template-columns: repeat(2, 1fr);
-          }
-        }
-
-        .highlight-card {
+        .roadmap-dash-header {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding: 1rem 1.25rem;
-          gap: 1rem;
           flex-wrap: wrap;
+          gap: 0.75rem;
         }
 
-        .roadmap-highlight {
-          background: linear-gradient(135deg, rgba(14, 165, 233, 0.12), rgba(99, 102, 241, 0.08));
-          border-color: rgba(14, 165, 233, 0.3);
-        }
-
-        .marvel-highlight {
-          background: linear-gradient(135deg, rgba(239, 68, 68, 0.12), rgba(245, 158, 11, 0.08));
-          border-color: rgba(239, 68, 68, 0.3);
-        }
-
-        .highlight-left {
+        .roadmap-dash-title-group {
           display: flex;
           align-items: center;
-          gap: 0.85rem;
-          flex: 1;
-          min-width: 200px;
+          gap: 0.75rem;
         }
 
-        .highlight-icon-wrap {
-          width: 42px;
-          height: 42px;
-          border-radius: var(--radius-sm);
+        .dash-badge-icon {
+          width: 40px;
+          height: 40px;
+          border-radius: var(--radius-md);
+          background: rgba(14, 165, 233, 0.15);
           display: flex;
           align-items: center;
           justify-content: center;
           flex-shrink: 0;
         }
 
-        .bg-cyan-glow {
-          background: rgba(14, 165, 233, 0.18);
+        .text-cyan { color: #06b6d4; }
+
+        .roadmap-badge-row {
+          display: flex;
+          align-items: center;
+          gap: 0.45rem;
+          margin-bottom: 0.2rem;
         }
 
-        .bg-red-glow {
-          background: rgba(239, 68, 68, 0.18);
+        .badge-roadmap {
+          background: rgba(16, 185, 129, 0.18);
+          color: #10b981;
+          font-weight: 700;
+          font-size: 0.7rem;
+          padding: 0.15rem 0.45rem;
+          border-radius: var(--radius-sm);
         }
 
-        .text-cyan { color: var(--accent-cyan); }
-        .text-red-400 { color: #ef4444; }
+        .roadmap-dash-heading {
+          font-size: 1.05rem;
+          font-weight: 800;
+          letter-spacing: -0.01em;
+        }
 
-        .highlight-texts {
+        .roadmap-dash-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+          gap: 0.65rem;
+        }
+
+        .dash-task-item {
+          display: flex;
+          align-items: flex-start;
+          gap: 0.55rem;
+          padding: 0.65rem 0.75rem;
+          background: var(--bg-card);
+          border: 1px solid var(--border-color);
+          border-radius: var(--radius-md);
+          cursor: pointer;
+          transition: all 0.15s ease;
+        }
+
+        .dash-task-item:hover {
+          border-color: var(--primary-color);
+          transform: translateY(-1px);
+        }
+
+        .dash-task-check {
+          flex-shrink: 0;
+          margin-top: 2px;
+        }
+
+        .dash-task-content {
           display: flex;
           flex-direction: column;
           gap: 0.2rem;
         }
 
-        .highlight-tag-row {
+        .dash-track-label {
+          font-size: 0.65rem;
+          font-weight: 800;
+          text-transform: uppercase;
+          letter-spacing: 0.02em;
+        }
+
+        .dash-track-label.dsa { color: #818cf8; }
+        .dash-track-label.fullstack { color: #34d399; }
+        .dash-track-label.mobile { color: #22d3ee; }
+        .dash-track-label.project { color: #f472b6; }
+        .dash-track-label.career { color: #fbbf24; }
+
+        .dash-task-text {
+          font-size: 0.78rem;
+          line-height: 1.35;
+          color: var(--text-main);
+        }
+
+        .dash-task-item.done {
+          background: rgba(16, 185, 129, 0.05);
+          border-color: rgba(16, 185, 129, 0.25);
+        }
+
+        .dash-task-item.done .dash-task-text {
+          text-decoration: line-through;
+          color: var(--text-muted);
+        }
+
+        .roadmap-dash-footer {
           display: flex;
           align-items: center;
           gap: 0.5rem;
+          padding-top: 0.6rem;
+          border-top: 1px solid rgba(255, 255, 255, 0.08);
         }
 
-        .badge-marvel {
-          background: rgba(239, 68, 68, 0.2);
-          color: #ef4444;
-          font-weight: 800;
-        }
-
-        .highlight-main-title {
-          font-size: 0.88rem;
-          font-weight: 700;
-          color: var(--text-primary);
-        }
-
-        .marvel-card-actions {
-          display: flex;
-          align-items: center;
-          gap: 0.4rem;
-        }
-
+        /* DASHBOARD GRID */
         .dashboard-grid {
           display: grid;
           grid-template-columns: 1fr;

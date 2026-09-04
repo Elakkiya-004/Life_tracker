@@ -110,12 +110,27 @@ export const AppProvider = ({ children }) => {
     }
   });
 
+  const mergeRoadmapWithDefaults = (existingList) => {
+    if (!Array.isArray(existingList) || existingList.length === 0) return DEFAULT_ROADMAP;
+    return DEFAULT_ROADMAP.map(defaultWeek => {
+      const matched = existingList.find(w => w && (w.id === defaultWeek.id || w.period === defaultWeek.period));
+      if (!matched) return defaultWeek;
+      return {
+        ...defaultWeek,
+        status: matched.status || defaultWeek.status,
+        completedTasks: Array.isArray(matched.completedTasks) ? matched.completedTasks : defaultWeek.completedTasks,
+        isLightWeek: typeof matched.isLightWeek === 'boolean' ? matched.isLightWeek : defaultWeek.isLightWeek,
+        notes: matched.notes !== undefined ? matched.notes : defaultWeek.notes,
+      };
+    });
+  };
+
   const [roadmap, setRoadmap] = useState(() => {
     try {
       const data = getLocalData(STORAGE_KEYS.ROADMAP, null);
-      if (Array.isArray(data) && data.length > 0) return data;
-      setLocalData(STORAGE_KEYS.ROADMAP, DEFAULT_ROADMAP);
-      return DEFAULT_ROADMAP;
+      const merged = mergeRoadmapWithDefaults(data);
+      setLocalData(STORAGE_KEYS.ROADMAP, merged);
+      return merged;
     } catch {
       return DEFAULT_ROADMAP;
     }
@@ -313,9 +328,12 @@ export const AppProvider = ({ children }) => {
           }
         }
         if (Array.isArray(cloudData.roadmap) && cloudData.roadmap.length > 0) {
-          setRoadmap(cloudData.roadmap);
-          setLocalData(STORAGE_KEYS.ROADMAP, cloudData.roadmap);
+          const merged = mergeRoadmapWithDefaults(cloudData.roadmap);
+          setRoadmap(merged);
+          setLocalData(STORAGE_KEYS.ROADMAP, merged);
         } else if (!cloudData.roadmap) {
+          setRoadmap(DEFAULT_ROADMAP);
+          setLocalData(STORAGE_KEYS.ROADMAP, DEFAULT_ROADMAP);
           syncToCloud('default_user', { roadmap: DEFAULT_ROADMAP });
         }
 
