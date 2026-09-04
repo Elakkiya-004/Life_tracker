@@ -79,7 +79,7 @@ export const Sidebar = () => {
                 <span className="nav-label">{item.label}</span>
               </div>
               {item.badge && (
-                <span className={`nav-badge ${item.id === 'watchlists' ? 'badge-marvel' : item.id === 'roadmap' ? 'badge-roadmap' : (todayHabitProgress === 100 ? 'badge-success' : '')}`}>
+                <span className={`nav-badge ${item.id === 'watchlists' ? 'badge-marvel' : item.id === 'roadmap' ? 'badge-roadmap' : item.id === 'protocol' ? 'badge-protocol' : item.id === 'finance' ? 'badge-finance' : (todayHabitProgress === 100 ? 'badge-success' : '')}`}>
                   {item.badge}
                 </span>
               )}
@@ -259,6 +259,18 @@ export const Sidebar = () => {
           background: rgba(239, 68, 68, 0.15);
           color: #ef4444;
           border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .nav-badge.badge-protocol {
+          background: rgba(244, 63, 94, 0.15);
+          color: #f43f5e;
+          border: 1px solid rgba(244, 63, 94, 0.3);
+        }
+
+        .nav-badge.badge-finance {
+          background: rgba(16, 185, 129, 0.15);
+          color: #10b981;
+          border: 1px solid rgba(16, 185, 129, 0.3);
         }
 
         .sidebar-progress-card {
