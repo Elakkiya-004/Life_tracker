@@ -1,5 +1,6 @@
 import React from 'react';
 import { useApp } from '../../context/AppContext';
+import { useAuth } from '../../context/AuthContext';
 import { 
   LayoutDashboard, 
   Compass, 
@@ -12,7 +13,10 @@ import {
   Cloud,
   CloudOff,
   Plus,
-  Film
+  Film,
+  ShieldCheck,
+  LogOut,
+  User
 } from 'lucide-react';
 
 export const Sidebar = () => {
@@ -28,7 +32,12 @@ export const Sidebar = () => {
     setIsQuickAddOpen
   } = useApp();
 
+  const { currentUser, logout, isSuperAdmin } = useAuth();
+
   const navItems = [
+    ...(isSuperAdmin ? [
+      { id: 'admin', path: '/admin', label: 'Super Admin Console', icon: ShieldCheck, highlightAdmin: true }
+    ] : []),
     { id: 'dashboard', path: '/', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'habits', path: '/habits', label: 'Habits & Routines', icon: CheckCircle2, badge: `${todayCompletedHabits}/${(Array.isArray(habits) ? habits.length : 0)}` },
     { id: 'protocol', path: '/health', label: 'Health & Diet Protocol', icon: HeartPulse, highlight: true },
@@ -38,6 +47,12 @@ export const Sidebar = () => {
     { id: 'analytics', path: '/analytics', label: 'Analytics & Score', icon: BarChart3 },
     { id: 'settings', path: '/settings', label: 'Settings & Cloud', icon: Settings },
   ];
+
+  const getInitials = (name = '') => {
+    const parts = name.trim().split(' ');
+    if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+    return (name[0] || 'U').toUpperCase();
+  };
 
   return (
     <aside className="app-sidebar">
@@ -72,7 +87,7 @@ export const Sidebar = () => {
             <a
               key={item.id}
               href={item.path}
-              className={`nav-link ${isActive ? 'active' : ''}`}
+              className={`nav-link ${isActive ? 'active' : ''} ${item.highlightAdmin ? 'admin-nav-item' : ''}`}
               onClick={(e) => {
                 e.preventDefault();
                 setActiveTab(item.id);
@@ -82,11 +97,13 @@ export const Sidebar = () => {
                 <Icon size={20} className="nav-icon" />
                 <span className="nav-label">{item.label}</span>
               </div>
-              {item.badge && (
+              {item.highlightAdmin ? (
+                <span className="nav-badge badge-admin">Admin</span>
+              ) : item.badge ? (
                 <span className={`nav-badge ${item.id === 'watchlists' ? 'badge-marvel' : item.id === 'roadmap' ? 'badge-roadmap' : item.id === 'protocol' ? 'badge-protocol' : item.id === 'finance' ? 'badge-finance' : (todayHabitProgress === 100 ? 'badge-success' : '')}`}>
                   {item.badge}
                 </span>
-              )}
+              ) : null}
             </a>
           );
         })}
@@ -109,8 +126,32 @@ export const Sidebar = () => {
         </p>
       </div>
 
-      {/* Cloud Status Footer */}
+      {/* User Session & Sign Out Footer */}
       <div className="sidebar-footer">
+        {currentUser && (
+          <div className="sidebar-user-card">
+            <div className="user-card-info">
+              <div className={`user-sidebar-avatar ${isSuperAdmin ? 'avatar-admin' : 'avatar-user'}`}>
+                {getInitials(currentUser.name)}
+              </div>
+              <div className="user-sidebar-texts">
+                <span className="user-sidebar-name">{currentUser.name}</span>
+                <span className="user-sidebar-role">
+                  {isSuperAdmin ? '👑 Super Admin' : '👤 Member'}
+                </span>
+              </div>
+            </div>
+
+            <button 
+              className="btn-icon btn-ghost btn-sm btn-logout" 
+              onClick={logout}
+              title="Sign Out"
+            >
+              <LogOut size={16} />
+            </button>
+          </div>
+        )}
+
         <div className="cloud-status-card">
           <div className="cloud-status-left">
             {syncStatus === 'synced' ? (
@@ -123,7 +164,7 @@ export const Sidebar = () => {
                 {syncStatus === 'synced' ? 'Firebase Cloud' : 'Local Offline'}
               </span>
               <span className="status-sub">
-                {syncStatus === 'synced' ? 'Auto-syncing across devices' : 'Stored on this device'}
+                {syncStatus === 'synced' ? 'Multi-device synced' : 'Stored locally'}
               </span>
             </div>
           </div>
@@ -199,34 +240,49 @@ export const Sidebar = () => {
           flex-direction: column;
           gap: 0.35rem;
           flex: 1;
+          overflow-y: auto;
         }
 
         .nav-link {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding: 0.75rem 0.9rem;
-          border-radius: var(--radius-sm);
-          border: 1px solid transparent;
-          background: transparent;
+          padding: 0.65rem 0.85rem;
+          border-radius: var(--radius-md);
           color: var(--text-secondary);
-          font-family: inherit;
-          font-size: 0.9rem;
+          text-decoration: none;
+          font-size: 0.88rem;
           font-weight: 600;
-          cursor: pointer;
           transition: all 0.2s ease;
-          text-align: left;
         }
 
         .nav-link:hover {
-          background: rgba(255, 255, 255, 0.05);
           color: var(--text-primary);
+          background: var(--bg-card);
         }
 
         .nav-link.active {
-          background: var(--accent-primary-glow);
-          color: var(--accent-primary);
-          border-color: rgba(99, 102, 241, 0.3);
+          color: #ffffff;
+          background: var(--accent-primary);
+          box-shadow: var(--shadow-glow);
+        }
+
+        .admin-nav-item {
+          background: rgba(245, 158, 11, 0.1);
+          border: 1px dashed rgba(245, 158, 11, 0.3);
+          color: #f59e0b;
+        }
+
+        .admin-nav-item.active {
+          background: #f59e0b;
+          color: #000000;
+          border-color: #f59e0b;
+        }
+
+        .badge-admin {
+          background: rgba(245, 158, 11, 0.2);
+          color: #f59e0b;
+          font-weight: 800;
         }
 
         .nav-link-content {
@@ -241,82 +297,87 @@ export const Sidebar = () => {
 
         .nav-badge {
           font-size: 0.7rem;
-          font-weight: 700;
-          padding: 0.15rem 0.5rem;
+          padding: 0.15rem 0.45rem;
           border-radius: var(--radius-full);
-          background: rgba(255, 255, 255, 0.08);
-          color: var(--text-muted);
+          background: var(--bg-card);
+          color: var(--text-secondary);
+          font-weight: 700;
         }
 
-        .nav-badge.badge-success {
-          background: var(--accent-success-glow);
-          color: var(--accent-success);
+        .nav-link.active .nav-badge {
+          background: rgba(255, 255, 255, 0.2);
+          color: #ffffff;
         }
 
-        .nav-badge.badge-roadmap {
-          background: rgba(14, 165, 233, 0.15);
-          color: var(--accent-cyan);
-          border: 1px solid rgba(14, 165, 233, 0.3);
-        }
-
-        .nav-badge.badge-marvel {
-          background: rgba(239, 68, 68, 0.15);
+        .badge-marvel {
+          background: rgba(239, 68, 68, 0.2);
           color: #ef4444;
-          border: 1px solid rgba(239, 68, 68, 0.3);
+          font-weight: 800;
         }
 
-        .nav-badge.badge-protocol {
-          background: rgba(244, 63, 94, 0.15);
-          color: #f43f5e;
-          border: 1px solid rgba(244, 63, 94, 0.3);
+        .badge-roadmap {
+          background: rgba(14, 165, 233, 0.2);
+          color: #0ea5e9;
+          font-weight: 800;
         }
 
-        .nav-badge.badge-finance {
-          background: rgba(16, 185, 129, 0.15);
+        .badge-protocol {
+          background: rgba(16, 185, 129, 0.2);
           color: #10b981;
-          border: 1px solid rgba(16, 185, 129, 0.3);
+          font-weight: 800;
+        }
+
+        .badge-finance {
+          background: rgba(236, 72, 153, 0.2);
+          color: #ec4899;
+          font-weight: 800;
+        }
+
+        .badge-success {
+          background: rgba(16, 185, 129, 0.2);
+          color: #10b981;
         }
 
         .sidebar-progress-card {
           background: var(--bg-card);
           border: 1px solid var(--border-color);
-          border-radius: var(--radius-sm);
+          border-radius: var(--radius-md);
           padding: 0.85rem;
-          margin-bottom: 1rem;
+          margin-top: 1rem;
         }
 
         .progress-header {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          margin-bottom: 0.4rem;
+          margin-bottom: 0.5rem;
         }
 
         .progress-title {
           font-size: 0.75rem;
           font-weight: 700;
-          color: var(--text-secondary);
+          color: var(--text-primary);
         }
 
         .progress-percent {
-          font-size: 0.8rem;
+          font-size: 0.75rem;
           font-weight: 800;
           color: var(--accent-primary);
         }
 
         .progress-bar-bg {
           height: 6px;
-          background: rgba(255, 255, 255, 0.08);
+          background: var(--border-color);
           border-radius: var(--radius-full);
           overflow: hidden;
-          margin-bottom: 0.35rem;
+          margin-bottom: 0.4rem;
         }
 
         .progress-bar-fill {
           height: 100%;
           background: linear-gradient(90deg, var(--accent-primary), var(--accent-success));
           border-radius: var(--radius-full);
-          transition: width 0.4s ease;
+          transition: width 0.3s ease;
         }
 
         .progress-sub {
@@ -325,30 +386,101 @@ export const Sidebar = () => {
         }
 
         .sidebar-footer {
-          border-top: 1px solid var(--border-color);
-          padding-top: 0.85rem;
+          margin-top: 1rem;
+          display: flex;
+          flex-direction: column;
+          gap: 0.6rem;
+        }
+
+        .sidebar-user-card {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 0.65rem 0.75rem;
+          background: var(--bg-card);
+          border: 1px solid var(--border-color);
+          border-radius: var(--radius-md);
+        }
+
+        .user-card-info {
+          display: flex;
+          align-items: center;
+          gap: 0.6rem;
+          min-width: 0;
+        }
+
+        .user-sidebar-avatar {
+          width: 32px;
+          height: 32px;
+          border-radius: var(--radius-full);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-weight: 800;
+          font-size: 0.75rem;
+          flex-shrink: 0;
+        }
+
+        .avatar-admin {
+          background: linear-gradient(135deg, #6366f1, #f59e0b);
+          color: #ffffff;
+        }
+
+        .avatar-user {
+          background: linear-gradient(135deg, #0ea5e9, #10b981);
+          color: #ffffff;
+        }
+
+        .user-sidebar-texts {
+          display: flex;
+          flex-direction: column;
+          gap: 0.1rem;
+          min-width: 0;
+        }
+
+        .user-sidebar-name {
+          font-size: 0.8rem;
+          font-weight: 700;
+          color: var(--text-primary);
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .user-sidebar-role {
+          font-size: 0.68rem;
+          color: var(--text-muted);
+        }
+
+        .btn-logout {
+          color: var(--text-muted);
+        }
+
+        .btn-logout:hover {
+          color: #ef4444;
         }
 
         .cloud-status-card {
-          padding: 0.6rem 0.75rem;
           background: var(--bg-card);
-          border-radius: var(--radius-sm);
           border: 1px solid var(--border-color);
+          border-radius: var(--radius-md);
+          padding: 0.65rem 0.75rem;
         }
 
         .cloud-status-left {
           display: flex;
           align-items: center;
-          gap: 0.6rem;
+          gap: 0.65rem;
         }
 
         .status-texts {
           display: flex;
           flex-direction: column;
+          gap: 0.1rem;
         }
 
         .status-heading {
-          font-size: 0.75rem;
+          font-size: 0.72rem;
           font-weight: 700;
           color: var(--text-primary);
         }
@@ -357,6 +489,9 @@ export const Sidebar = () => {
           font-size: 0.65rem;
           color: var(--text-muted);
         }
+
+        .text-emerald-400 { color: #10b981; }
+        .text-slate-400 { color: #94a3b8; }
       `}</style>
     </aside>
   );

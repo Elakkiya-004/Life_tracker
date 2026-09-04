@@ -1,11 +1,14 @@
 import React from 'react';
 import { useApp } from '../../context/AppContext';
+import { useAuth } from '../../context/AuthContext';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { BottomNav } from './BottomNav';
 import { MobileDrawer } from './MobileDrawer';
 import { QuickAddModal } from '../common/QuickAddModal';
 
+import { LoginView } from '../../views/LoginView';
+import { AdminView } from '../../views/AdminView';
 import { DashboardView } from '../../views/DashboardView';
 import { RoadmapView } from '../../views/RoadmapView';
 import { HabitsView } from '../../views/HabitsView';
@@ -16,10 +19,18 @@ import { AnalyticsView } from '../../views/AnalyticsView';
 import { SettingsView } from '../../views/SettingsView';
 
 export const Layout = () => {
+  const { currentUser } = useAuth();
   const { activeTab } = useApp();
+
+  // If user is not logged in, show Login Portal
+  if (!currentUser) {
+    return <LoginView />;
+  }
 
   const renderView = () => {
     switch (activeTab) {
+      case 'admin':
+        return currentUser.role === 'super_admin' ? <AdminView /> : <DashboardView />;
       case 'dashboard':
         return <DashboardView />;
       case 'watchlists':
@@ -42,7 +53,7 @@ export const Layout = () => {
       case 'settings':
         return <SettingsView />;
       default:
-        return <DashboardView />;
+        return currentUser.role === 'super_admin' && activeTab === 'admin' ? <AdminView /> : <DashboardView />;
     }
   };
 

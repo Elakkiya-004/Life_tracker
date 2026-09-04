@@ -1,4 +1,4 @@
-// Firebase Client Integration (Serverless & Free Tier)
+// Firebase Client Integration (Serverless & Free Tier with Auth & RBAC Directory)
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import {
   getFirestore,
@@ -7,9 +7,18 @@ import {
   persistentMultipleTabManager,
   doc,
   setDoc,
+  deleteDoc,
+  collection,
   getDocs,
   onSnapshot
 } from 'firebase/firestore';
+import {
+  getAuth,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged
+} from 'firebase/auth';
 import { getLocalData, STORAGE_KEYS } from './storage';
 
 // Get Firebase configuration from .env, LocalStorage GUI settings, or hardcoded project credentials
@@ -38,6 +47,7 @@ export const getFirebaseConfig = () => {
 
 let app = null;
 let db = null;
+let auth = null;
 let isInitialized = false;
 
 export const initFirebase = (customConfig = null) => {
@@ -46,6 +56,7 @@ export const initFirebase = (customConfig = null) => {
     console.log('ℹ️ Firebase config not detected. Running in Local-Only Mode.');
     app = null;
     db = null;
+    auth = null;
     isInitialized = false;
     return { success: false, mode: 'local' };
   }
@@ -69,25 +80,24 @@ export const initFirebase = (customConfig = null) => {
       db = getFirestore(app);
     }
 
+    auth = getAuth(app);
     isInitialized = true;
-    console.log('✅ Firebase initialized successfully with Firestore!');
-    return { success: true, mode: 'firebase', db, app };
+    console.log('✅ Firebase initialized successfully with Firestore & Auth!');
+    return { success: true, mode: 'firebase', db, auth, app };
   } catch (error) {
     console.error('Firebase initialization error:', error);
     return { success: false, mode: 'local', error };
   }
 };
 
-// Cloud Sync Helpers
+// Cloud Sync Helpers for Individual User Workspace
 export const syncToCloud = async (userId = 'default_user', data) => {
   if (!db || !isInitialized) {
-    // Attempt lazy initialization if not already done
     const initRes = initFirebase();
     if (!initRes.success) return { success: false, reason: 'offline_mode' };
   }
 
   try {
-    // Sanitize data (removes undefined values which cause Firestore setDoc to fail)
     const sanitizedData = JSON.parse(JSON.stringify(data));
     const userDocRef = doc(db, 'users', userId);
     await setDoc(userDocRef, {
@@ -123,5 +133,61 @@ export const listenToCloud = (userId = 'default_user', onUpdate) => {
   }
 };
 
-export { app, db, isInitialized };
+// Super Admin Directory Cloud Sync Helpers
+export const syncUserToDirectoryCloud = async (userObj) => {
+  if (!db || !isInitialized) {
+    const initRes = initFirebase();
+    if (!initRes.success) return { success: false, reason: 'offline_mode' };
+  }
 
+  try {
+    const sanitized = JSON.parse(JSON.stringify(userObj));
+    const dirDocRef = doc(db, 'users_directory', userObj.uid || userObj.email.replace(/[@.]/g, '_'));
+    await setDoc(dirDocRef, {
+      ...sanitized,
+      updatedAt: new Date().toISOString(),
+    }, { merge: true });
+    return { success: true };
+  } catch (err) {
+    console.error('Error syncing user to cloud directory:', err);
+    return { success: false, error: err };
+  }
+};
+
+export const deleteUserFromDirectoryCloud = async (userId) => {
+  if (!db || !isInitialized) return { success: false };
+  try {
+    const dirDocRef = doc(db, 'users_directory', userId);
+    await deleteDoc(dirDocRef);
+    return { success: true };
+  } catch (err) {
+    console.error('Error deleting user from cloud directory:', err);
+    return { success: false, error: err };
+  }
+};
+
+export const listenToUsersDirectory = (onUpdate) => {
+  if (!db || !isInitialized) {
+    const initRes = initFirebase();
+    if (!initRes.success) return () => {};
+  }
+
+  try {
+    const dirColRef = collection(db, 'users_directory');
+    const unsubscribe = onSnapshot(dirColRef, (snapshot) => {
+      const users = [];
+      snapshot.forEach(docSnap => {
+        users.push({ id: docSnap.id, ...docSnap.data() });
+      });
+      onUpdate(users);
+    }, (err) => {
+      console.error('Users directory listener error:', err);
+    });
+    return unsubscribe;
+  } catch (err) {
+    console.error('Failed to attach directory listener:', err);
+    return () => {};
+  }
+};
+
+export { app, db, auth, isInitialized };

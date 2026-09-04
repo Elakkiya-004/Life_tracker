@@ -1,21 +1,25 @@
 import React from 'react';
 import { useApp } from '../../context/AppContext';
+import { useAuth } from '../../context/AuthContext';
 import { 
   X, 
   LayoutDashboard, 
   Compass, 
   CheckCircle2, 
-  HeartPulse,
+  HeartPulse, 
   Wallet, 
   BarChart3, 
   Settings, 
   Sparkles, 
   Cloud, 
-  CloudOff,
-  Sun,
-  Moon,
-  Plus,
-  Film
+  CloudOff, 
+  Sun, 
+  Moon, 
+  Plus, 
+  Film,
+  ShieldCheck,
+  LogOut,
+  User
 } from 'lucide-react';
 
 export const MobileDrawer = () => {
@@ -34,6 +38,8 @@ export const MobileDrawer = () => {
     setIsQuickAddOpen
   } = useApp();
 
+  const { currentUser, logout, isSuperAdmin } = useAuth();
+
   if (!isMobileDrawerOpen) return null;
 
   const handleNavClick = (tabId) => {
@@ -46,6 +52,9 @@ export const MobileDrawer = () => {
   };
 
   const navItems = [
+    ...(isSuperAdmin ? [
+      { id: 'admin', path: '/admin', label: 'Super Admin Console', icon: ShieldCheck, highlightAdmin: true }
+    ] : []),
     { id: 'dashboard', path: '/', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'habits', path: '/habits', label: 'Habits & Routines', icon: CheckCircle2, badge: `${todayCompletedHabits}/${(Array.isArray(habits) ? habits.length : 0)}` },
     { id: 'protocol', path: '/health', label: 'Health & Diet Protocol', icon: HeartPulse, highlight: true },
@@ -55,6 +64,12 @@ export const MobileDrawer = () => {
     { id: 'analytics', path: '/analytics', label: 'Analytics & Score', icon: BarChart3 },
     { id: 'settings', path: '/settings', label: 'Settings & Cloud', icon: Settings },
   ];
+
+  const getInitials = (name = '') => {
+    const parts = name.trim().split(' ');
+    if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+    return (name[0] || 'U').toUpperCase();
+  };
 
   return (
     <div className="mobile-drawer-overlay" onClick={() => setIsMobileDrawerOpen(false)}>
@@ -79,6 +94,21 @@ export const MobileDrawer = () => {
           </button>
         </div>
 
+        {/* Logged in User Pill */}
+        {currentUser && (
+          <div className="drawer-user-pill">
+            <div className={`drawer-user-avatar ${isSuperAdmin ? 'avatar-admin' : 'avatar-user'}`}>
+              {getInitials(currentUser.name)}
+            </div>
+            <div className="drawer-user-info">
+              <span className="drawer-user-name">{currentUser.name}</span>
+              <span className="drawer-user-role">
+                {isSuperAdmin ? '👑 Super Admin' : '👤 Regular User'}
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* Quick Log CTA */}
         <div className="drawer-cta">
           <button 
@@ -102,7 +132,7 @@ export const MobileDrawer = () => {
               <a
                 key={item.id}
                 href={item.path}
-                className={`drawer-nav-item ${isActive ? 'active' : ''} ${item.highlight ? 'highlight' : ''}`}
+                className={`drawer-nav-item ${isActive ? 'active' : ''} ${item.highlightAdmin ? 'admin-highlight' : item.highlight ? 'highlight' : ''}`}
                 onClick={(e) => {
                   e.preventDefault();
                   handleNavClick(item.id);
@@ -112,11 +142,13 @@ export const MobileDrawer = () => {
                   <Icon size={20} className="nav-icon" />
                   <span className="drawer-nav-label">{item.label}</span>
                 </div>
-                {item.badge && (
+                {item.highlightAdmin ? (
+                  <span className="badge badge-admin-mini text-xs">Admin</span>
+                ) : item.badge ? (
                   <span className="badge badge-primary text-xs">
                     {item.badge}
                   </span>
-                )}
+                ) : null}
               </a>
             );
           })}
@@ -135,13 +167,29 @@ export const MobileDrawer = () => {
             </span>
           </div>
 
-          <button 
-            className="btn-icon btn-ghost theme-toggle-btn"
-            onClick={toggleTheme}
-            aria-label="Toggle Theme"
-          >
-            {settings.theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
-          </button>
+          <div className="drawer-footer-actions">
+            <button 
+              className="btn-icon btn-ghost theme-toggle-btn"
+              onClick={toggleTheme}
+              aria-label="Toggle Theme"
+            >
+              {settings.theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
+            </button>
+
+            {currentUser && (
+              <button 
+                className="btn-icon btn-ghost btn-drawer-logout"
+                onClick={() => {
+                  setIsMobileDrawerOpen(false);
+                  logout();
+                }}
+                title="Sign Out"
+                aria-label="Sign Out"
+              >
+                <LogOut size={18} />
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -165,33 +213,27 @@ export const MobileDrawer = () => {
           border-right: 1px solid var(--border-color);
           display: flex;
           flex-direction: column;
-          padding: 1.5rem 1.25rem;
-          box-shadow: var(--shadow-lg);
-          animation: slideRight 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        @keyframes slideRight {
-          from { transform: translateX(-100%); }
-          to { transform: translateX(0); }
+          padding: 1.25rem 1rem;
+          animation: slideInLeft 0.25s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .drawer-header {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding-bottom: 1rem;
+          padding-bottom: 0.75rem;
           border-bottom: 1px solid var(--border-color);
         }
 
         .drawer-brand {
           display: flex;
           align-items: center;
-          gap: 0.75rem;
+          gap: 0.6rem;
         }
 
         .brand-logo-mini {
-          width: 36px;
-          height: 36px;
+          width: 32px;
+          height: 32px;
           border-radius: var(--radius-sm);
           background: linear-gradient(135deg, var(--accent-primary), var(--accent-purple));
           display: flex;
@@ -201,26 +243,77 @@ export const MobileDrawer = () => {
         }
 
         .brand-title {
-          font-size: 1.05rem;
+          font-size: 1rem;
           font-weight: 800;
-          color: var(--text-primary);
+          line-height: 1.1;
         }
 
         .brand-sub {
           font-size: 0.65rem;
+          color: var(--text-muted);
+        }
+
+        .drawer-user-pill {
+          display: flex;
+          align-items: center;
+          gap: 0.6rem;
+          padding: 0.65rem 0.75rem;
+          background: var(--bg-card);
+          border: 1px solid var(--border-color);
+          border-radius: var(--radius-md);
+          margin-top: 0.85rem;
+        }
+
+        .drawer-user-avatar {
+          width: 32px;
+          height: 32px;
+          border-radius: var(--radius-full);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-weight: 800;
+          font-size: 0.75rem;
+          flex-shrink: 0;
+        }
+
+        .avatar-admin {
+          background: linear-gradient(135deg, #6366f1, #f59e0b);
+          color: #ffffff;
+        }
+
+        .avatar-user {
+          background: linear-gradient(135deg, #0ea5e9, #10b981);
+          color: #ffffff;
+        }
+
+        .drawer-user-info {
+          display: flex;
+          flex-direction: column;
+          gap: 0.1rem;
+          min-width: 0;
+        }
+
+        .drawer-user-name {
+          font-size: 0.825rem;
           font-weight: 700;
-          color: var(--accent-primary);
-          display: block;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .drawer-user-role {
+          font-size: 0.68rem;
+          color: var(--text-muted);
         }
 
         .drawer-cta {
-          margin: 1.25rem 0 1rem 0;
+          margin: 0.85rem 0;
         }
 
         .drawer-nav {
           display: flex;
           flex-direction: column;
-          gap: 0.4rem;
+          gap: 0.35rem;
           flex: 1;
           overflow-y: auto;
         }
@@ -229,31 +322,36 @@ export const MobileDrawer = () => {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding: 0.8rem 1rem;
-          border-radius: var(--radius-sm);
-          border: 1px solid transparent;
-          background: transparent;
+          padding: 0.65rem 0.75rem;
+          border-radius: var(--radius-md);
           color: var(--text-secondary);
-          font-family: inherit;
-          font-size: 0.9rem;
+          text-decoration: none;
+          font-size: 0.88rem;
           font-weight: 600;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          text-align: left;
+          transition: all 0.15s ease;
         }
 
-        .drawer-nav-item:active {
-          transform: scale(0.98);
-        }
-
+        .drawer-nav-item:hover,
         .drawer-nav-item.active {
-          background: var(--accent-primary-glow);
-          border-color: rgba(99, 102, 241, 0.35);
-          color: var(--accent-primary);
+          background: var(--accent-primary);
+          color: #ffffff;
         }
 
-        .drawer-nav-item.highlight {
-          color: var(--text-primary);
+        .drawer-nav-item.admin-highlight {
+          background: rgba(245, 158, 11, 0.12);
+          border: 1px dashed rgba(245, 158, 11, 0.35);
+          color: #f59e0b;
+        }
+
+        .drawer-nav-item.admin-highlight.active {
+          background: #f59e0b;
+          color: #000000;
+        }
+
+        .badge-admin-mini {
+          background: rgba(245, 158, 11, 0.2);
+          color: #f59e0b;
+          font-weight: 800;
         }
 
         .drawer-nav-left {
@@ -266,15 +364,31 @@ export const MobileDrawer = () => {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding-top: 1rem;
+          padding-top: 0.85rem;
           border-top: 1px solid var(--border-color);
+          margin-top: 0.5rem;
         }
 
         .footer-status-pill {
           display: flex;
           align-items: center;
           gap: 0.4rem;
-          color: var(--text-secondary);
+          color: var(--text-muted);
+        }
+
+        .drawer-footer-actions {
+          display: flex;
+          align-items: center;
+          gap: 0.35rem;
+        }
+
+        .btn-drawer-logout:hover {
+          color: #ef4444;
+        }
+
+        @keyframes slideInLeft {
+          from { transform: translateX(-100%); }
+          to { transform: translateX(0); }
         }
       `}</style>
     </div>

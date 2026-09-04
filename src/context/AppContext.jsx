@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import confetti from 'canvas-confetti';
+import { useAuth } from './AuthContext';
 import {
   getLocalData,
   setLocalData,
@@ -29,6 +30,7 @@ export const useApp = () => {
 export const PATH_TO_TAB = {
   '/': 'dashboard',
   '/dashboard': 'dashboard',
+  '/admin': 'admin',
   '/habits': 'habits',
   '/health': 'protocol',
   '/protocol': 'protocol',
@@ -46,6 +48,7 @@ export const PATH_TO_TAB = {
 
 export const TAB_TO_PATH = {
   'dashboard': '/',
+  'admin': '/admin',
   'habits': '/habits',
   'protocol': '/health',
   'health': '/health',
@@ -73,6 +76,8 @@ const getInitialTabFromLocation = () => {
 };
 
 export const AppProvider = ({ children }) => {
+  const { currentUser } = useAuth();
+  const currentUserId = currentUser?.uid || 'default_user';
   // Safe state initialization with clean defaults (No static dummy data)
   const [habits, setHabits] = useState(() => {
     try {
@@ -219,13 +224,13 @@ export const AppProvider = ({ children }) => {
       dailyHistory: dailyHistory || {},
       settings: settings || DEFAULT_SETTINGS,
     };
-    const res = await syncToCloud('default_user', payload);
+    const res = await syncToCloud(currentUserId, payload);
     if (res.success) {
       setSyncStatus('synced');
     } else {
       setSyncStatus(res.reason === 'offline_mode' ? 'local' : 'error');
     }
-  }, [habits, transactions, jars, roadmap, customLists, healthProtocol, dailyHistory, settings]);
+  }, [currentUserId, habits, transactions, jars, roadmap, customLists, healthProtocol, dailyHistory, settings]);
 
   // Dynamic tracker date with 10:30 PM (22:30) auto-reset cutoff for next day
   const [todayStr, setTodayStr] = useState(() => getEffectiveTrackerDate());
@@ -312,7 +317,7 @@ export const AppProvider = ({ children }) => {
     if (fbResult.success) {
       setSyncStatus('synced');
 
-      const unsubscribe = listenToCloud('default_user', (cloudData) => {
+      const unsubscribe = listenToCloud(currentUserId, (cloudData) => {
         if (!cloudData) return;
         if (Array.isArray(cloudData.habits)) setHabits(cloudData.habits);
         if (Array.isArray(cloudData.transactions)) setTransactions(cloudData.transactions);
@@ -321,7 +326,7 @@ export const AppProvider = ({ children }) => {
           if (isOldDefault) {
             setJars(DEFAULT_JARS);
             setLocalData(STORAGE_KEYS.JARS, DEFAULT_JARS);
-            syncToCloud('default_user', { jars: DEFAULT_JARS });
+            syncToCloud(currentUserId, { jars: DEFAULT_JARS });
           } else {
             setJars(cloudData.jars);
             setLocalData(STORAGE_KEYS.JARS, cloudData.jars);
@@ -334,14 +339,14 @@ export const AppProvider = ({ children }) => {
         } else if (!cloudData.roadmap) {
           setRoadmap(DEFAULT_ROADMAP);
           setLocalData(STORAGE_KEYS.ROADMAP, DEFAULT_ROADMAP);
-          syncToCloud('default_user', { roadmap: DEFAULT_ROADMAP });
+          syncToCloud(currentUserId, { roadmap: DEFAULT_ROADMAP });
         }
 
         if (Array.isArray(cloudData.customLists) && cloudData.customLists.length > 0 && cloudData.customLists.some(l => l && Array.isArray(l.items) && l.items.length > 0)) {
           setCustomLists(cloudData.customLists);
           setLocalData(STORAGE_KEYS.CUSTOM_LISTS, cloudData.customLists);
         } else if (!cloudData.customLists || cloudData.customLists.length === 0) {
-          syncToCloud('default_user', { customLists: DEFAULT_CUSTOM_LISTS });
+          syncToCloud(currentUserId, { customLists: DEFAULT_CUSTOM_LISTS });
         }
 
         if (cloudData.healthProtocol) setHealthProtocol(cloudData.healthProtocol);
@@ -353,7 +358,7 @@ export const AppProvider = ({ children }) => {
     } else {
       setSyncStatus('local');
     }
-  }, []);
+  }, [currentUserId]);
 
   // Habit Operations
   const toggleHabit = (habitId, dateStr = todayStr) => {

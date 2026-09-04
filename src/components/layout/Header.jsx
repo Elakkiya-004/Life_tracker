@@ -1,5 +1,6 @@
 import React from 'react';
 import { useApp } from '../../context/AppContext';
+import { useAuth } from '../../context/AuthContext';
 import { 
   Sun, 
   Moon, 
@@ -7,9 +8,12 @@ import {
   Flame, 
   Cloud, 
   CloudOff, 
-  RefreshCw,
-  Sparkles,
-  Menu
+  RefreshCw, 
+  Sparkles, 
+  Menu,
+  LogOut,
+  ShieldCheck,
+  User
 } from 'lucide-react';
 
 export const Header = () => {
@@ -23,6 +27,8 @@ export const Header = () => {
     syncStatus,
     pushToCloud 
   } = useApp();
+
+  const { currentUser, logout, isSuperAdmin } = useAuth();
 
   const toggleTheme = () => {
     updateSettings({ theme: settings.theme === 'light' ? 'dark' : 'light' });
@@ -41,6 +47,8 @@ export const Header = () => {
     day: 'numeric',
   }).format(new Date());
 
+  const userName = currentUser?.name || settings.userName || 'Champion';
+
   return (
     <header className="app-header">
       <div className="header-left">
@@ -58,7 +66,8 @@ export const Header = () => {
             <span>{formattedDate}</span>
           </div>
           <h2 className="greeting-text">
-            {getGreeting()}, <span className="user-highlight">{settings.userName || 'Champion'}</span> 👋
+            {getGreeting()}, <span className="user-highlight">{userName}</span> 👋
+            {isSuperAdmin && <span className="admin-badge-mini">👑 Super Admin</span>}
           </h2>
         </div>
       </div>
@@ -102,6 +111,18 @@ export const Header = () => {
           <Plus size={18} />
           <span>Quick Log</span>
         </button>
+
+        {/* Sign Out Button */}
+        {currentUser && (
+          <button
+            className="btn-icon btn-ghost desktop-only btn-header-logout"
+            onClick={logout}
+            title={`Signed in as ${currentUser.email} • Click to Sign Out`}
+            aria-label="Sign Out"
+          >
+            <LogOut size={17} />
+          </button>
+        )}
       </div>
 
       <style>{`
@@ -118,12 +139,6 @@ export const Header = () => {
           z-index: 40;
         }
 
-        @media (min-width: 768px) {
-          .app-header {
-            padding: 1.25rem 2rem;
-          }
-        }
-
         .header-left {
           display: flex;
           align-items: center;
@@ -131,10 +146,7 @@ export const Header = () => {
         }
 
         .mobile-menu-btn {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          color: var(--text-primary);
+          display: flex;
         }
 
         @media (min-width: 768px) {
@@ -151,64 +163,54 @@ export const Header = () => {
 
         .date-badge {
           font-size: 0.72rem;
-          font-weight: 600;
           color: var(--text-muted);
+          font-weight: 600;
           text-transform: uppercase;
-          letter-spacing: 0.05em;
+          letter-spacing: 0.04em;
         }
 
         .greeting-text {
-          font-size: 1.05rem;
-          font-weight: 700;
+          font-size: 1.1rem;
+          font-weight: 800;
           color: var(--text-primary);
-        }
-
-        @media (min-width: 768px) {
-          .greeting-text {
-            font-size: 1.2rem;
-          }
+          display: flex;
+          align-items: center;
+          gap: 0.4rem;
+          flex-wrap: wrap;
         }
 
         .user-highlight {
-          background: linear-gradient(135deg, var(--accent-primary), var(--accent-cyan));
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
+          color: var(--accent-primary);
+        }
+
+        .admin-badge-mini {
+          font-size: 0.65rem;
+          font-weight: 800;
+          padding: 0.1rem 0.45rem;
+          border-radius: var(--radius-full);
+          background: rgba(245, 158, 11, 0.2);
+          color: #f59e0b;
+          border: 1px solid rgba(245, 158, 11, 0.35);
         }
 
         .header-actions {
           display: flex;
           align-items: center;
-          gap: 0.5rem;
-        }
-
-        @media (min-width: 768px) {
-          .header-actions {
-            gap: 0.75rem;
-          }
+          gap: 0.65rem;
         }
 
         .sync-indicator {
           display: flex;
           align-items: center;
-          gap: 0.35rem;
-          padding: 0.35rem 0.6rem;
+          gap: 0.4rem;
+          padding: 0.35rem 0.65rem;
           border-radius: var(--radius-full);
+          border: 1px solid var(--border-color);
+          background: var(--bg-card);
           font-size: 0.75rem;
           font-weight: 600;
-          background: var(--bg-card);
-          border: 1px solid var(--border-color);
-          color: var(--text-secondary);
           cursor: pointer;
-          transition: all 0.2s ease;
-        }
-
-        .sync-indicator:hover {
-          background: var(--bg-card-hover);
-        }
-
-        .sync-indicator.synced {
-          border-color: rgba(16, 185, 129, 0.3);
-          color: var(--accent-success);
+          color: var(--text-secondary);
         }
 
         .streak-pill {
@@ -219,7 +221,7 @@ export const Header = () => {
           border-radius: var(--radius-full);
           background: rgba(245, 158, 11, 0.12);
           border: 1px solid rgba(245, 158, 11, 0.25);
-          color: var(--accent-warning);
+          color: #f59e0b;
           font-size: 0.75rem;
           font-weight: 700;
         }
@@ -228,17 +230,13 @@ export const Header = () => {
           color: #f59e0b;
         }
 
-        .theme-btn {
-          color: var(--text-secondary);
+        .btn-header-logout {
+          color: var(--text-muted);
         }
 
-        .spin-animate {
-          animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
+        .btn-header-logout:hover {
+          color: #ef4444;
+          background: rgba(239, 68, 68, 0.1);
         }
 
         .desktop-only {

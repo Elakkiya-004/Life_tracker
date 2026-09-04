@@ -13,7 +13,33 @@ const STORAGE_KEYS = {
   HEALTH_PROTOCOL: 'life_tracker_health_protocol_v1',
   DAILY_HISTORY: 'life_tracker_daily_history_v1',
   FIREBASE_CONFIG: 'life_tracker_firebase_config',
+  AUTH_USER: 'life_tracker_auth_user_v1',
+  USERS_DIRECTORY: 'life_tracker_users_directory_v1',
 };
+
+// Seeded Users for RBAC Authentication System
+export const DEFAULT_USERS = [
+  {
+    uid: 'admin-super-001',
+    name: 'Super Admin',
+    email: 'admin@lifetracker.com',
+    password: 'admin123',
+    role: 'super_admin',
+    status: 'active',
+    createdAt: '2026-09-01T00:00:00.000Z',
+    createdBy: 'System Root',
+  },
+  {
+    uid: 'user-demo-002',
+    name: 'Elakkiya',
+    email: 'user@lifetracker.com',
+    password: 'user123',
+    role: 'user',
+    status: 'active',
+    createdAt: '2026-09-02T00:00:00.000Z',
+    createdBy: 'admin@lifetracker.com',
+  }
+];
 
 // Default 7-Jar Budget System tailored for ₹18,000 Take-Home Salary (₹16k Spends + ₹2k Savings)
 export const DEFAULT_JARS = [
