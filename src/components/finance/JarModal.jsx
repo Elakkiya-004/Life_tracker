@@ -57,7 +57,7 @@ export const JarModal = ({ isOpen, onClose }) => {
   };
 
   const handleReset = () => {
-    if (window.confirm('Reset Jars to tailored ₹18k split (Loan ₹10k, Food ₹2k, Travel ₹1.5k, Bills ₹1.5k, Shopping ₹1k, Grandma ₹1k, Savings ₹1k)?')) {
+    if (window.confirm('Reset Jars to tailored ₹18k split (Loan ₹10k, Travel ₹1.5k, Bills ₹1.5k, Shopping ₹1k, Grandma ₹1k, Snacks ₹1k, Savings ₹2k)?')) {
       resetJarsToDefault();
       setSalary(18000);
       onClose();

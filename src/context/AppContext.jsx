@@ -54,7 +54,7 @@ export const AppProvider = ({ children }) => {
   const [jars, setJars] = useState(() => {
     try {
       const data = getLocalData(STORAGE_KEYS.JARS, null);
-      if (Array.isArray(data) && data.length > 0 && data.some(j => j && (j.id === 'jar-grandma' || j.allocated === 10000))) {
+      if (Array.isArray(data) && data.length > 0 && data.some(j => j && j.id === 'jar-snacks')) {
         return data;
       }
       setLocalData(STORAGE_KEYS.JARS, DEFAULT_JARS);
@@ -220,7 +220,7 @@ export const AppProvider = ({ children }) => {
         if (Array.isArray(cloudData.habits)) setHabits(cloudData.habits);
         if (Array.isArray(cloudData.transactions)) setTransactions(cloudData.transactions);
         if (Array.isArray(cloudData.jars)) {
-          const isOldDefault = cloudData.jars.length <= 6 && !cloudData.jars.some(j => j && j.id === 'jar-grandma');
+          const isOldDefault = !cloudData.jars.some(j => j && j.id === 'jar-snacks');
           if (isOldDefault) {
             setJars(DEFAULT_JARS);
             setLocalData(STORAGE_KEYS.JARS, DEFAULT_JARS);

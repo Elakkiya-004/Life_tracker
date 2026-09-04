@@ -21,7 +21,8 @@ import {
   Printer, 
   CheckCircle2,
   FileText,
-  Heart
+  Heart,
+  Coffee
 } from 'lucide-react';
 
 const JAR_ICON_MAP = {
@@ -32,6 +33,7 @@ const JAR_ICON_MAP = {
   Receipt,
   PiggyBank,
   Heart,
+  Coffee,
 };
 
 export const FinanceView = () => {
@@ -224,7 +226,7 @@ export const FinanceView = () => {
             Take-Home: <span className="text-emerald">{currency}{salary.toLocaleString()}</span>
           </h2>
           <p className="hero-desc text-sub">
-            Salary spilled across <strong>{safeJars.length} smart budget jars</strong> (Loan, Food, Travel, Bills, Shopping, Grandma, Savings).
+            Salary spilled across <strong>{safeJars.length} smart budget jars</strong> (Loan, Travel, Bills, Shopping, Grandma, Snacks, Savings).
           </p>
 
           <div className="quick-hero-metrics">

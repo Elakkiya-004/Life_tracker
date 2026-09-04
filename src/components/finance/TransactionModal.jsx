@@ -18,6 +18,7 @@ import {
 const CATEGORIES = [
   'Loan',
   'Food',
+  'Snacks',
   'Travel',
   'Bills',
   'Shopping',

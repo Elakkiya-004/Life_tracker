@@ -8,14 +8,14 @@ const STORAGE_KEYS = {
   TRANSACTIONS: 'life_tracker_transactions_v2',
   ROADMAP: 'life_tracker_roadmap',
   CUSTOM_LISTS: 'life_tracker_custom_lists_v1',
-  JARS: 'life_tracker_budget_jars_v2',
+  JARS: 'life_tracker_budget_jars_v3',
   SETTINGS: 'life_tracker_settings_v2',
   HEALTH_PROTOCOL: 'life_tracker_health_protocol_v1',
   DAILY_HISTORY: 'life_tracker_daily_history_v1',
   FIREBASE_CONFIG: 'life_tracker_firebase_config',
 };
 
-// Default 7-Jar Budget System tailored for ₹18,000 Take-Home Salary
+// Default 7-Jar Budget System tailored for ₹18,000 Take-Home Salary (₹16k Spends + ₹2k Savings)
 export const DEFAULT_JARS = [
   {
     id: 'jar-loan',
@@ -24,14 +24,6 @@ export const DEFAULT_JARS = [
     allocated: 10000,
     color: '#ef4444',
     icon: 'Building2',
-  },
-  {
-    id: 'jar-food',
-    name: 'Food & Daily Groceries',
-    category: 'Food',
-    allocated: 2000,
-    color: '#f59e0b',
-    icon: 'Utensils',
   },
   {
     id: 'jar-travel',
@@ -66,10 +58,18 @@ export const DEFAULT_JARS = [
     icon: 'Heart',
   },
   {
+    id: 'jar-snacks',
+    name: 'Snacks & Outside Food',
+    category: 'Food',
+    allocated: 1000,
+    color: '#f59e0b',
+    icon: 'Coffee',
+  },
+  {
     id: 'jar-savings',
     name: 'Savings & Emergency Fund',
     category: 'Savings',
-    allocated: 1000,
+    allocated: 2000,
     color: '#10b981',
     icon: 'PiggyBank',
   },
@@ -85,7 +85,7 @@ export const DEFAULT_SETTINGS = {
   userName: 'Champion',
   currency: '₹', // Default in Rupees
   monthlySalary: 18000,
-  monthlyBudget: 17000, // (₹18,000 salary - ₹1,000 minimum saved)
+  monthlyBudget: 16000, // (₹16,000 monthly spend limit, ₹2,000 guaranteed saved)
   theme: 'dark',
   cloudSyncEnabled: false,
   habitRolloverMode: 'fresh_checks', // 'fresh_checks' | 'auto_clear'
