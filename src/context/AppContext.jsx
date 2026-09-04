@@ -219,7 +219,17 @@ export const AppProvider = ({ children }) => {
         if (!cloudData) return;
         if (Array.isArray(cloudData.habits)) setHabits(cloudData.habits);
         if (Array.isArray(cloudData.transactions)) setTransactions(cloudData.transactions);
-        if (Array.isArray(cloudData.jars)) setJars(cloudData.jars);
+        if (Array.isArray(cloudData.jars)) {
+          const isOldDefault = cloudData.jars.length <= 6 && !cloudData.jars.some(j => j && j.id === 'jar-grandma');
+          if (isOldDefault) {
+            setJars(DEFAULT_JARS);
+            setLocalData(STORAGE_KEYS.JARS, DEFAULT_JARS);
+            syncToCloud('default_user', { jars: DEFAULT_JARS });
+          } else {
+            setJars(cloudData.jars);
+            setLocalData(STORAGE_KEYS.JARS, cloudData.jars);
+          }
+        }
         if (Array.isArray(cloudData.roadmap)) setRoadmap(cloudData.roadmap);
         if (Array.isArray(cloudData.customLists)) setCustomLists(cloudData.customLists);
         if (cloudData.healthProtocol) setHealthProtocol(cloudData.healthProtocol);
