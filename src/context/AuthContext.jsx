@@ -3,14 +3,18 @@ import {
   getLocalData,
   setLocalData,
   STORAGE_KEYS,
-  DEFAULT_USERS
+  DEFAULT_USERS,
+  DEFAULT_MENU_PERMISSIONS,
+  AVAILABLE_MENUS
 } from '../services/storage';
 import {
   initFirebase,
   auth,
   syncUserToDirectoryCloud,
   deleteUserFromDirectoryCloud,
-  listenToUsersDirectory
+  listenToUsersDirectory,
+  syncMenuPermissionsToCloud,
+  listenToMenuPermissions
 } from '../services/firebase';
 
 const AuthContext = createContext();
@@ -58,23 +62,36 @@ export const AuthProvider = ({ children }) => {
     }
   });
 
+  // Global Menu Permissions for regular users (Toggled by Super Admin)
+  const [menuPermissions, setMenuPermissions] = useState(() => {
+    try {
+      const saved = getLocalData(STORAGE_KEYS.MENU_PERMISSIONS, null);
+      if (saved && typeof saved === 'object') {
+        return { ...DEFAULT_MENU_PERMISSIONS, ...saved };
+      }
+      setLocalData(STORAGE_KEYS.MENU_PERMISSIONS, DEFAULT_MENU_PERMISSIONS);
+      return DEFAULT_MENU_PERMISSIONS;
+    } catch {
+      return DEFAULT_MENU_PERMISSIONS;
+    }
+  });
+
   const [isLoading, setIsLoading] = useState(false);
   const [authError, setAuthError] = useState(null);
 
-  // Sync users directory with Firebase Cloud
+  // Sync users directory & menu permissions with Firebase Cloud
   useEffect(() => {
     const fbRes = initFirebase();
     if (fbRes.success) {
-      // Seed default admin in cloud if directory empty
+      // Seed default admin and menu permissions in cloud
       DEFAULT_USERS.forEach(u => syncUserToDirectoryCloud(u));
+      syncMenuPermissionsToCloud(menuPermissions);
 
-      const unsubscribe = listenToUsersDirectory((cloudUsers) => {
+      const unsubUsers = listenToUsersDirectory((cloudUsers) => {
         if (Array.isArray(cloudUsers) && cloudUsers.length > 0) {
           setUsersList(prev => {
             const mergedMap = new Map();
-            // Local users first
             prev.forEach(u => u && u.email && mergedMap.set(u.email.toLowerCase(), u));
-            // Overwrite with cloud directory
             cloudUsers.forEach(u => u && u.email && mergedMap.set(u.email.toLowerCase(), { ...mergedMap.get(u.email.toLowerCase()), ...u }));
             const mergedList = Array.from(mergedMap.values());
             setLocalData(STORAGE_KEYS.USERS_DIRECTORY, mergedList);
@@ -82,7 +99,21 @@ export const AuthProvider = ({ children }) => {
           });
         }
       });
-      return () => unsubscribe && unsubscribe();
+
+      const unsubPerms = listenToMenuPermissions((cloudPerms) => {
+        if (cloudPerms && typeof cloudPerms === 'object') {
+          setMenuPermissions(prev => {
+            const updated = { ...prev, ...cloudPerms };
+            setLocalData(STORAGE_KEYS.MENU_PERMISSIONS, updated);
+            return updated;
+          });
+        }
+      });
+
+      return () => {
+        unsubUsers && unsubUsers();
+        unsubPerms && unsubPerms();
+      };
     }
   }, []);
 
@@ -128,6 +159,7 @@ export const AuthProvider = ({ children }) => {
         email: foundUser.email,
         role: foundUser.role || 'user',
         status: foundUser.status || 'active',
+        allowedMenus: foundUser.allowedMenus || null,
         createdAt: foundUser.createdAt || new Date().toISOString(),
         lastLoginAt: new Date().toISOString(),
       };
@@ -149,8 +181,8 @@ export const AuthProvider = ({ children }) => {
     setLocalData(STORAGE_KEYS.AUTH_USER, null);
   }, []);
 
-  // Super Admin: Create / Add New User
-  const createUser = useCallback(async ({ name, email, password, role = 'user' }) => {
+  // Super Admin: Create / Add New User with optional allowedMenus
+  const createUser = useCallback(async ({ name, email, password, role = 'user', allowedMenus = null }) => {
     if (!currentUser || currentUser.role !== 'super_admin') {
       return { success: false, error: 'Unauthorized: Only Super Admin can create users.' };
     }
@@ -176,6 +208,7 @@ export const AuthProvider = ({ children }) => {
       password: cleanPass,
       role: role === 'super_admin' ? 'super_admin' : 'user',
       status: 'active',
+      allowedMenus: Array.isArray(allowedMenus) ? allowedMenus : null,
       createdAt: new Date().toISOString(),
       createdBy: currentUser.email,
     };
@@ -188,6 +221,62 @@ export const AuthProvider = ({ children }) => {
     await syncUserToDirectoryCloud(newUser);
 
     return { success: true, user: newUser };
+  }, [currentUser, usersList]);
+
+  // Super Admin: Toggle Global Menu Permission (Show / Hide menu for users)
+  const toggleMenuPermission = useCallback(async (menuId) => {
+    if (!currentUser || currentUser.role !== 'super_admin') {
+      return { success: false, error: 'Unauthorized: Only Super Admin can toggle menu permissions.' };
+    }
+
+    setMenuPermissions(prev => {
+      const isCurrentlyEnabled = prev[menuId] !== false;
+      const updated = {
+        ...prev,
+        [menuId]: !isCurrentlyEnabled
+      };
+      setLocalData(STORAGE_KEYS.MENU_PERMISSIONS, updated);
+      syncMenuPermissionsToCloud(updated);
+      return updated;
+    });
+
+    return { success: true };
+  }, [currentUser]);
+
+  // Super Admin: Set all menu permissions at once
+  const updateAllMenuPermissions = useCallback(async (newPermissions) => {
+    if (!currentUser || currentUser.role !== 'super_admin') {
+      return { success: false, error: 'Unauthorized.' };
+    }
+    setMenuPermissions(newPermissions);
+    setLocalData(STORAGE_KEYS.MENU_PERMISSIONS, newPermissions);
+    await syncMenuPermissionsToCloud(newPermissions);
+    return { success: true };
+  }, [currentUser]);
+
+  // Super Admin: Update Specific User's Menu Permissions (Per-User Override)
+  const updateUserAllowedMenus = useCallback(async (uid, allowedMenus) => {
+    if (!currentUser || currentUser.role !== 'super_admin') {
+      return { success: false, error: 'Unauthorized.' };
+    }
+
+    const targetUser = usersList.find(u => u && u.uid === uid);
+    if (!targetUser) return { success: false, error: 'User not found.' };
+
+    const updatedUser = { ...targetUser, allowedMenus: Array.isArray(allowedMenus) ? allowedMenus : null };
+    const updatedList = usersList.map(u => u.uid === uid ? updatedUser : u);
+
+    setUsersList(updatedList);
+    setLocalData(STORAGE_KEYS.USERS_DIRECTORY, updatedList);
+    await syncUserToDirectoryCloud(updatedUser);
+
+    // Update session if editing self
+    if (currentUser.uid === uid) {
+      setCurrentUser(updatedUser);
+      setLocalData(STORAGE_KEYS.AUTH_USER, updatedUser);
+    }
+
+    return { success: true };
   }, [currentUser, usersList]);
 
   // Super Admin: Update User Status (active / disabled)
@@ -256,17 +345,38 @@ export const AuthProvider = ({ children }) => {
     return { success: true };
   }, [currentUser, usersList]);
 
+  // Helper to check if a menu is visible for a user
+  const isMenuVisible = useCallback((menuId, targetUser = currentUser) => {
+    if (!targetUser) return false;
+    // Super Admin can always see all menus
+    if (targetUser.role === 'super_admin') return true;
+
+    // If user has specific custom allowedMenus array
+    if (Array.isArray(targetUser.allowedMenus)) {
+      return targetUser.allowedMenus.includes(menuId);
+    }
+
+    // Otherwise use global permissions
+    return menuPermissions[menuId] !== false;
+  }, [currentUser, menuPermissions]);
+
   const value = {
     currentUser,
     usersList,
+    menuPermissions,
+    availableMenus: AVAILABLE_MENUS,
     isLoading,
     authError,
     login,
     logout,
     createUser,
+    toggleMenuPermission,
+    updateAllMenuPermissions,
+    updateUserAllowedMenus,
     updateUserStatus,
     updateUserPassword,
     deleteUser,
+    isMenuVisible,
     isSuperAdmin: currentUser?.role === 'super_admin',
   };
 

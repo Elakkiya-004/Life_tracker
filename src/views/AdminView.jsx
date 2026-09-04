@@ -13,31 +13,88 @@ import {
   CheckCircle2, 
   XCircle, 
   Sparkles, 
-  ArrowRight,
   Shield,
-  Clock,
-  Mail,
-  User as UserIcon,
-  RefreshCw
+  LayoutDashboard,
+  HeartPulse,
+  Compass,
+  Film,
+  Wallet,
+  BarChart3,
+  Settings as SettingsIcon,
+  Sliders,
+  Eye,
+  EyeOff,
+  RotateCcw,
+  Check,
+  SlidersHorizontal
 } from 'lucide-react';
+
+const MENU_ICONS = {
+  LayoutDashboard: LayoutDashboard,
+  CheckCircle2: CheckCircle2,
+  HeartPulse: HeartPulse,
+  Compass: Compass,
+  Film: Film,
+  Wallet: Wallet,
+  BarChart3: BarChart3,
+  Settings: SettingsIcon,
+};
 
 export const AdminView = () => {
   const { 
     currentUser, 
     usersList = [], 
     updateUserStatus, 
-    deleteUser 
+    deleteUser,
+    menuPermissions = {},
+    availableMenus = [],
+    toggleMenuPermission,
+    updateAllMenuPermissions
   } = useAuth();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [userToEdit, setUserToEdit] = useState(null);
+  const [toggleSuccessMsg, setToggleSuccessMsg] = useState(null);
 
   const totalUsers = usersList.length;
   const activeUsers = usersList.filter(u => u && u.status === 'active').length;
   const disabledUsers = usersList.filter(u => u && u.status === 'disabled').length;
   const superAdminCount = usersList.filter(u => u && u.role === 'super_admin').length;
+
+  const enabledMenusCount = availableMenus.filter(m => menuPermissions[m.id] !== false).length;
+
+  const handleToggle = async (menuId, menuLabel) => {
+    const isCurrentlyEnabled = menuPermissions[menuId] !== false;
+    await toggleMenuPermission(menuId);
+    setToggleSuccessMsg(`"${menuLabel}" is now ${!isCurrentlyEnabled ? 'visible' : 'hidden'} for regular users.`);
+    setTimeout(() => setToggleSuccessMsg(null), 3000);
+  };
+
+  const handleEnableAll = async () => {
+    const allEnabled = {};
+    availableMenus.forEach(m => { allEnabled[m.id] = true; });
+    await updateAllMenuPermissions(allEnabled);
+    setToggleSuccessMsg('All navigation menus are now visible to users.');
+    setTimeout(() => setToggleSuccessMsg(null), 3000);
+  };
+
+  const handleResetDefaults = async () => {
+    const defaults = {
+      dashboard: true,
+      habits: true,
+      protocol: true,
+      roadmap: true,
+      watchlists: true,
+      finance: true,
+      analytics: true,
+      settings: true,
+    };
+    await updateAllMenuPermissions(defaults);
+    setToggleSuccessMsg('Menu permissions reset to defaults.');
+    setTimeout(() => setToggleSuccessMsg(null), 3000);
+  };
 
   const filteredUsers = usersList.filter(user => {
     if (!user) return false;
@@ -154,6 +211,111 @@ export const AdminView = () => {
             <span className="metric-title">Super Admins</span>
             <span className="metric-number text-amber">{superAdminCount}</span>
           </div>
+        </div>
+      </div>
+
+      {/* Navigation & Feature Access Controls (Show/Hide Toggles for Users) */}
+      <div className="card menu-toggle-card">
+        <div className="menu-toggle-header">
+          <div className="menu-toggle-title-area">
+            <div className="toggle-badge-icon">
+              <SlidersHorizontal size={20} className="text-primary" />
+            </div>
+            <div>
+              <div className="flex-center-gap">
+                <h3 className="menu-toggle-title">User Navigation & Module Visibility</h3>
+                <span className="active-modules-pill">
+                  {enabledMenusCount} of {availableMenus.length} Menus Visible
+                </span>
+              </div>
+              <p className="menu-toggle-desc text-sub text-xs">
+                Toggle switches below to show or hide navigation items & pages for regular members in real-time. Super Admin always retains full access to everything.
+              </p>
+            </div>
+          </div>
+
+          <div className="menu-toggle-actions">
+            <button 
+              className="btn btn-secondary btn-sm"
+              onClick={handleEnableAll}
+              title="Show all menus to users"
+            >
+              <Check size={14} />
+              <span>Enable All</span>
+            </button>
+            <button 
+              className="btn btn-secondary btn-sm"
+              onClick={handleResetDefaults}
+              title="Reset to default visibility"
+            >
+              <RotateCcw size={14} />
+              <span>Reset</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Live Feedback Banner */}
+        {toggleSuccessMsg && (
+          <div className="toggle-toast-banner">
+            <CheckCircle2 size={16} className="text-emerald" />
+            <span>{toggleSuccessMsg}</span>
+          </div>
+        )}
+
+        {/* Grid of Menu Module Toggles */}
+        <div className="menu-grid">
+          {availableMenus.map((menu) => {
+            const isEnabled = menuPermissions[menu.id] !== false;
+            const IconComponent = MENU_ICONS[menu.icon] || LayoutDashboard;
+
+            return (
+              <div 
+                key={menu.id} 
+                className={`menu-toggle-item ${isEnabled ? 'menu-enabled' : 'menu-disabled'}`}
+                onClick={() => handleToggle(menu.id, menu.label)}
+              >
+                <div className="menu-item-left">
+                  <div className={`menu-icon-box ${isEnabled ? 'box-active' : 'box-inactive'}`}>
+                    <IconComponent size={20} />
+                  </div>
+                  <div className="menu-info-texts">
+                    <div className="menu-name-row">
+                      <span className="menu-name">{menu.label}</span>
+                      <span className="menu-path-tag">{menu.path}</span>
+                    </div>
+                    <span className="menu-desc">{menu.desc}</span>
+                  </div>
+                </div>
+
+                <div className="menu-item-right" onClick={(e) => e.stopPropagation()}>
+                  <span className={`status-indicator ${isEnabled ? 'ind-visible' : 'ind-hidden'}`}>
+                    {isEnabled ? (
+                      <>
+                        <Eye size={13} />
+                        <span>Visible</span>
+                      </>
+                    ) : (
+                      <>
+                        <EyeOff size={13} />
+                        <span>Hidden</span>
+                      </>
+                    )}
+                  </span>
+
+                  {/* iOS Style Switch Toggle */}
+                  <label className="switch-toggle-label" title={`Toggle ${menu.label} visibility`}>
+                    <input
+                      type="checkbox"
+                      checked={isEnabled}
+                      onChange={() => handleToggle(menu.id, menu.label)}
+                      className="switch-input"
+                    />
+                    <span className="switch-slider" />
+                  </label>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -693,6 +855,270 @@ export const AdminView = () => {
 
         .info-sub {
           line-height: 1.6;
+        }
+
+        /* Menu Visibility Toggle Section */
+        .menu-toggle-card {
+          padding: 1.5rem;
+          background: var(--bg-card);
+          border: 1px solid var(--border-color);
+          display: flex;
+          flex-direction: column;
+          gap: 1.25rem;
+        }
+
+        .menu-toggle-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 1rem;
+          flex-wrap: wrap;
+          padding-bottom: 1rem;
+          border-bottom: 1px solid var(--border-color);
+        }
+
+        .menu-toggle-title-area {
+          display: flex;
+          align-items: center;
+          gap: 0.85rem;
+          max-width: 680px;
+        }
+
+        .toggle-badge-icon {
+          width: 42px;
+          height: 42px;
+          border-radius: var(--radius-md);
+          background: rgba(99, 102, 241, 0.15);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        }
+
+        .flex-center-gap {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          flex-wrap: wrap;
+          margin-bottom: 0.2rem;
+        }
+
+        .menu-toggle-title {
+          font-size: 1.15rem;
+          font-weight: 800;
+          letter-spacing: -0.01em;
+          color: var(--text-main);
+        }
+
+        .active-modules-pill {
+          font-size: 0.72rem;
+          font-weight: 700;
+          padding: 0.2rem 0.6rem;
+          border-radius: var(--radius-full);
+          background: rgba(16, 185, 129, 0.15);
+          color: #10b981;
+          border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .menu-toggle-desc {
+          line-height: 1.4;
+        }
+
+        .menu-toggle-actions {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        }
+
+        .toggle-toast-banner {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.65rem 0.9rem;
+          border-radius: var(--radius-md);
+          background: rgba(16, 185, 129, 0.12);
+          border: 1px solid rgba(16, 185, 129, 0.3);
+          color: #10b981;
+          font-size: 0.825rem;
+          font-weight: 600;
+          animation: fadeIn 0.2s ease;
+        }
+
+        .menu-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+          gap: 0.85rem;
+        }
+
+        .menu-toggle-item {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 0.85rem 1rem;
+          border-radius: var(--radius-md);
+          border: 1px solid var(--border-color);
+          background: var(--bg-secondary);
+          cursor: pointer;
+          transition: all 0.2s ease;
+          gap: 0.75rem;
+        }
+
+        .menu-toggle-item:hover {
+          border-color: var(--primary-color);
+          transform: translateY(-1px);
+        }
+
+        .menu-toggle-item.menu-enabled {
+          background: rgba(99, 102, 241, 0.04);
+          border-color: rgba(99, 102, 241, 0.3);
+        }
+
+        .menu-toggle-item.menu-disabled {
+          opacity: 0.65;
+          background: rgba(255, 255, 255, 0.02);
+          border-color: rgba(255, 255, 255, 0.08);
+        }
+
+        .menu-item-left {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          min-width: 0;
+        }
+
+        .menu-icon-box {
+          width: 38px;
+          height: 38px;
+          border-radius: var(--radius-sm);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+          transition: all 0.2s ease;
+        }
+
+        .box-active {
+          background: rgba(99, 102, 241, 0.2);
+          color: var(--primary-color);
+        }
+
+        .box-inactive {
+          background: rgba(148, 163, 184, 0.1);
+          color: #94a3b8;
+        }
+
+        .menu-info-texts {
+          display: flex;
+          flex-direction: column;
+          gap: 0.15rem;
+          min-width: 0;
+        }
+
+        .menu-name-row {
+          display: flex;
+          align-items: center;
+          gap: 0.45rem;
+        }
+
+        .menu-name {
+          font-size: 0.88rem;
+          font-weight: 700;
+          color: var(--text-main);
+          white-space: nowrap;
+        }
+
+        .menu-path-tag {
+          font-size: 0.68rem;
+          font-weight: 600;
+          font-family: monospace;
+          padding: 0.1rem 0.35rem;
+          border-radius: var(--radius-sm);
+          background: rgba(255, 255, 255, 0.08);
+          color: var(--text-muted);
+        }
+
+        .menu-desc {
+          font-size: 0.72rem;
+          color: var(--text-muted);
+          line-height: 1.3;
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+
+        .menu-item-right {
+          display: flex;
+          align-items: center;
+          gap: 0.65rem;
+          flex-shrink: 0;
+        }
+
+        .status-indicator {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.3rem;
+          font-size: 0.72rem;
+          font-weight: 700;
+          padding: 0.15rem 0.45rem;
+          border-radius: var(--radius-full);
+        }
+
+        .ind-visible {
+          color: #10b981;
+          background: rgba(16, 185, 129, 0.12);
+        }
+
+        .ind-hidden {
+          color: #94a3b8;
+          background: rgba(148, 163, 184, 0.1);
+        }
+
+        /* iOS Switch Toggle Component */
+        .switch-toggle-label {
+          position: relative;
+          display: inline-block;
+          width: 44px;
+          height: 24px;
+          cursor: pointer;
+        }
+
+        .switch-input {
+          opacity: 0;
+          width: 0;
+          height: 0;
+        }
+
+        .switch-slider {
+          position: absolute;
+          cursor: pointer;
+          inset: 0;
+          background-color: rgba(255, 255, 255, 0.15);
+          transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+          border-radius: 34px;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .switch-slider:before {
+          position: absolute;
+          content: "";
+          height: 18px;
+          width: 18px;
+          left: 2px;
+          bottom: 2px;
+          background-color: white;
+          transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+          border-radius: 50%;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+        }
+
+        .switch-input:checked + .switch-slider {
+          background-color: var(--primary-color);
+          border-color: var(--primary-color);
+        }
+
+        .switch-input:checked + .switch-slider:before {
+          transform: translateX(20px);
         }
       `}</style>
     </div>

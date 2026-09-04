@@ -32,9 +32,9 @@ export const Sidebar = () => {
     setIsQuickAddOpen
   } = useApp();
 
-  const { currentUser, logout, isSuperAdmin } = useAuth();
+  const { currentUser, logout, isSuperAdmin, isMenuVisible } = useAuth();
 
-  const navItems = [
+  const allNavItems = [
     ...(isSuperAdmin ? [
       { id: 'admin', path: '/admin', label: 'Super Admin Console', icon: ShieldCheck, highlightAdmin: true }
     ] : []),
@@ -47,6 +47,8 @@ export const Sidebar = () => {
     { id: 'analytics', path: '/analytics', label: 'Analytics & Score', icon: BarChart3 },
     { id: 'settings', path: '/settings', label: 'Settings & Cloud', icon: Settings },
   ];
+
+  const navItems = allNavItems.filter(item => item.id === 'admin' || isMenuVisible(item.id));
 
   const getInitials = (name = '') => {
     const parts = name.trim().split(' ');

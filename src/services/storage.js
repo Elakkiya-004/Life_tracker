@@ -15,6 +15,30 @@ const STORAGE_KEYS = {
   FIREBASE_CONFIG: 'life_tracker_firebase_config',
   AUTH_USER: 'life_tracker_auth_user_v1',
   USERS_DIRECTORY: 'life_tracker_users_directory_v1',
+  MENU_PERMISSIONS: 'life_tracker_menu_permissions_v1',
+};
+
+// Available Menus for Super Admin Control
+export const AVAILABLE_MENUS = [
+  { id: 'dashboard', label: 'Dashboard', path: '/', icon: 'LayoutDashboard', desc: 'Main home overview, habits progress ring, streak tracker' },
+  { id: 'habits', label: 'Habits & Routines', path: '/habits', icon: 'CheckCircle2', desc: 'Daily to-do checklist, routine streaks, 10:30 PM reset' },
+  { id: 'protocol', label: 'Health & Diet Protocol', path: '/health', icon: 'HeartPulse', desc: 'Intermittent fasting 16:8, water counter, meal schedule' },
+  { id: 'roadmap', label: 'Career Roadmap', path: '/roadmap', icon: 'Compass', desc: '16-Week DSA, Full-Stack, React Native Excel curriculum' },
+  { id: 'watchlists', label: 'MCU Watchlist', path: '/mcu', icon: 'Film', desc: 'Marvel Cinematic Universe Phase 1–6 release tracker' },
+  { id: 'finance', label: 'Finance & Budget', path: '/finance', icon: 'Wallet', desc: '₹18,000 monthly take-home 7-jar budget manager' },
+  { id: 'analytics', label: 'Analytics & Score', path: '/analytics', icon: 'BarChart3', desc: 'Discipline score, completion trends & monthly graphs' },
+  { id: 'settings', label: 'Settings & Cloud', path: '/settings', icon: 'Settings', desc: 'Theme switcher, profile customization, cloud backup' },
+];
+
+export const DEFAULT_MENU_PERMISSIONS = {
+  dashboard: true,
+  habits: true,
+  protocol: true,
+  roadmap: true,
+  watchlists: true,
+  finance: true,
+  analytics: true,
+  settings: true,
 };
 
 // Seeded Users for RBAC Authentication System

@@ -1,9 +1,12 @@
 import React from 'react';
 import { useApp } from '../../context/AppContext';
+import { useAuth } from '../../context/AuthContext';
 import { 
   LayoutDashboard, 
   Compass,
   CheckCircle2, 
+  HeartPulse,
+  Film,
   Plus, 
   Menu
 } from 'lucide-react';
@@ -19,28 +22,42 @@ export const BottomNav = () => {
     roadmapCompletionPercent 
   } = useApp();
 
+  const { isMenuVisible } = useAuth();
+
   return (
     <nav className="bottom-nav">
-      <button 
-        className={`bottom-nav-item ${activeTab === 'dashboard' ? 'active' : ''}`}
-        onClick={() => setActiveTab('dashboard')}
-      >
-        <LayoutDashboard size={20} />
-        <span>Home</span>
-      </button>
+      {isMenuVisible('dashboard') && (
+        <button 
+          className={`bottom-nav-item ${activeTab === 'dashboard' ? 'active' : ''}`}
+          onClick={() => setActiveTab('dashboard')}
+        >
+          <LayoutDashboard size={20} />
+          <span>Home</span>
+        </button>
+      )}
 
-      <button 
-        className={`bottom-nav-item ${activeTab === 'roadmap' ? 'active' : ''}`}
-        onClick={() => setActiveTab('roadmap')}
-      >
-        <div className="icon-with-badge">
-          <Compass size={20} />
-          {roadmapCompletionPercent > 0 && (
-            <span className="dot-badge cyan" />
-          )}
-        </div>
-        <span>Roadmap</span>
-      </button>
+      {isMenuVisible('roadmap') ? (
+        <button 
+          className={`bottom-nav-item ${activeTab === 'roadmap' ? 'active' : ''}`}
+          onClick={() => setActiveTab('roadmap')}
+        >
+          <div className="icon-with-badge">
+            <Compass size={20} />
+            {roadmapCompletionPercent > 0 && (
+              <span className="dot-badge cyan" />
+            )}
+          </div>
+          <span>Roadmap</span>
+        </button>
+      ) : isMenuVisible('protocol') ? (
+        <button 
+          className={`bottom-nav-item ${activeTab === 'protocol' ? 'active' : ''}`}
+          onClick={() => setActiveTab('protocol')}
+        >
+          <HeartPulse size={20} />
+          <span>Health</span>
+        </button>
+      ) : null}
 
       {/* Center Floating Action Button */}
       <div className="fab-container">
@@ -53,18 +70,28 @@ export const BottomNav = () => {
         </button>
       </div>
 
-      <button 
-        className={`bottom-nav-item ${activeTab === 'habits' ? 'active' : ''}`}
-        onClick={() => setActiveTab('habits')}
-      >
-        <div className="icon-with-badge">
-          <CheckCircle2 size={20} />
-          {habits.length > todayCompletedHabits && (
-            <span className="dot-badge" />
-          )}
-        </div>
-        <span>Habits</span>
-      </button>
+      {isMenuVisible('habits') ? (
+        <button 
+          className={`bottom-nav-item ${activeTab === 'habits' ? 'active' : ''}`}
+          onClick={() => setActiveTab('habits')}
+        >
+          <div className="icon-with-badge">
+            <CheckCircle2 size={20} />
+            {habits.length > todayCompletedHabits && (
+              <span className="dot-badge" />
+            )}
+          </div>
+          <span>Habits</span>
+        </button>
+      ) : isMenuVisible('watchlists') ? (
+        <button 
+          className={`bottom-nav-item ${activeTab === 'watchlists' ? 'active' : ''}`}
+          onClick={() => setActiveTab('watchlists')}
+        >
+          <Film size={20} />
+          <span>MCU</span>
+        </button>
+      ) : null}
 
       {/* Menu / More Drawer Toggle Button */}
       <button 

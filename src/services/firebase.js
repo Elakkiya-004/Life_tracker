@@ -190,4 +190,38 @@ export const listenToUsersDirectory = (onUpdate) => {
   }
 };
 
+// Global Menu & Feature Permissions Sync
+export const syncMenuPermissionsToCloud = async (permissions) => {
+  if (!db || !isInitialized) return { success: false };
+  try {
+    const permDocRef = doc(db, 'system_config', 'menu_permissions');
+    await setDoc(permDocRef, {
+      ...permissions,
+      updatedAt: new Date().toISOString(),
+    }, { merge: true });
+    return { success: true };
+  } catch (err) {
+    console.error('Error syncing menu permissions:', err);
+    return { success: false, error: err };
+  }
+};
+
+export const listenToMenuPermissions = (onUpdate) => {
+  if (!db || !isInitialized) return () => {};
+  try {
+    const permDocRef = doc(db, 'system_config', 'menu_permissions');
+    const unsubscribe = onSnapshot(permDocRef, (docSnap) => {
+      if (docSnap.exists()) {
+        onUpdate(docSnap.data());
+      }
+    }, (err) => {
+      console.error('Menu permissions listener error:', err);
+    });
+    return unsubscribe;
+  } catch (err) {
+    console.error('Failed to listen to menu permissions:', err);
+    return () => {};
+  }
+};
+
 export { app, db, auth, isInitialized };

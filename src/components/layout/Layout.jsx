@@ -19,7 +19,7 @@ import { AnalyticsView } from '../../views/AnalyticsView';
 import { SettingsView } from '../../views/SettingsView';
 
 export const Layout = () => {
-  const { currentUser } = useAuth();
+  const { currentUser, isMenuVisible, isSuperAdmin } = useAuth();
   const { activeTab } = useApp();
 
   // If user is not logged in, show Login Portal
@@ -28,9 +28,33 @@ export const Layout = () => {
   }
 
   const renderView = () => {
+    if (activeTab === 'admin') {
+      return isSuperAdmin ? <AdminView /> : <DashboardView />;
+    }
+
+    // Guard disabled modules for regular users
+    const mapTabToMenuId = {
+      dashboard: 'dashboard',
+      habits: 'habits',
+      protocol: 'protocol',
+      health: 'protocol',
+      roadmap: 'roadmap',
+      career: 'roadmap',
+      watchlists: 'watchlists',
+      mcu: 'watchlists',
+      marvel: 'watchlists',
+      finance: 'finance',
+      budget: 'finance',
+      analytics: 'analytics',
+      settings: 'settings',
+    };
+
+    const menuId = mapTabToMenuId[activeTab] || activeTab;
+    if (!isSuperAdmin && !isMenuVisible(menuId)) {
+      return <DashboardView />;
+    }
+
     switch (activeTab) {
-      case 'admin':
-        return currentUser.role === 'super_admin' ? <AdminView /> : <DashboardView />;
       case 'dashboard':
         return <DashboardView />;
       case 'watchlists':
@@ -53,7 +77,7 @@ export const Layout = () => {
       case 'settings':
         return <SettingsView />;
       default:
-        return currentUser.role === 'super_admin' && activeTab === 'admin' ? <AdminView /> : <DashboardView />;
+        return isSuperAdmin && activeTab === 'admin' ? <AdminView /> : <DashboardView />;
     }
   };
 
