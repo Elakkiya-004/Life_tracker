@@ -65,13 +65,25 @@ export const AppProvider = ({ children }) => {
   });
 
   const [roadmap, setRoadmap] = useState(() => {
-    const data = getLocalData(STORAGE_KEYS.ROADMAP, DEFAULT_ROADMAP);
-    return Array.isArray(data) ? data : DEFAULT_ROADMAP;
+    try {
+      const data = getLocalData(STORAGE_KEYS.ROADMAP, null);
+      if (Array.isArray(data) && data.length > 0) return data;
+      setLocalData(STORAGE_KEYS.ROADMAP, DEFAULT_ROADMAP);
+      return DEFAULT_ROADMAP;
+    } catch {
+      return DEFAULT_ROADMAP;
+    }
   });
 
   const [customLists, setCustomLists] = useState(() => {
-    const data = getLocalData(STORAGE_KEYS.CUSTOM_LISTS, DEFAULT_CUSTOM_LISTS);
-    return Array.isArray(data) ? data : DEFAULT_CUSTOM_LISTS;
+    try {
+      const data = getLocalData(STORAGE_KEYS.CUSTOM_LISTS, null);
+      if (Array.isArray(data) && data.length > 0 && data.some(l => l && Array.isArray(l.items) && l.items.length > 0)) return data;
+      setLocalData(STORAGE_KEYS.CUSTOM_LISTS, DEFAULT_CUSTOM_LISTS);
+      return DEFAULT_CUSTOM_LISTS;
+    } catch {
+      return DEFAULT_CUSTOM_LISTS;
+    }
   });
 
   const [healthProtocol, setHealthProtocol] = useState(() => {
@@ -230,8 +242,20 @@ export const AppProvider = ({ children }) => {
             setLocalData(STORAGE_KEYS.JARS, cloudData.jars);
           }
         }
-        if (Array.isArray(cloudData.roadmap)) setRoadmap(cloudData.roadmap);
-        if (Array.isArray(cloudData.customLists)) setCustomLists(cloudData.customLists);
+        if (Array.isArray(cloudData.roadmap) && cloudData.roadmap.length > 0) {
+          setRoadmap(cloudData.roadmap);
+          setLocalData(STORAGE_KEYS.ROADMAP, cloudData.roadmap);
+        } else if (!cloudData.roadmap) {
+          syncToCloud('default_user', { roadmap: DEFAULT_ROADMAP });
+        }
+
+        if (Array.isArray(cloudData.customLists) && cloudData.customLists.length > 0 && cloudData.customLists.some(l => l && Array.isArray(l.items) && l.items.length > 0)) {
+          setCustomLists(cloudData.customLists);
+          setLocalData(STORAGE_KEYS.CUSTOM_LISTS, cloudData.customLists);
+        } else if (!cloudData.customLists || cloudData.customLists.length === 0) {
+          syncToCloud('default_user', { customLists: DEFAULT_CUSTOM_LISTS });
+        }
+
         if (cloudData.healthProtocol) setHealthProtocol(cloudData.healthProtocol);
         if (cloudData.dailyHistory) setDailyHistory(cloudData.dailyHistory);
         if (cloudData.settings) setSettings(prev => ({ ...prev, ...cloudData.settings }));

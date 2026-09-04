@@ -21,9 +21,13 @@ export const Layout = () => {
   const renderView = () => {
     switch (activeTab) {
       case 'dashboard':
-      case 'watchlists':
         return <DashboardView />;
+      case 'watchlists':
+      case 'mcu':
+      case 'marvel':
+        return <WatchlistView />;
       case 'roadmap':
+      case 'career':
         return <RoadmapView />;
       case 'habits':
         return <HabitsView />;
@@ -31,6 +35,7 @@ export const Layout = () => {
       case 'health':
         return <HealthProtocolView />;
       case 'finance':
+      case 'budget':
         return <FinanceView />;
       case 'analytics':
         return <AnalyticsView />;

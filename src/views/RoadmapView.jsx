@@ -44,10 +44,11 @@ export const RoadmapView = () => {
   const [weekToEdit, setWeekToEdit] = useState(null);
 
   // Filter weeks by month
+  const safeRoadmap = Array.isArray(roadmap) && roadmap.length > 0 ? roadmap : DEFAULT_ROADMAP;
   const months = ['All', 'September', 'October', 'November', 'December'];
   const filteredWeeks = selectedMonth === 'All'
-    ? roadmap
-    : roadmap.filter(w => w.month === selectedMonth);
+    ? safeRoadmap
+    : safeRoadmap.filter(w => w && w.month === selectedMonth);
 
   // Calculate days left to Dec 31, 2026
   const targetDate = new Date('2026-12-31T23:59:59');

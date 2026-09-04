@@ -11,7 +11,8 @@ import {
   Sparkles,
   Cloud,
   CloudOff,
-  Plus
+  Plus,
+  Film
 } from 'lucide-react';
 
 export const Sidebar = () => {
@@ -22,6 +23,7 @@ export const Sidebar = () => {
     todayCompletedHabits, 
     todayHabitProgress,
     roadmapCompletionPercent,
+    marvelProgressPercent,
     syncStatus,
     setIsQuickAddOpen
   } = useApp();
@@ -31,6 +33,7 @@ export const Sidebar = () => {
     { id: 'habits', label: 'Habits & Routines', icon: CheckCircle2, badge: `${todayCompletedHabits}/${(Array.isArray(habits) ? habits.length : 0)}` },
     { id: 'protocol', label: 'Health & Diet Protocol', icon: HeartPulse, highlight: true },
     { id: 'roadmap', label: 'Career Roadmap', icon: Compass, badge: `${roadmapCompletionPercent}%` },
+    { id: 'watchlists', label: 'MCU Watchlist', icon: Film, badge: `${marvelProgressPercent}%` },
     { id: 'finance', label: 'Finance & Budget', icon: Wallet },
     { id: 'analytics', label: 'Analytics & Score', icon: BarChart3 },
     { id: 'settings', label: 'Settings & Cloud', icon: Settings },

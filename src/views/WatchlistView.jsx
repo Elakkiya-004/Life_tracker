@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
+import { DEFAULT_CUSTOM_LISTS } from '../services/marvelData';
 import { WatchlistModal } from '../components/watchlist/WatchlistModal';
 import { 
   Film, 
@@ -36,8 +37,9 @@ export const WatchlistView = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-  const activeList = customLists.find(l => l.id === activeListId) || customLists[0];
-  const items = activeList?.items || [];
+  const safeLists = Array.isArray(customLists) && customLists.length > 0 ? customLists : DEFAULT_CUSTOM_LISTS;
+  const activeList = safeLists.find(l => l && l.id === activeListId) || safeLists[0] || DEFAULT_CUSTOM_LISTS[0];
+  const items = Array.isArray(activeList?.items) ? activeList.items : [];
 
   // Extract unique phases/categories
   const phases = ['All', ...Array.from(new Set(items.map(i => i.category)))];
