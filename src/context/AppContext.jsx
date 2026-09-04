@@ -153,9 +153,17 @@ export const AppProvider = ({ children }) => {
   });
 
   const [healthProtocol, setHealthProtocol] = useState(() => {
-    const data = getLocalData(STORAGE_KEYS.HEALTH_PROTOCOL, DEFAULT_HEALTH_PROTOCOL);
+    const userKey = `${STORAGE_KEYS.HEALTH_PROTOCOL}_${currentUser?.uid || 'default_user'}`;
+    const data = getLocalData(userKey, null) || getLocalData(STORAGE_KEYS.HEALTH_PROTOCOL, DEFAULT_HEALTH_PROTOCOL);
     return data && typeof data === 'object' ? data : DEFAULT_HEALTH_PROTOCOL;
   });
+
+  // Reload protocol when current user switches
+  useEffect(() => {
+    const userKey = `${STORAGE_KEYS.HEALTH_PROTOCOL}_${currentUser?.uid || 'default_user'}`;
+    const saved = getLocalData(userKey, null) || getLocalData(STORAGE_KEYS.HEALTH_PROTOCOL, DEFAULT_HEALTH_PROTOCOL);
+    setHealthProtocol(saved && typeof saved === 'object' ? saved : DEFAULT_HEALTH_PROTOCOL);
+  }, [currentUser?.uid]);
 
   const [dailyHistory, setDailyHistory] = useState(() => {
     const data = getLocalData(STORAGE_KEYS.DAILY_HISTORY, {});
@@ -872,10 +880,53 @@ export const AppProvider = ({ children }) => {
   const updateHealthProtocol = (newProtocol) => {
     setHealthProtocol(prev => {
       const updated = typeof newProtocol === 'function' ? newProtocol(prev || DEFAULT_HEALTH_PROTOCOL) : { ...(prev || DEFAULT_HEALTH_PROTOCOL), ...newProtocol };
+      const userKey = `${STORAGE_KEYS.HEALTH_PROTOCOL}_${currentUser?.uid || 'default_user'}`;
+      setLocalData(userKey, updated);
       setLocalData(STORAGE_KEYS.HEALTH_PROTOCOL, updated);
-      pushToCloud({ habits, transactions, jars, roadmap, customLists, healthProtocol: updated, settings });
+      pushToCloud({ habits, transactions, jars, roadmap, customLists, healthProtocol: updated, dailyHistory, settings });
       return updated;
     });
+  };
+
+  const importHealthProtocolFromExcel = (parsedProtocol, stats = null) => {
+    const userKey = `${STORAGE_KEYS.HEALTH_PROTOCOL}_${currentUser?.uid || 'default_user'}`;
+    const enrichedProtocol = {
+      ...DEFAULT_HEALTH_PROTOCOL,
+      ...parsedProtocol,
+      meta: {
+        isCustom: true,
+        planName: stats?.fileName ? stats.fileName.replace(/\.[^/.]+$/, '').replace(/_/g, ' ') : 'Custom Uploaded Diet Protocol',
+        uploadedAt: new Date().toISOString(),
+        fileName: stats?.fileName || 'custom_diet_protocol.xlsx',
+        source: 'excel_upload',
+        uploaderEmail: currentUser?.email || 'user',
+      }
+    };
+    setHealthProtocol(enrichedProtocol);
+    setLocalData(userKey, enrichedProtocol);
+    setLocalData(STORAGE_KEYS.HEALTH_PROTOCOL, enrichedProtocol);
+    pushToCloud({ habits, transactions, jars, roadmap, customLists, healthProtocol: enrichedProtocol, dailyHistory, settings });
+    triggerCelebration();
+    return enrichedProtocol;
+  };
+
+  const resetHealthProtocolToDefault = () => {
+    const userKey = `${STORAGE_KEYS.HEALTH_PROTOCOL}_${currentUser?.uid || 'default_user'}`;
+    setHealthProtocol(DEFAULT_HEALTH_PROTOCOL);
+    setLocalData(userKey, DEFAULT_HEALTH_PROTOCOL);
+    setLocalData(STORAGE_KEYS.HEALTH_PROTOCOL, DEFAULT_HEALTH_PROTOCOL);
+    pushToCloud({ habits, transactions, jars, roadmap, customLists, healthProtocol: DEFAULT_HEALTH_PROTOCOL, dailyHistory, settings });
+    return DEFAULT_HEALTH_PROTOCOL;
+  };
+
+  const updateUserHealthProtocol = async (targetUid, newProtocol) => {
+    if (!targetUid) return;
+    const userKey = `${STORAGE_KEYS.HEALTH_PROTOCOL}_${targetUid}`;
+    setLocalData(userKey, newProtocol);
+    if (currentUser?.uid === targetUid) {
+      setHealthProtocol(newProtocol);
+    }
+    await syncToCloud(targetUid, { healthProtocol: newProtocol });
   };
 
   const addProtocolTasksToToday = (dayKey) => {
@@ -1028,6 +1079,9 @@ export const AppProvider = ({ children }) => {
         nextMarvelItem,
         healthProtocol: healthProtocol || DEFAULT_HEALTH_PROTOCOL,
         updateHealthProtocol,
+        importHealthProtocolFromExcel,
+        resetHealthProtocolToDefault,
+        updateUserHealthProtocol,
         addProtocolTasksToToday,
         settings: settings || DEFAULT_SETTINGS,
         activeTab,

@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useApp } from '../context/AppContext';
 import { UserModal } from '../components/admin/UserModal';
 import { EmployeePermissionsModal } from '../components/admin/EmployeePermissionsModal';
+import { ExcelUploadModal } from '../components/health/ExcelUploadModal';
 import { 
   ShieldCheck, 
   UserPlus, 
@@ -29,7 +31,9 @@ import {
   Check,
   SlidersHorizontal,
   Globe,
-  Sliders as SlidersIcon
+  Sliders as SlidersIcon,
+  Utensils,
+  FileSpreadsheet
 } from 'lucide-react';
 
 const MENU_ICONS = {
@@ -55,12 +59,16 @@ export const AdminView = () => {
     updateAllMenuPermissions
   } = useAuth();
 
+  const { updateUserHealthProtocol } = useApp();
+
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [userToEdit, setUserToEdit] = useState(null);
   const [permissionsUser, setPermissionsUser] = useState(null);
   const [isPermModalOpen, setIsPermModalOpen] = useState(false);
+  const [dietUploadUser, setDietUploadUser] = useState(null);
+  const [isDietModalOpen, setIsDietModalOpen] = useState(false);
   const [toggleSuccessMsg, setToggleSuccessMsg] = useState(null);
 
   const totalUsers = usersList.length;
@@ -125,6 +133,11 @@ export const AdminView = () => {
   const handleOpenPermissions = (user) => {
     setPermissionsUser(user);
     setIsPermModalOpen(true);
+  };
+
+  const handleOpenDietUpload = (user) => {
+    setDietUploadUser(user);
+    setIsDietModalOpen(true);
   };
 
   const handleToggleStatus = async (user) => {
@@ -488,14 +501,25 @@ export const AdminView = () => {
                         <div className="actions-cell">
                           {/* Menu Permissions Button (For regular users) */}
                           {user.role !== 'super_admin' && (
-                            <button
-                              className="btn-action btn-perms-action"
-                              onClick={() => handleOpenPermissions(user)}
-                              title="Configure Menus for this Employee"
-                            >
-                              <SlidersHorizontal size={13} />
-                              <span>Menus</span>
-                            </button>
+                            <>
+                              <button
+                                className="btn-action btn-perms-action"
+                                onClick={() => handleOpenPermissions(user)}
+                                title="Configure Menus for this Employee"
+                              >
+                                <SlidersHorizontal size={13} />
+                                <span>Menus</span>
+                              </button>
+
+                              <button
+                                className="btn-action btn-diet-action"
+                                onClick={() => handleOpenDietUpload(user)}
+                                title="Upload Custom Diet Plan (Excel) for this Employee"
+                              >
+                                <Utensils size={13} />
+                                <span>Diet Plan</span>
+                              </button>
+                            </>
                           )}
 
                           {/* Toggle Active / Suspend */}
@@ -548,8 +572,8 @@ export const AdminView = () => {
         <div className="info-text-content">
           <h4 className="info-heading">Role-Based Access Control (RBAC) System Architecture</h4>
           <p className="info-sub text-xs text-sub">
-            • <strong>Super Admin</strong>: Has unrestricted access to all 8 modules and the Super Admin Console (`/admin`) to create users, reset passwords, and toggle menu visibility.<br />
-            • <strong>Per-Employee Menu Toggles</strong>: Super Admin can assign specific modules (e.g. Habits, Roadmap, Budget) individually per employee or apply global visibility toggles.
+            • <strong>Super Admin</strong>: Has unrestricted access to all 8 modules and the Super Admin Console (`/admin`) to create users, reset passwords, upload custom employee diet plans, and toggle menu visibility.<br />
+            • <strong>Per-Employee Menu & Diet Customization</strong>: Super Admin can assign specific modules (e.g. Habits, Roadmap, Budget) individually per employee, and import customized diet schedules via Excel (.xlsx).
           </p>
         </div>
       </div>
@@ -572,6 +596,23 @@ export const AdminView = () => {
           setPermissionsUser(null);
         }}
         employee={permissionsUser}
+      />
+
+      {/* Employee Diet Protocol Upload Modal */}
+      <ExcelUploadModal
+        isOpen={isDietModalOpen}
+        onClose={() => {
+          setIsDietModalOpen(false);
+          setDietUploadUser(null);
+        }}
+        onApply={async (newProto) => {
+          if (dietUploadUser?.uid) {
+            await updateUserHealthProtocol(dietUploadUser.uid, newProto);
+            setToggleSuccessMsg(`🎉 Diet Protocol updated from Excel for ${dietUploadUser.name}!`);
+            setTimeout(() => setToggleSuccessMsg(null), 3500);
+          }
+        }}
+        targetUserName={dietUploadUser?.name}
       />
 
       <style>{`
@@ -981,6 +1022,17 @@ export const AdminView = () => {
 
         .btn-activate:hover {
           background: rgba(16, 185, 129, 0.25);
+        }
+
+        .btn-diet-action {
+          background: rgba(16, 185, 129, 0.12);
+          color: #10b981;
+          border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-diet-action:hover {
+          background: rgba(16, 185, 129, 0.25);
+          border-color: #10b981;
         }
 
         .admin-info-card {

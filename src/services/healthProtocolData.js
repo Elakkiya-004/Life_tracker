@@ -1,5 +1,13 @@
 // Standard Health, Diet, Hair & Skin Care Protocol Data
 export const DEFAULT_HEALTH_PROTOCOL = {
+  // Metadata for plan tracking
+  meta: {
+    isCustom: false,
+    planName: 'Standard Ayurvedic & Fitness Protocol',
+    uploadedAt: null,
+    source: 'system_default',
+  },
+
   // 1. Daily Calorie & Macro Requirements
   calories: {
     maintenance: 1850,
@@ -41,7 +49,68 @@ export const DEFAULT_HEALTH_PROTOCOL = {
     ]
   },
 
-  // 2. Micronutrients Focus
+  // 2. Daily Meal Schedule & Food Timetable
+  mealSchedule: [
+    {
+      id: 'meal-1',
+      time: '08:00 AM',
+      name: '🌅 Morning Detox & Hydration',
+      dishes: 'Warm water + 1/2 lemon + soaked chia seeds (1 tbsp)',
+      calories: 45,
+      protein: '1 g',
+      hairSkinBenefits: 'Flushes metabolic toxins, stimulates gut motility & digestive enzymes'
+    },
+    {
+      id: 'meal-2',
+      time: '10:30 AM',
+      name: '🍵 Pre-Meal Brain & Energy Boost',
+      dishes: '1 cup green tea + 10 soaked almonds + 2 walnuts + 1 medjool date',
+      calories: 140,
+      protein: '4 g',
+      hairSkinBenefits: 'Vitamin E & healthy omega-3 fatty acids for skin glow & scalp moisture'
+    },
+    {
+      id: 'meal-3',
+      time: '01:00 PM',
+      name: '🥗 Main Lunch / High-Protein Nutrition',
+      dishes: '1 cup brown rice or 2 multigrain rotis + grilled paneer/tofu (150g) or boiled eggs + 1 bowl mixed dal + cucumber salad + fresh curd',
+      calories: 520,
+      protein: '30 g',
+      hairSkinBenefits: 'Keratin synthesis, amino acids for hair growth & sustained afternoon energy'
+    },
+    {
+      id: 'meal-4',
+      time: '04:30 PM',
+      name: '🥜 Evening Snack & Hydration',
+      dishes: 'Roasted pumpkin seeds (15g) + tender coconut water or buttermilk',
+      calories: 130,
+      protein: '5 g',
+      hairSkinBenefits: 'Zinc for acne prevention & magnesium for craving reduction'
+    },
+    {
+      id: 'meal-5',
+      time: '07:30 PM',
+      name: '🍲 Light Dinner / Cell Repair',
+      dishes: 'Warm vegetable soup + stir-fried broccoli, mushrooms, paneer/tofu or 3 egg whites + 1 bowl lentil broth',
+      calories: 380,
+      protein: '25 g',
+      hairSkinBenefits: 'Collagen synthesis, overnight muscle recovery & sound deep sleep'
+    }
+  ],
+
+  // 3. Fasting & Hydration Targets
+  fastingAndWater: {
+    fastingProtocol: '16:8 Intermittent Fasting',
+    fastingWindow: 'Fasting 8:00 PM to 12:00 PM next day',
+    fastingStart: '20:00',
+    fastingEnd: '12:00',
+    waterTargetLiters: 3.5,
+    waterTargetGlasses: 14,
+    electrolyteHack: 'Morning warm water + pinch of pink Himalayan salt + lemon',
+    fastingNotes: 'Zero-calorie beverages permitted: Water, plain green tea, black coffee without sugar'
+  },
+
+  // 4. Micronutrients Focus
   micronutrients: [
     {
       id: 'iron',
@@ -80,7 +149,7 @@ export const DEFAULT_HEALTH_PROTOCOL = {
     },
   ],
 
-  // 3. Exercise Routine
+  // 5. Exercise Routine
   exerciseRoutine: {
     morning: {
       title: '🌅 Morning Cardio (30–40 Mins)',
@@ -94,7 +163,7 @@ export const DEFAULT_HEALTH_PROTOCOL = {
     }
   },
 
-  // 4. Sugar Cutting Strategy
+  // 6. Sugar Cutting Strategy
   sugarCutting: {
     phases: [
       { week: 'Week 1', action: 'Remove added sugar from tea & coffee', status: 'Phase 1' },
@@ -104,7 +173,7 @@ export const DEFAULT_HEALTH_PROTOCOL = {
     cravingHack: '🧠 Craving Hack: Drink 1 glass warm water + take 5 slow deep breaths. Cravings fade in 90 seconds.'
   },
 
-  // 5. Skin Care Regime
+  // 7. Skin Care Regime
   skinCare: {
     daily: 'AM and PM (Cleanse, hydrate, sunscreen AM, barrier repair PM)',
     weeklySunday: 'Sunday: Face shaving and scrub',
@@ -112,14 +181,14 @@ export const DEFAULT_HEALTH_PROTOCOL = {
     notes: 'Gentle circular motion for scrub; use soothing gel after face shaving.'
   },
 
-  // 6. Body Care Regime
+  // 8. Body Care Regime
   bodyCare: {
     sunday: 'Sunday: Oiling, scrub, shaving',
     tueFri: 'Tuesday & Friday: Exfoliating body wash',
     notes: 'Warm oil before bath on Sundays; gentle loofah with exfoliating wash on Tue/Fri.'
   },
 
-  // 7. Hair Care Regime
+  // 9. Hair Care Regime
   hairCare: {
     daily: 'Serum and hair growth water',
     weekly: '3x Oiling, hair pack, hair wash',

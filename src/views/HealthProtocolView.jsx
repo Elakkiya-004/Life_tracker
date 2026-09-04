@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
 import { 
   HeartPulse, 
   Flame, 
@@ -14,26 +15,103 @@ import {
   Calendar,
   Sparkle,
   Clock,
-  X
+  X,
+  UploadCloud,
+  FileSpreadsheet,
+  Download,
+  RotateCcw,
+  Droplets,
+  Utensils,
+  Check,
+  Share2,
+  FileDown,
+  Info,
+  CheckCircle2
 } from 'lucide-react';
+import { 
+  exportHealthProtocolToExcel, 
+  downloadSampleDietTemplate 
+} from '../services/excelProtocolParser';
+import { ExcelUploadModal } from '../components/health/ExcelUploadModal';
 
 export const HealthProtocolView = () => {
   const { 
     healthProtocol, 
     updateHealthProtocol, 
+    importHealthProtocolFromExcel,
+    resetHealthProtocolToDefault,
+    todayStr,
+    triggerCelebration
   } = useApp();
 
+  const { currentUser } = useAuth();
+
   const [notificationMsg, setNotificationMsg] = useState(null);
+  const [isExcelModalOpen, setIsExcelModalOpen] = useState(false);
+
+  // Daily Water Tracker state (Persisted in localStorage per day & user)
+  const waterStorageKey = `life_tracker_water_${currentUser?.uid || 'user'}_${todayStr}`;
+  const [waterGlasses, setWaterGlasses] = useState(() => {
+    try {
+      const saved = localStorage.getItem(waterStorageKey);
+      return saved !== null ? parseInt(saved, 10) : 0;
+    } catch {
+      return 0;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(waterStorageKey, String(waterGlasses));
+    } catch {
+      // Ignore storage errors
+    }
+  }, [waterGlasses, waterStorageKey]);
+
+  // Daily Completed Meals Tracker state
+  const mealStorageKey = `life_tracker_meals_done_${currentUser?.uid || 'user'}_${todayStr}`;
+  const [completedMeals, setCompletedMeals] = useState(() => {
+    try {
+      const saved = localStorage.getItem(mealStorageKey);
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(mealStorageKey, JSON.stringify(completedMeals));
+    } catch {
+      // Ignore storage errors
+    }
+  }, [completedMeals, mealStorageKey]);
 
   // Edit Modals State
-  const [activeModal, setActiveModal] = useState(null); // 'calories' | 'micronutrients' | 'exercise' | 'sugar' | 'skincare' | 'bodycare' | 'haircare' | null
+  const [activeModal, setActiveModal] = useState(null); // 'calories' | 'micronutrients' | 'exercise' | 'sugar' | 'skincare' | 'bodycare' | 'haircare' | 'meals' | 'fasting' | null
   
   // Temporary Form States
   const [formData, setFormData] = useState({});
 
   const protocol = healthProtocol || {};
+  const meta = protocol.meta || {};
+  const isCustomPlan = !!meta.isCustom;
+
   const calories = protocol.calories || {};
   const macros = calories.macros || [];
+  const mealSchedule = Array.isArray(protocol.mealSchedule) && protocol.mealSchedule.length > 0
+    ? protocol.mealSchedule
+    : [];
+
+  const fastingAndWater = protocol.fastingAndWater || {
+    fastingProtocol: '16:8 Intermittent Fasting',
+    fastingWindow: 'Fasting 8:00 PM to 12:00 PM next day',
+    waterTargetLiters: 3.5,
+    waterTargetGlasses: 14,
+    electrolyteHack: 'Morning warm water + pink Himalayan salt + lemon',
+    fastingNotes: 'Water, black coffee, plain green tea allowed during fast'
+  };
+
   const micronutrients = Array.isArray(protocol.micronutrients) && protocol.micronutrients.length > 0 
     ? protocol.micronutrients 
     : [
@@ -72,6 +150,49 @@ export const HealthProtocolView = () => {
     setTimeout(() => setNotificationMsg(null), 3500);
   };
 
+  // Water Increment / Decrement
+  const handleAddWater = () => {
+    const next = waterGlasses + 1;
+    setWaterGlasses(next);
+    if (next === (fastingAndWater.waterTargetGlasses || 14)) {
+      triggerCelebration();
+      showToast('🎉 Awesome! Daily water goal completed (3.5L)!');
+    }
+  };
+
+  const handleSubWater = () => {
+    setWaterGlasses(prev => Math.max(0, prev - 1));
+  };
+
+  // Toggle Meal Completion
+  const handleToggleMeal = (mealId) => {
+    setCompletedMeals(prev => {
+      const isDone = prev.includes(mealId);
+      const updated = isDone ? prev.filter(id => id !== mealId) : [...prev, mealId];
+      if (!isDone && mealSchedule.length > 0 && updated.length === mealSchedule.length) {
+        triggerCelebration();
+        showToast('🌟 All daily protocol meals completed! Super disciplined!');
+      }
+      return updated;
+    });
+  };
+
+  // Export current protocol to Excel
+  const handleExportExcel = () => {
+    const res = exportHealthProtocolToExcel(protocol, currentUser?.name || 'My_Diet_Plan');
+    if (res.success) {
+      showToast(`📥 Exported: ${res.fileName}`);
+    }
+  };
+
+  // Revert protocol to standard default
+  const handleRevertToDefault = () => {
+    if (window.confirm('Are you sure you want to revert to the Standard System Health Protocol? Your custom uploaded sheets will be reset to defaults.')) {
+      resetHealthProtocolToDefault();
+      showToast('🔄 Reverted back to Standard System Health Protocol.');
+    }
+  };
+
   // --- CALORIE & MACRO EDITING ---
   const handleOpenEditCalories = () => {
     setFormData({
@@ -104,6 +225,37 @@ export const HealthProtocolView = () => {
     }));
     setActiveModal(null);
     showToast('✅ Calorie & Macro targets updated successfully!');
+  };
+
+  // --- FASTING & WATER EDITING ---
+  const handleOpenEditFasting = () => {
+    setFormData({
+      fastingProtocol: fastingAndWater.fastingProtocol || '16:8 Intermittent Fasting',
+      fastingWindow: fastingAndWater.fastingWindow || 'Fasting 8:00 PM to 12:00 PM next day',
+      waterTargetLiters: fastingAndWater.waterTargetLiters || 3.5,
+      electrolyteHack: fastingAndWater.electrolyteHack || '',
+      fastingNotes: fastingAndWater.fastingNotes || ''
+    });
+    setActiveModal('fasting');
+  };
+
+  const handleSaveFasting = (e) => {
+    e.preventDefault();
+    const liters = parseFloat(formData.waterTargetLiters) || 3.5;
+    updateHealthProtocol(prev => ({
+      ...prev,
+      fastingAndWater: {
+        ...prev.fastingAndWater,
+        fastingProtocol: formData.fastingProtocol,
+        fastingWindow: formData.fastingWindow,
+        waterTargetLiters: liters,
+        waterTargetGlasses: Math.round(liters * 4),
+        electrolyteHack: formData.electrolyteHack,
+        fastingNotes: formData.fastingNotes
+      }
+    }));
+    setActiveModal(null);
+    showToast('✅ Fasting & Hydration targets updated!');
   };
 
   // --- MICRONUTRIENTS EDITING ---
@@ -294,6 +446,9 @@ export const HealthProtocolView = () => {
     showToast('✅ Hair care regime updated!');
   };
 
+  const waterTargetGlasses = fastingAndWater.waterTargetGlasses || 14;
+  const waterPercent = Math.min(100, Math.round((waterGlasses / waterTargetGlasses) * 100));
+
   return (
     <div className="health-protocol-view">
       {/* Toast Notification */}
@@ -303,28 +458,257 @@ export const HealthProtocolView = () => {
         </div>
       )}
 
-      {/* Hero Banner */}
+      {/* Excel Upload & Live Preview Modal */}
+      <ExcelUploadModal
+        isOpen={isExcelModalOpen}
+        onClose={() => setIsExcelModalOpen(false)}
+        onApply={(newProto, stats) => {
+          importHealthProtocolFromExcel(newProto, stats);
+          showToast('🎉 Diet Plan successfully updated from Excel sheet!');
+        }}
+        targetUserName={currentUser?.name}
+      />
+
+      {/* Hero Banner with Plan Badge & Dynamic Actions */}
       <div className="protocol-hero card">
-        <div className="hero-content">
+        <div className="hero-top-bar">
           <div className="hero-badge-row">
             <span className="badge badge-primary">
               <HeartPulse size={14} />
               <span>HEALTH, DIET & BODY REGIME</span>
             </span>
-            <span className="badge badge-success">
-              <Sparkles size={14} />
-              <span>CUSTOMIZABLE & CLOUD SYNCED</span>
-            </span>
+
+            {isCustomPlan ? (
+              <span className="badge badge-custom-plan">
+                <Sparkles size={14} />
+                <span>⭐ CUSTOM PLAN: {meta.planName || meta.fileName || 'Personalized Excel'}</span>
+              </span>
+            ) : (
+              <span className="badge badge-success">
+                <ShieldCheck size={14} />
+                <span>🌿 STANDARD AYURVEDIC & FITNESS PROTOCOL</span>
+              </span>
+            )}
           </div>
 
-          <h2 className="hero-heading">Nutrition, Self-Care & Body Wellness Protocol</h2>
+          {/* Quick Action Buttons */}
+          <div className="hero-action-buttons">
+            <button
+              type="button"
+              className="btn btn-primary btn-sm btn-upload-excel"
+              onClick={() => setIsExcelModalOpen(true)}
+            >
+              <UploadCloud size={15} />
+              <span>Upload Diet Excel (.xlsx)</span>
+            </button>
+
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              onClick={downloadSampleDietTemplate}
+              title="Download empty pre-formatted Excel template"
+            >
+              <Download size={15} />
+              <span>Sample Template</span>
+            </button>
+
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              onClick={handleExportExcel}
+              title="Export current active protocol to Excel"
+            >
+              <FileDown size={15} />
+              <span>Export Plan</span>
+            </button>
+
+            {isCustomPlan && (
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm text-danger"
+                onClick={handleRevertToDefault}
+                title="Reset back to standard protocol"
+              >
+                <RotateCcw size={14} />
+                <span>Reset to Standard</span>
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className="hero-bottom-text">
+          <h2 className="hero-heading">
+            {isCustomPlan 
+              ? `${currentUser?.name ? currentUser.name + "'s" : 'Personalized'} Custom Nutrition & Wellness Protocol` 
+              : 'Nutrition, Self-Care & Body Wellness Protocol'}
+          </h2>
           <p className="hero-sub">
-            Your personalized regime for daily calories, micronutrients, workouts, and dedicated Skin, Body & Hair care routines.
+            {isCustomPlan && meta.uploadedAt 
+              ? `Custom timetable loaded from spreadsheet on ${new Date(meta.uploadedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}. Updates are isolated to your profile.`
+              : 'Your personalized regime for daily meals, macros, hydration, workout timing, and dedicated Skin, Body & Hair care routines.'}
           </p>
         </div>
       </div>
 
+      {/* ========================================================================= */}
+      {/* 0. INTERACTIVE FASTING & DAILY MEAL SCHEDULE (Excel-Driven Timetable) */}
+      {/* ========================================================================= */}
+      <div className="section-container">
+        <div className="section-title-row">
+          <div className="title-with-icon">
+            <Utensils size={20} className="text-primary" />
+            <h3 className="section-title">Daily Meal Timetable & Fasting Protocol</h3>
+          </div>
+          <div className="title-actions">
+            <button 
+              type="button" 
+              className="btn btn-secondary btn-sm"
+              onClick={handleOpenEditFasting}
+            >
+              <Edit3 size={14} />
+              <span>Edit Fasting & Water</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Fasting & Water Dual Row */}
+        <div className="fasting-water-grid">
+          {/* Fasting Card */}
+          <div className="card fasting-card">
+            <div className="fasting-header">
+              <div className="fasting-icon-wrap">
+                <Clock size={20} />
+              </div>
+              <div>
+                <span className="fasting-badge">{fastingAndWater.fastingProtocol}</span>
+                <h4 className="fasting-title">{fastingAndWater.fastingWindow}</h4>
+              </div>
+            </div>
+            <div className="fasting-details">
+              <p className="fasting-notes">
+                <strong>Rules:</strong> {fastingAndWater.fastingNotes}
+              </p>
+              {fastingAndWater.electrolyteHack && (
+                <div className="electrolyte-tip">
+                  ⚡ <strong>Morning Hack:</strong> {fastingAndWater.electrolyteHack}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Water Intake Interactive Card */}
+          <div className="card water-card">
+            <div className="water-header">
+              <div className="water-icon-wrap">
+                <Droplets size={22} />
+              </div>
+              <div className="water-header-text">
+                <div className="water-title-row">
+                  <h4 className="water-title">Daily Hydration Counter</h4>
+                  <span className="water-goal-badge">{fastingAndWater.waterTargetLiters || 3.5} Litres Goal</span>
+                </div>
+                <span className="water-sub">
+                  {waterGlasses} of {waterTargetGlasses} glasses logged today ({(waterGlasses * 0.25).toFixed(2)}L)
+                </span>
+              </div>
+            </div>
+
+            {/* Progress Bar */}
+            <div className="water-progress-track">
+              <div 
+                className="water-progress-fill" 
+                style={{ width: `${waterPercent}%` }}
+              />
+            </div>
+
+            {/* Quick Logging Buttons */}
+            <div className="water-actions-row">
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={handleSubWater}
+                disabled={waterGlasses === 0}
+              >
+                - 1 Glass
+              </button>
+              <span className="water-percent-tag">{waterPercent}%</span>
+              <button
+                type="button"
+                className="btn btn-primary btn-sm btn-water-add"
+                onClick={handleAddWater}
+              >
+                <Plus size={15} />
+                <span>+ 1 Glass (250ml)</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Meal Timetable Schedule List */}
+        {mealSchedule.length > 0 && (
+          <div className="meal-schedule-list">
+            {mealSchedule.map((meal, idx) => {
+              const isDone = completedMeals.includes(meal.id || `meal-${idx}`);
+              return (
+                <div 
+                  key={meal.id || idx} 
+                  className={`card meal-schedule-card ${isDone ? 'meal-completed' : ''}`}
+                >
+                  <div className="meal-card-top">
+                    <button
+                      type="button"
+                      className={`meal-check-btn ${isDone ? 'checked' : ''}`}
+                      onClick={() => handleToggleMeal(meal.id || `meal-${idx}`)}
+                      title={isDone ? 'Mark uncompleted' : 'Mark meal done for today'}
+                    >
+                      {isDone ? <Check size={16} /> : <div className="meal-check-circle" />}
+                    </button>
+
+                    <div className="meal-time-tag">
+                      <Clock size={13} />
+                      <span>{meal.time}</span>
+                    </div>
+
+                    <h4 className="meal-name">{meal.name}</h4>
+
+                    <div className="meal-macros-pills">
+                      {meal.calories > 0 && (
+                        <span className="meal-cal-pill">
+                          <Flame size={12} />
+                          <span>{meal.calories} kcal</span>
+                        </span>
+                      )}
+                      {meal.protein && (
+                        <span className="meal-protein-pill">
+                          <span>{meal.protein} protein</span>
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="meal-card-content">
+                    <div className="meal-dishes-box">
+                      <span className="dishes-label">🥗 Ingredients / Dishes:</span>
+                      <span className="dishes-text">{meal.dishes}</span>
+                    </div>
+
+                    {meal.hairSkinBenefits && (
+                      <div className="meal-benefits-box">
+                        <Sparkles size={14} className="text-pink" />
+                        <span><strong>Hair & Skin Benefits:</strong> {meal.hairSkinBenefits}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* ========================================================================= */}
       {/* 1. Daily Calories & Macronutrients (Editable) */}
+      {/* ========================================================================= */}
       <div className="section-container">
         <div className="section-title-row">
           <div className="title-with-icon">
@@ -390,7 +774,9 @@ export const HealthProtocolView = () => {
         </div>
       </div>
 
+      {/* ========================================================================= */}
       {/* 2. Micronutrients Focus (Editable) */}
+      {/* ========================================================================= */}
       <div className="section-container">
         <div className="section-title-row">
           <div className="title-with-icon">
@@ -430,7 +816,9 @@ export const HealthProtocolView = () => {
         </div>
       </div>
 
-      {/* 3. Skin, Body & Hair Care Regimes (User Specific Protocol - Editable) */}
+      {/* ========================================================================= */}
+      {/* 3. Skin, Body & Hair Care Regimes (Editable) */}
+      {/* ========================================================================= */}
       <div className="section-container">
         <div className="section-title-row">
           <div className="title-with-icon">
@@ -607,7 +995,9 @@ export const HealthProtocolView = () => {
         </div>
       </div>
 
+      {/* ========================================================================= */}
       {/* 4. Fitness & Sugar Protocols (Editable) */}
+      {/* ========================================================================= */}
       <div className="protocol-cards-grid">
         {/* Exercise Routine */}
         <div className="card protocol-section-card">
@@ -682,7 +1072,9 @@ export const HealthProtocolView = () => {
         </div>
       </div>
 
-      {/* --- EDIT MODALS --- */}
+      {/* ========================================================================= */}
+      {/* EDIT MODALS */}
+      {/* ========================================================================= */}
 
       {/* 1. Edit Calories Modal */}
       {activeModal === 'calories' && (
@@ -754,7 +1146,83 @@ export const HealthProtocolView = () => {
         </div>
       )}
 
-      {/* 2. Edit Micronutrients Modal */}
+      {/* 2. Edit Fasting Modal */}
+      {activeModal === 'fasting' && (
+        <div className="modal-overlay" onClick={() => setActiveModal(null)}>
+          <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3 className="modal-title">Edit Fasting & Hydration Targets</h3>
+              <button type="button" className="btn-icon btn-ghost" onClick={() => setActiveModal(null)}><X size={18} /></button>
+            </div>
+            <form onSubmit={handleSaveFasting} className="modal-form">
+              <div className="input-group">
+                <label className="label">Fasting Protocol</label>
+                <input
+                  type="text"
+                  className="input"
+                  value={formData.fastingProtocol}
+                  onChange={(e) => setFormData({ ...formData, fastingProtocol: e.target.value })}
+                  placeholder="e.g. 16:8 Intermittent Fasting"
+                  required
+                />
+              </div>
+
+              <div className="input-group">
+                <label className="label">Fasting Window (Timing)</label>
+                <input
+                  type="text"
+                  className="input"
+                  value={formData.fastingWindow}
+                  onChange={(e) => setFormData({ ...formData, fastingWindow: e.target.value })}
+                  placeholder="e.g. Fasting 8:00 PM to 12:00 PM next day"
+                  required
+                />
+              </div>
+
+              <div className="input-group">
+                <label className="label">Daily Water Target (Litres)</label>
+                <input
+                  type="number"
+                  step="0.1"
+                  className="input"
+                  value={formData.waterTargetLiters}
+                  onChange={(e) => setFormData({ ...formData, waterTargetLiters: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div className="input-group">
+                <label className="label">Morning Electrolyte Hack</label>
+                <input
+                  type="text"
+                  className="input"
+                  value={formData.electrolyteHack}
+                  onChange={(e) => setFormData({ ...formData, electrolyteHack: e.target.value })}
+                  placeholder="e.g. Warm lemon water + pink Himalayan salt"
+                />
+              </div>
+
+              <div className="input-group">
+                <label className="label">Fasting Guidelines & Permitted Drinks</label>
+                <textarea
+                  className="textarea"
+                  rows={2}
+                  value={formData.fastingNotes}
+                  onChange={(e) => setFormData({ ...formData, fastingNotes: e.target.value })}
+                  placeholder="e.g. Water, black coffee, plain green tea allowed"
+                />
+              </div>
+
+              <div className="modal-actions">
+                <button type="button" className="btn btn-secondary" onClick={() => setActiveModal(null)}>Cancel</button>
+                <button type="submit" className="btn btn-primary">Save Targets</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 3. Edit Micronutrients Modal */}
       {activeModal === 'micronutrients' && (
         <div className="modal-overlay" onClick={() => setActiveModal(null)}>
           <div className="modal-panel" style={{ maxWidth: '650px' }} onClick={(e) => e.stopPropagation()}>
@@ -826,7 +1294,7 @@ export const HealthProtocolView = () => {
         </div>
       )}
 
-      {/* 3. Edit Skin Care Modal */}
+      {/* 4. Edit Skin Care Modal */}
       {activeModal === 'skincare' && (
         <div className="modal-overlay" onClick={() => setActiveModal(null)}>
           <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
@@ -890,7 +1358,7 @@ export const HealthProtocolView = () => {
         </div>
       )}
 
-      {/* 4. Edit Body Care Modal */}
+      {/* 5. Edit Body Care Modal */}
       {activeModal === 'bodycare' && (
         <div className="modal-overlay" onClick={() => setActiveModal(null)}>
           <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
@@ -942,7 +1410,7 @@ export const HealthProtocolView = () => {
         </div>
       )}
 
-      {/* 5. Edit Hair Care Modal */}
+      {/* 6. Edit Hair Care Modal */}
       {activeModal === 'haircare' && (
         <div className="modal-overlay" onClick={() => setActiveModal(null)}>
           <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
@@ -1006,7 +1474,7 @@ export const HealthProtocolView = () => {
         </div>
       )}
 
-      {/* 6. Edit Exercise Modal */}
+      {/* 7. Edit Exercise Modal */}
       {activeModal === 'exercise' && (
         <div className="modal-overlay" onClick={() => setActiveModal(null)}>
           <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
@@ -1080,7 +1548,7 @@ export const HealthProtocolView = () => {
         </div>
       )}
 
-      {/* 7. Edit Sugar Modal */}
+      {/* 8. Edit Sugar Modal */}
       {activeModal === 'sugar' && (
         <div className="modal-overlay" onClick={() => setActiveModal(null)}>
           <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
@@ -1167,21 +1635,57 @@ export const HealthProtocolView = () => {
           background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(16, 185, 129, 0.12));
           border-color: rgba(99, 102, 241, 0.3);
           padding: 1.5rem;
+          display: flex;
+          flex-direction: column;
+          gap: 1rem;
+        }
+
+        .hero-top-bar {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          flex-wrap: wrap;
+          gap: 0.75rem;
         }
 
         .hero-badge-row {
           display: flex;
           align-items: center;
           gap: 0.6rem;
-          margin-bottom: 0.5rem;
           flex-wrap: wrap;
+        }
+
+        .badge-custom-plan {
+          background: rgba(245, 158, 11, 0.15);
+          color: var(--accent-warning);
+          border: 1px solid rgba(245, 158, 11, 0.3);
+          font-weight: 800;
+        }
+
+        .hero-action-buttons {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          flex-wrap: wrap;
+        }
+
+        .btn-upload-excel {
+          background: linear-gradient(135deg, #10b981, #059669);
+          border: none;
+          color: white;
+          font-weight: 800;
+        }
+
+        .btn-upload-excel:hover {
+          background: linear-gradient(135deg, #059669, #047857);
+          transform: translateY(-1px);
         }
 
         .hero-heading {
           font-size: 1.4rem;
           font-weight: 800;
           color: var(--text-primary);
-          margin-bottom: 0.4rem;
+          margin-bottom: 0.3rem;
         }
 
         .hero-sub {
@@ -1214,6 +1718,314 @@ export const HealthProtocolView = () => {
           font-size: 1.15rem;
           font-weight: 800;
           color: var(--text-primary);
+        }
+
+        /* Fasting & Water Grid */
+        .fasting-water-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 1rem;
+        }
+
+        @media (min-width: 768px) {
+          .fasting-water-grid {
+            grid-template-columns: 1fr 1.25fr;
+          }
+        }
+
+        .fasting-card {
+          padding: 1.25rem;
+          display: flex;
+          flex-direction: column;
+          gap: 0.85rem;
+          border-left: 4px solid var(--accent-primary);
+          background: rgba(99, 102, 241, 0.03);
+        }
+
+        .fasting-header {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+        }
+
+        .fasting-icon-wrap {
+          width: 38px;
+          height: 38px;
+          border-radius: var(--radius-sm);
+          background: rgba(99, 102, 241, 0.15);
+          color: var(--accent-primary);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        }
+
+        .fasting-badge {
+          font-size: 0.68rem;
+          font-weight: 800;
+          color: var(--accent-primary);
+          text-transform: uppercase;
+        }
+
+        .fasting-title {
+          font-size: 1rem;
+          font-weight: 800;
+          color: var(--text-primary);
+        }
+
+        .fasting-details {
+          display: flex;
+          flex-direction: column;
+          gap: 0.5rem;
+        }
+
+        .fasting-notes {
+          font-size: 0.8rem;
+          color: var(--text-secondary);
+          line-height: 1.4;
+        }
+
+        .electrolyte-tip {
+          background: rgba(245, 158, 11, 0.1);
+          border: 1px solid rgba(245, 158, 11, 0.25);
+          border-radius: var(--radius-sm);
+          padding: 0.5rem 0.75rem;
+          font-size: 0.75rem;
+          color: var(--accent-warning);
+          line-height: 1.35;
+        }
+
+        .water-card {
+          padding: 1.25rem;
+          display: flex;
+          flex-direction: column;
+          gap: 0.75rem;
+          border-left: 4px solid var(--accent-cyan);
+          background: rgba(14, 165, 233, 0.03);
+        }
+
+        .water-header {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+        }
+
+        .water-icon-wrap {
+          width: 40px;
+          height: 40px;
+          border-radius: var(--radius-sm);
+          background: rgba(14, 165, 233, 0.15);
+          color: var(--accent-cyan);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        }
+
+        .water-header-text {
+          flex: 1;
+        }
+
+        .water-title-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 0.5rem;
+        }
+
+        .water-title {
+          font-size: 1rem;
+          font-weight: 800;
+          color: var(--text-primary);
+        }
+
+        .water-goal-badge {
+          font-size: 0.68rem;
+          font-weight: 800;
+          background: rgba(14, 165, 233, 0.15);
+          color: var(--accent-cyan);
+          padding: 0.15rem 0.5rem;
+          border-radius: 4px;
+        }
+
+        .water-sub {
+          font-size: 0.75rem;
+          color: var(--text-muted);
+        }
+
+        .water-progress-track {
+          width: 100%;
+          height: 8px;
+          background: rgba(255, 255, 255, 0.08);
+          border-radius: 999px;
+          overflow: hidden;
+        }
+
+        .water-progress-fill {
+          height: 100%;
+          background: linear-gradient(90deg, #0ea5e9, #38bdf8);
+          border-radius: 999px;
+          transition: width 0.3s ease;
+        }
+
+        .water-actions-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+        }
+
+        .water-percent-tag {
+          font-size: 0.85rem;
+          font-weight: 800;
+          color: var(--accent-cyan);
+        }
+
+        .btn-water-add {
+          background: rgba(14, 165, 233, 0.2);
+          border: 1px solid rgba(14, 165, 233, 0.4);
+          color: var(--accent-cyan);
+          font-weight: 700;
+        }
+
+        .btn-water-add:hover {
+          background: rgba(14, 165, 233, 0.3);
+        }
+
+        /* Meal Schedule List */
+        .meal-schedule-list {
+          display: flex;
+          flex-direction: column;
+          gap: 0.75rem;
+        }
+
+        .meal-schedule-card {
+          padding: 1.15rem 1.25rem;
+          display: flex;
+          flex-direction: column;
+          gap: 0.75rem;
+          border-left: 4px solid var(--accent-primary);
+          transition: all 0.2s ease;
+        }
+
+        .meal-schedule-card.meal-completed {
+          opacity: 0.85;
+          border-left-color: var(--accent-success);
+          background: rgba(16, 185, 129, 0.04);
+        }
+
+        .meal-card-top {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          flex-wrap: wrap;
+        }
+
+        .meal-check-btn {
+          background: none;
+          border: none;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 0;
+        }
+
+        .meal-check-circle {
+          width: 22px;
+          height: 22px;
+          border-radius: 50%;
+          border: 2px solid rgba(255, 255, 255, 0.25);
+          transition: border-color 0.2s;
+        }
+
+        .meal-check-circle:hover {
+          border-color: var(--accent-primary);
+        }
+
+        .meal-check-btn.checked {
+          width: 22px;
+          height: 22px;
+          border-radius: 50%;
+          background: var(--accent-success);
+          color: white;
+        }
+
+        .meal-time-tag {
+          display: flex;
+          align-items: center;
+          gap: 0.3rem;
+          background: rgba(99, 102, 241, 0.15);
+          color: var(--accent-primary);
+          font-size: 0.72rem;
+          font-weight: 800;
+          padding: 0.2rem 0.55rem;
+          border-radius: 4px;
+        }
+
+        .meal-name {
+          font-size: 1.05rem;
+          font-weight: 800;
+          color: var(--text-primary);
+          flex: 1;
+        }
+
+        .meal-macros-pills {
+          display: flex;
+          align-items: center;
+          gap: 0.4rem;
+        }
+
+        .meal-cal-pill {
+          display: flex;
+          align-items: center;
+          gap: 0.25rem;
+          font-size: 0.72rem;
+          font-weight: 800;
+          background: rgba(245, 158, 11, 0.15);
+          color: var(--accent-warning);
+          padding: 0.15rem 0.5rem;
+          border-radius: 4px;
+        }
+
+        .meal-protein-pill {
+          font-size: 0.72rem;
+          font-weight: 700;
+          background: rgba(239, 68, 68, 0.15);
+          color: #ef4444;
+          padding: 0.15rem 0.5rem;
+          border-radius: 4px;
+        }
+
+        .meal-card-content {
+          display: flex;
+          flex-direction: column;
+          gap: 0.45rem;
+          padding-left: 2rem;
+        }
+
+        .meal-dishes-box {
+          font-size: 0.85rem;
+          line-height: 1.45;
+          color: var(--text-primary);
+        }
+
+        .dishes-label {
+          font-weight: 700;
+          color: var(--text-muted);
+          margin-right: 0.35rem;
+        }
+
+        .meal-benefits-box {
+          display: flex;
+          align-items: center;
+          gap: 0.45rem;
+          font-size: 0.78rem;
+          color: #ec4899;
+          background: rgba(236, 72, 153, 0.08);
+          border: 1px solid rgba(236, 72, 153, 0.2);
+          border-radius: var(--radius-sm);
+          padding: 0.4rem 0.65rem;
+          align-self: flex-start;
         }
 
         .calories-stat-grid {
