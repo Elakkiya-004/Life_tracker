@@ -113,22 +113,7 @@ export const Sidebar = () => {
         })}
       </nav>
 
-      {/* Mini Habits Progress Card */}
-      <div className="sidebar-progress-card">
-        <div className="progress-header">
-          <span className="progress-title">Today's Habits</span>
-          <span className="progress-percent">{todayHabitProgress}%</span>
-        </div>
-        <div className="progress-bar-bg">
-          <div 
-            className="progress-bar-fill" 
-            style={{ width: `${todayHabitProgress}%` }}
-          />
-        </div>
-        <p className="progress-sub">
-          {todayCompletedHabits} of {habits.length} completed
-        </p>
-      </div>
+
 
       {/* User Session & Sign Out Footer */}
       <div className="sidebar-footer">
@@ -169,7 +154,11 @@ export const Sidebar = () => {
           </div>
         )}
 
-        <div className="cloud-status-card">
+        <div 
+          className="cloud-status-card clickable"
+          onClick={() => setActiveTab('settings')}
+          title="Click to view Cloud Database & Sync Settings"
+        >
           <div className="cloud-status-left">
             {syncStatus === 'synced' ? (
               <Cloud size={16} className="text-emerald-400" />
@@ -500,6 +489,17 @@ export const Sidebar = () => {
           border: 1px solid var(--border-color);
           border-radius: var(--radius-md);
           padding: 0.65rem 0.75rem;
+          transition: all 0.2s ease;
+        }
+
+        .cloud-status-card.clickable {
+          cursor: pointer;
+        }
+
+        .cloud-status-card.clickable:hover {
+          border-color: rgba(16, 185, 129, 0.4);
+          background: rgba(16, 185, 129, 0.06);
+          transform: translateY(-1px);
         }
 
         .cloud-status-left {

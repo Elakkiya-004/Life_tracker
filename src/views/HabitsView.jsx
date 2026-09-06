@@ -4,6 +4,7 @@ import { HabitTodoItem } from '../components/habits/HabitTodoItem';
 import { HabitCard } from '../components/habits/HabitCard';
 import { HabitModal } from '../components/habits/HabitModal';
 import { HabitHistoryModal } from '../components/habits/HabitHistoryModal';
+import { getScheduledProtocolsForDay } from '../services/careProtocolUtils';
 import { 
   Plus, 
   Flame, 
@@ -11,7 +12,7 @@ import {
   Sun, 
   Moon, 
   Clock, 
-  Sparkles,
+  Sparkles, 
   ListTodo,
   LayoutGrid,
   RotateCcw,
@@ -40,6 +41,7 @@ export const HabitsView = () => {
     resetAllHabitsToday,
     settings = {},
     updateSettings,
+    healthProtocol = {},
     todayStr 
   } = useApp();
 
@@ -68,6 +70,33 @@ export const HabitsView = () => {
     : 0;
 
   const rolloverMode = settings?.habitRolloverMode || 'fresh_checks'; // 'fresh_checks' | 'auto_clear'
+
+  // Protocols scheduled for today (e.g. Sunday care protocols)
+  const daySchedule = useMemo(() => {
+    return getScheduledProtocolsForDay(healthProtocol, todayStr || 'Sunday');
+  }, [healthProtocol, todayStr]);
+
+  const isProtocolAdded = (proto) => {
+    return habitsList.some(h => 
+      (h.name && proto.suggestedHabitName && (
+        h.name.toLowerCase().includes(proto.suggestedHabitName.toLowerCase()) || 
+        proto.suggestedHabitName.toLowerCase().includes(h.name.toLowerCase())
+      ))
+    );
+  };
+
+  const handleAddProtocolHabit = (proto) => {
+    if (isProtocolAdded(proto)) return;
+    addHabit({
+      name: proto.suggestedHabitName,
+      category: proto.category || 'Self Care',
+      timeOfDay: proto.suggestedHabitName.toLowerCase().includes('pm') ? 'Evening' : 'Morning',
+      icon: proto.iconName === 'Sun' ? 'Sunrise' : 'Sparkles',
+      color: proto.color || '#ec4899',
+      frequency: 'weekly',
+      targetDays: 1,
+    });
+  };
 
   // Filter habits based on Status, Time of Day, and Search Query
   const filteredHabits = useMemo(() => {
@@ -365,6 +394,82 @@ export const HabitsView = () => {
         </div>
       </div>
 
+      {/* 🌟 Sunday / Scheduled Care Protocol Reminder Banner (Commented out as requested) */}
+      {/* 
+      {daySchedule.hasProtocols && (
+        <div className="protocol-day-reminder-banner card">
+          <div className="proto-banner-header">
+            <div className="proto-banner-title-wrap">
+              <div className="proto-banner-icon-badge">
+                <Sparkles size={16} />
+              </div>
+              <div>
+                <h3 className="proto-banner-title">
+                  📅 {daySchedule.dayName} Care Protocol Reminder
+                </h3>
+                <span className="proto-banner-sub">
+                  Scheduled routines from your Health & Care Regimes for {daySchedule.dayName}
+                </span>
+              </div>
+            </div>
+            <span className="proto-banner-count-badge">
+              {daySchedule.protocols.length} {daySchedule.protocols.length === 1 ? 'routine' : 'routines'} active
+            </span>
+          </div>
+
+          <div className="proto-banner-items-grid">
+            {daySchedule.protocols.map((proto) => {
+              const alreadyInList = isProtocolAdded(proto);
+              return (
+                <div key={proto.id} className="proto-banner-card" style={{ borderLeftColor: proto.color }}>
+                  <div className="proto-card-top">
+                    <span className="proto-regime-badge" style={{ backgroundColor: `${proto.color}25`, color: proto.color }}>
+                      {proto.regimeName}
+                    </span>
+                    <span className="proto-freq-tag">{proto.frequencyLabel}</span>
+                  </div>
+
+                  <div className="proto-card-content">
+                    <h4 className="proto-card-title">{proto.title}</h4>
+                    {proto.points && proto.points.length > 0 && (
+                      <ul className="proto-card-points">
+                        {proto.points.map((pt, pIdx) => (
+                          <li key={pIdx}>• {pt}</li>
+                        ))}
+                      </ul>
+                    )}
+                    {proto.notes && (
+                      <span className="proto-card-notes">💡 {proto.notes}</span>
+                    )}
+                  </div>
+
+                  <div className="proto-card-footer">
+                    {alreadyInList ? (
+                      <span className="proto-added-badge">
+                        <CheckCheck size={13} />
+                        <span>In Today's Routine</span>
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        className="btn btn-primary btn-xs proto-add-btn"
+                        style={{ backgroundColor: proto.color, borderColor: proto.color }}
+                        onClick={() => handleAddProtocolHabit(proto)}
+                        title={`Add "${proto.suggestedHabitName}" to today's habits`}
+                      >
+                        <Plus size={12} />
+                        <span>Add to Today's Habits</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+      */}
+
       {/* ⚡ Inline Fast Add Input Bar */}
       <form onSubmit={handleQuickAdd} className="quick-todo-bar card">
         <div className="quick-input-wrap">
@@ -402,6 +507,29 @@ export const HabitsView = () => {
             <span>+ Advanced</span>
           </button>
         </div>
+
+        {daySchedule.hasProtocols && (
+          <div className="quick-suggestions-row">
+            <span className="quick-sugg-label">💡 {daySchedule.dayName} Suggestions:</span>
+            <div className="quick-sugg-chips-list">
+              {daySchedule.protocols.map(proto => (
+                <button
+                  type="button"
+                  key={proto.id}
+                  className="quick-sugg-chip"
+                  onClick={() => {
+                    setQuickInput(proto.suggestedHabitName);
+                    setQuickTimeOfDay(proto.suggestedHabitName.toLowerCase().includes('pm') ? 'Evening' : 'Morning');
+                  }}
+                  title={`Click to fill "${proto.suggestedHabitName}"`}
+                >
+                  <span className="sugg-dot" style={{ backgroundColor: proto.color }} />
+                  <span>{proto.suggestedHabitName}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </form>
 
       {/* Controls: Filters, Search & View Switcher */}
@@ -1136,6 +1264,221 @@ export const HabitsView = () => {
           font-size: 1.1rem;
           font-weight: 700;
           color: var(--text-primary);
+        }
+
+        /* Care Protocol Reminder Banner in Habits View */
+        .protocol-day-reminder-banner {
+          background: linear-gradient(135deg, rgba(245, 158, 11, 0.08), rgba(236, 72, 153, 0.05));
+          border: 1px solid rgba(245, 158, 11, 0.25);
+          border-radius: var(--radius-lg);
+          padding: 1.15rem 1.25rem;
+          display: flex;
+          flex-direction: column;
+          gap: 0.95rem;
+          margin-bottom: 0.25rem;
+        }
+
+        .proto-banner-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          flex-wrap: wrap;
+          gap: 0.5rem;
+        }
+
+        .proto-banner-title-wrap {
+          display: flex;
+          align-items: center;
+          gap: 0.65rem;
+        }
+
+        .proto-banner-icon-badge {
+          width: 34px;
+          height: 34px;
+          border-radius: var(--radius-sm);
+          background: linear-gradient(135deg, #f59e0b, #ec4899);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #ffffff;
+          flex-shrink: 0;
+          box-shadow: 0 4px 10px rgba(245, 158, 11, 0.3);
+        }
+
+        .proto-banner-title {
+          font-size: 1.05rem;
+          font-weight: 800;
+          color: var(--text-primary);
+          letter-spacing: -0.01em;
+        }
+
+        .proto-banner-sub {
+          font-size: 0.74rem;
+          color: var(--text-muted);
+          display: block;
+        }
+
+        .proto-banner-count-badge {
+          font-size: 0.72rem;
+          font-weight: 700;
+          background: rgba(245, 158, 11, 0.15);
+          color: var(--accent-warning);
+          padding: 0.2rem 0.55rem;
+          border-radius: var(--radius-full);
+          border: 1px solid rgba(245, 158, 11, 0.25);
+        }
+
+        .proto-banner-items-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 0.75rem;
+        }
+
+        @media (min-width: 800px) {
+          .proto-banner-items-grid {
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+          }
+        }
+
+        .proto-banner-card {
+          background: var(--bg-card);
+          border: 1px solid var(--border-color);
+          border-left-width: 4px;
+          border-radius: var(--radius-md);
+          padding: 0.85rem;
+          display: flex;
+          flex-direction: column;
+          gap: 0.5rem;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .proto-card-top {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 0.4rem;
+        }
+
+        .proto-regime-badge {
+          font-size: 0.7rem;
+          font-weight: 800;
+          padding: 0.15rem 0.45rem;
+          border-radius: var(--radius-full);
+          text-transform: uppercase;
+        }
+
+        .proto-freq-tag {
+          font-size: 0.68rem;
+          color: var(--text-muted);
+          font-weight: 600;
+        }
+
+        .proto-card-content {
+          display: flex;
+          flex-direction: column;
+          gap: 0.35rem;
+          flex: 1;
+        }
+
+        .proto-card-title {
+          font-size: 0.88rem;
+          font-weight: 700;
+          color: var(--text-primary);
+        }
+
+        .proto-card-points {
+          list-style: none;
+          padding: 0;
+          margin: 0;
+          display: flex;
+          flex-direction: column;
+          gap: 0.2rem;
+          font-size: 0.78rem;
+          color: var(--text-secondary);
+        }
+
+        .proto-card-notes {
+          font-size: 0.72rem;
+          color: var(--text-muted);
+          font-style: italic;
+          background: rgba(255, 255, 255, 0.02);
+          padding: 0.25rem 0.45rem;
+          border-radius: var(--radius-sm);
+        }
+
+        .proto-card-footer {
+          margin-top: 0.25rem;
+        }
+
+        .proto-add-btn {
+          width: 100%;
+          justify-content: center;
+          gap: 0.35rem;
+          font-weight: 700;
+        }
+
+        .proto-added-badge {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.3rem;
+          width: 100%;
+          padding: 0.3rem 0.5rem;
+          background: rgba(16, 185, 129, 0.12);
+          color: #10b981;
+          font-size: 0.74rem;
+          font-weight: 700;
+          border-radius: var(--radius-sm);
+        }
+
+        .quick-suggestions-row {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          flex-wrap: wrap;
+          padding-top: 0.5rem;
+          border-top: 1px solid rgba(255, 255, 255, 0.05);
+          width: 100%;
+        }
+
+        .quick-sugg-label {
+          font-size: 0.74rem;
+          font-weight: 700;
+          color: var(--accent-warning);
+        }
+
+        .quick-sugg-chips-list {
+          display: flex;
+          align-items: center;
+          gap: 0.35rem;
+          flex-wrap: wrap;
+        }
+
+        .quick-sugg-chip {
+          background: rgba(255, 255, 255, 0.05);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: var(--radius-full);
+          padding: 0.2rem 0.55rem;
+          font-size: 0.74rem;
+          color: var(--text-primary);
+          display: inline-flex;
+          align-items: center;
+          gap: 0.35rem;
+          cursor: pointer;
+          transition: all 0.15s ease;
+        }
+
+        .quick-sugg-chip:hover {
+          background: rgba(245, 158, 11, 0.15);
+          border-color: rgba(245, 158, 11, 0.35);
+          color: var(--accent-warning);
+        }
+
+        .sugg-dot {
+          width: 7px;
+          height: 7px;
+          border-radius: 50%;
+          flex-shrink: 0;
         }
       `}</style>
     </div>

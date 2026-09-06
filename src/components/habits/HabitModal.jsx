@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Modal } from '../common/Modal';
 import { useApp } from '../../context/AppContext';
+import { getScheduledProtocolsForDay } from '../../services/careProtocolUtils';
 import { 
   Sunrise,
   Moon,
@@ -59,7 +60,7 @@ const TIMES_OF_DAY = [
 ];
 
 export const HabitModal = ({ isOpen, onClose, habitToEdit = null }) => {
-  const { addHabit, updateHabit } = useApp();
+  const { addHabit, updateHabit, healthProtocol, todayStr } = useApp();
 
   const [name, setName] = useState('');
   const [category, setCategory] = useState('Morning');
@@ -68,6 +69,21 @@ export const HabitModal = ({ isOpen, onClose, habitToEdit = null }) => {
   const [color, setColor] = useState('#f59e0b');
   const [frequency, setFrequency] = useState('daily');
   const [targetDays, setTargetDays] = useState(7);
+
+  // Protocols scheduled for today (e.g. Sunday care protocols)
+  const daySchedule = useMemo(() => {
+    return getScheduledProtocolsForDay(healthProtocol, todayStr || 'Sunday');
+  }, [healthProtocol, todayStr]);
+
+  const handleApplyProtocol = (proto) => {
+    setName(proto.suggestedHabitName);
+    setCategory('Self Care');
+    setTimeOfDay(proto.suggestedHabitName.toLowerCase().includes('pm') ? 'Evening' : 'Morning');
+    setIcon(proto.iconName === 'Sun' ? 'Sunrise' : 'Sparkles');
+    setColor(proto.color || '#ec4899');
+    setFrequency('weekly');
+    setTargetDays(1);
+  };
 
   useEffect(() => {
     if (habitToEdit) {
@@ -119,6 +135,35 @@ export const HabitModal = ({ isOpen, onClose, habitToEdit = null }) => {
       title={habitToEdit ? 'Edit Habit' : 'Create Routine Habit'}
     >
       <form onSubmit={handleSubmit} className="habit-form">
+        {/* Sunday / Scheduled Care Protocol Reminder */}
+        {daySchedule.hasProtocols && !habitToEdit && (
+          <div className="protocol-reminder-modal-box">
+            <div className="reminder-box-header">
+              <div className="reminder-title-tag">
+                <Sparkles size={14} className="text-amber" />
+                <span>🔔 {daySchedule.dayName} Care Protocol Reminder</span>
+              </div>
+              <span className="reminder-hint">Active health protocols scheduled for today:</span>
+            </div>
+            <div className="reminder-protocols-chips">
+              {daySchedule.protocols.map((proto) => (
+                <button
+                  type="button"
+                  key={proto.id}
+                  className="reminder-proto-btn"
+                  onClick={() => handleApplyProtocol(proto)}
+                  title={`Click to fill: "${proto.suggestedHabitName}"`}
+                >
+                  <span className="proto-dot" style={{ backgroundColor: proto.color }} />
+                  <span className="proto-regime-name">[{proto.regimeName}]</span>
+                  <span className="proto-item-name">{proto.suggestedHabitName}</span>
+                  <span className="proto-action-pill">+ Autofill</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Habit Name */}
         <div className="input-group">
           <label className="label">Habit / Routine Name *</label>
@@ -291,6 +336,97 @@ export const HabitModal = ({ isOpen, onClose, habitToEdit = null }) => {
           border-color: #ffffff;
           transform: scale(1.15);
           box-shadow: 0 0 10px currentColor;
+        }
+
+        .protocol-reminder-modal-box {
+          background: rgba(245, 158, 11, 0.08);
+          border: 1px solid rgba(245, 158, 11, 0.25);
+          border-radius: var(--radius-md);
+          padding: 0.75rem 0.85rem;
+          display: flex;
+          flex-direction: column;
+          gap: 0.5rem;
+          margin-bottom: 0.5rem;
+        }
+
+        .reminder-box-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          flex-wrap: wrap;
+          gap: 0.35rem;
+        }
+
+        .reminder-title-tag {
+          display: flex;
+          align-items: center;
+          gap: 0.35rem;
+          font-size: 0.8rem;
+          font-weight: 700;
+          color: var(--accent-warning);
+        }
+
+        .reminder-hint {
+          font-size: 0.72rem;
+          color: var(--text-muted);
+        }
+
+        .reminder-protocols-chips {
+          display: flex;
+          flex-direction: column;
+          gap: 0.35rem;
+        }
+
+        .reminder-proto-btn {
+          display: flex;
+          align-items: center;
+          gap: 0.45rem;
+          background: rgba(255, 255, 255, 0.04);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: var(--radius-sm);
+          padding: 0.35rem 0.55rem;
+          cursor: pointer;
+          text-align: left;
+          transition: all 0.2s ease;
+          color: var(--text-primary);
+        }
+
+        .reminder-proto-btn:hover {
+          background: rgba(245, 158, 11, 0.15);
+          border-color: rgba(245, 158, 11, 0.4);
+          transform: translateX(2px);
+        }
+
+        .proto-dot {
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          flex-shrink: 0;
+        }
+
+        .proto-regime-name {
+          font-size: 0.72rem;
+          font-weight: 700;
+          color: var(--text-secondary);
+        }
+
+        .proto-item-name {
+          font-size: 0.78rem;
+          font-weight: 500;
+          flex: 1;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .proto-action-pill {
+          font-size: 0.68rem;
+          font-weight: 700;
+          background: rgba(245, 158, 11, 0.2);
+          color: var(--accent-warning);
+          padding: 0.1rem 0.4rem;
+          border-radius: var(--radius-full);
+          white-space: nowrap;
         }
 
         .form-actions {

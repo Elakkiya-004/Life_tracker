@@ -66,14 +66,14 @@ export const PRESET_AVATARS = [
 export const DEFAULT_USERS = [
   {
     uid: 'admin-super-001',
-    name: 'Super Admin',
-    email: 'admin@lifetracker.com',
-    password: 'admin123',
+    name: 'Elakkiya',
+    email: 'elakkiya.sakthivelu3089@gmail.com',
+    password: 'Cr3089',
     role: 'super_admin',
     status: 'active',
     avatar: '👑',
     avatarBg: 'linear-gradient(135deg, #6366f1, #f59e0b)',
-    jobTitle: 'System Administrator',
+    jobTitle: 'Super Administrator',
     bio: 'Oversees workspace governance and user management.',
     allowedMenus: null, // null means inherits global defaults
     createdAt: '2026-09-01T00:00:00.000Z',
@@ -81,7 +81,7 @@ export const DEFAULT_USERS = [
   },
   {
     uid: 'user-demo-002',
-    name: 'Elakkiya',
+    name: 'Member User',
     email: 'user@lifetracker.com',
     password: 'user123',
     role: 'user',
@@ -92,7 +92,7 @@ export const DEFAULT_USERS = [
     bio: 'Dedicated to daily habits, 16-week career roadmap, and financial discipline.',
     allowedMenus: null, // null means inherits global defaults
     createdAt: '2026-09-02T00:00:00.000Z',
-    createdBy: 'admin@lifetracker.com',
+    createdBy: 'elakkiya.sakthivelu3089@gmail.com',
   }
 ];
 

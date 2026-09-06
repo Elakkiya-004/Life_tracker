@@ -13,7 +13,8 @@ import {
   Menu,
   LogOut,
   ShieldCheck,
-  User
+  User,
+  Compass
 } from 'lucide-react';
 
 export const Header = () => {
@@ -22,6 +23,9 @@ export const Header = () => {
     updateSettings, 
     todayCompletedHabits, 
     habits, 
+    activeTab,
+    currentRoadmapWeek,
+    currentRoadmapWeekDoneTasks,
     setIsQuickAddOpen,
     setIsMobileDrawerOpen,
     syncStatus,
@@ -122,10 +126,21 @@ export const Header = () => {
           </span>
         </button>
 
+        {/* Active Roadmap Milestone Indicator (when viewing Roadmap) */}
+        {(activeTab === 'roadmap' || activeTab === 'career') && (
+          <div 
+            className="streak-pill roadmap-streak-pill" 
+            title={`Career Roadmap Milestone (${currentRoadmapWeek?.period || 'Sep W1'}): ${currentRoadmapWeekDoneTasks}/5 Tasks Done`}
+          >
+            <Compass size={15} className="compass-icon text-cyan-400" />
+            <span>🎯 {currentRoadmapWeek?.period || 'Sep W1'}: {currentRoadmapWeekDoneTasks}/5 Done</span>
+          </div>
+        )}
+
         {/* Daily Streak Indicator */}
-        <div className="streak-pill">
-          <Flame size={16} className="flame-icon" />
-          <span>{todayCompletedHabits}/{(Array.isArray(habits) ? habits.length : 0)} Done</span>
+        <div className="streak-pill" title="Daily Habits Completed Today">
+          <Flame size={15} className="flame-icon" />
+          <span>Habits: {todayCompletedHabits}/{(Array.isArray(habits) ? habits.length : 0)} Done</span>
         </div>
 
         {/* Theme Toggle */}
@@ -304,6 +319,18 @@ export const Header = () => {
           color: #f59e0b;
           font-size: 0.75rem;
           font-weight: 700;
+        }
+
+        .roadmap-streak-pill {
+          background: rgba(6, 182, 212, 0.12);
+          border: 1px solid rgba(6, 182, 212, 0.3);
+          color: #22d3ee;
+          animation: pulseSubtle 3s infinite ease-in-out;
+        }
+
+        @keyframes pulseSubtle {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.85; }
         }
 
         .flame-icon {

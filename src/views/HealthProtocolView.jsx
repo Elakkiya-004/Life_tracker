@@ -27,6 +27,8 @@ import {
   downloadSampleDietTemplate 
 } from '../services/excelProtocolParser';
 import { ExcelUploadModal } from '../components/health/ExcelUploadModal';
+import { CareRegimeModal } from '../components/health/CareRegimeModal';
+import { normalizeCareRegime, getFrequencyMeta } from '../services/careProtocolUtils';
 import { Modal } from '../components/common/Modal';
 
 export const HealthProtocolView = () => {
@@ -37,7 +39,7 @@ export const HealthProtocolView = () => {
     resetHealthProtocolToDefault,
   } = useApp();
 
-  const { currentUser } = useAuth();
+  const { currentUser, isSuperAdmin } = useAuth();
 
   const [notificationMsg, setNotificationMsg] = useState(null);
   const [isExcelModalOpen, setIsExcelModalOpen] = useState(false);
@@ -63,6 +65,10 @@ export const HealthProtocolView = () => {
   const skinCare = protocol.skinCare || {};
   const bodyCare = protocol.bodyCare || {};
   const hairCare = protocol.hairCare || {};
+
+  const normalizedSkinCare = normalizeCareRegime(skinCare, 'skincare');
+  const normalizedBodyCare = normalizeCareRegime(bodyCare, 'bodycare');
+  const normalizedHairCare = normalizeCareRegime(hairCare, 'haircare');
 
   const showToast = (msg) => {
     setNotificationMsg(msg);
@@ -258,35 +264,23 @@ export const HealthProtocolView = () => {
 
   // --- 3. SKIN CARE ACTIONS ---
   const handleOpenEditSkinCare = () => {
-    setFormData({
-      daily: skinCare.daily || '',
-      weeklySunday: skinCare.weeklySunday || '',
-      weeklyTueFri: skinCare.weeklyTueFri || '',
-      notes: skinCare.notes || '',
-    });
     setActiveModal('skincare');
   };
 
-  const handleSaveSkinCare = (e) => {
-    e.preventDefault();
+  const handleSaveSkinCareRegime = (serializedData) => {
     updateHealthProtocol(prev => ({
       ...prev,
-      skinCare: {
-        daily: formData.daily,
-        weeklySunday: formData.weeklySunday,
-        weeklyTueFri: formData.weeklyTueFri,
-        notes: formData.notes,
-      }
+      skinCare: serializedData
     }));
     setActiveModal(null);
-    showToast('✅ Skin care regime updated!');
+    showToast('✅ Skin care regime updated with points & schedules!');
   };
 
   const handleClearSkinCare = () => {
     if (window.confirm('Delete/Clear Skin Care regime details?')) {
       updateHealthProtocol(prev => ({
         ...prev,
-        skinCare: { daily: '', weeklySunday: '', weeklyTueFri: '', notes: '' }
+        skinCare: { routines: [], daily: '', weeklySunday: '', weeklyTueFri: '', notes: '' }
       }));
       showToast('🗑️ Skin care regime cleared.');
     }
@@ -294,33 +288,23 @@ export const HealthProtocolView = () => {
 
   // --- 4. BODY CARE ACTIONS ---
   const handleOpenEditBodyCare = () => {
-    setFormData({
-      sunday: bodyCare.sunday || '',
-      tueFri: bodyCare.tueFri || '',
-      notes: bodyCare.notes || '',
-    });
     setActiveModal('bodycare');
   };
 
-  const handleSaveBodyCare = (e) => {
-    e.preventDefault();
+  const handleSaveBodyCareRegime = (serializedData) => {
     updateHealthProtocol(prev => ({
       ...prev,
-      bodyCare: {
-        sunday: formData.sunday,
-        tueFri: formData.tueFri,
-        notes: formData.notes,
-      }
+      bodyCare: serializedData
     }));
     setActiveModal(null);
-    showToast('✅ Body care regime updated!');
+    showToast('✅ Body care regime updated with points & schedules!');
   };
 
   const handleClearBodyCare = () => {
     if (window.confirm('Delete/Clear Body Care regime details?')) {
       updateHealthProtocol(prev => ({
         ...prev,
-        bodyCare: { sunday: '', tueFri: '', notes: '' }
+        bodyCare: { routines: [], sunday: '', tueFri: '', notes: '' }
       }));
       showToast('🗑️ Body care regime cleared.');
     }
@@ -328,35 +312,23 @@ export const HealthProtocolView = () => {
 
   // --- 5. HAIR CARE ACTIONS ---
   const handleOpenEditHairCare = () => {
-    setFormData({
-      daily: hairCare.daily || '',
-      weekly: hairCare.weekly || '',
-      biWeekly: hairCare.biWeekly || '',
-      notes: hairCare.notes || '',
-    });
     setActiveModal('haircare');
   };
 
-  const handleSaveHairCare = (e) => {
-    e.preventDefault();
+  const handleSaveHairCareRegime = (serializedData) => {
     updateHealthProtocol(prev => ({
       ...prev,
-      hairCare: {
-        daily: formData.daily,
-        weekly: formData.weekly,
-        biWeekly: formData.biWeekly,
-        notes: formData.notes,
-      }
+      hairCare: serializedData
     }));
     setActiveModal(null);
-    showToast('✅ Hair care regime updated!');
+    showToast('✅ Hair care regime updated with points & schedules!');
   };
 
   const handleClearHairCare = () => {
     if (window.confirm('Delete/Clear Hair Care regime details?')) {
       updateHealthProtocol(prev => ({
         ...prev,
-        hairCare: { daily: '', weekly: '', biWeekly: '', notes: '' }
+        hairCare: { routines: [], daily: '', weekly: '', biWeekly: '', notes: '' }
       }));
       showToast('🗑️ Hair care regime cleared.');
     }
@@ -480,16 +452,18 @@ export const HealthProtocolView = () => {
         </div>
       )}
 
-      {/* Excel Upload & Live Preview Modal */}
-      <ExcelUploadModal
-        isOpen={isExcelModalOpen}
-        onClose={() => setIsExcelModalOpen(false)}
-        onApply={(newProto, stats) => {
-          importHealthProtocolFromExcel(newProto, stats);
-          showToast('🎉 Diet Plan successfully updated from Excel sheet!');
-        }}
-        targetUserName={currentUser?.name}
-      />
+      {/* Excel Upload & Live Preview Modal (Super Admin Only) */}
+      {isSuperAdmin && (
+        <ExcelUploadModal
+          isOpen={isExcelModalOpen}
+          onClose={() => setIsExcelModalOpen(false)}
+          onApply={(newProto, stats) => {
+            importHealthProtocolFromExcel(newProto, stats);
+            showToast('🎉 Diet Plan successfully updated from Excel sheet!');
+          }}
+          targetUserName={currentUser?.name}
+        />
+      )}
 
       {/* Hero Banner with Plan Badge & Dynamic Actions */}
       <div className="protocol-hero card">
@@ -515,24 +489,29 @@ export const HealthProtocolView = () => {
 
           {/* Quick Action Buttons */}
           <div className="hero-action-buttons">
-            <button
-              type="button"
-              className="btn btn-primary btn-sm btn-upload-excel"
-              onClick={() => setIsExcelModalOpen(true)}
-            >
-              <UploadCloud size={15} />
-              <span>Upload Excel (.xlsx)</span>
-            </button>
+            {isSuperAdmin && (
+              <>
+                <button
+                  type="button"
+                  className="btn btn-primary btn-sm btn-upload-excel"
+                  onClick={() => setIsExcelModalOpen(true)}
+                  title="Super Admin: Upload Diet Protocol spreadsheet"
+                >
+                  <UploadCloud size={15} />
+                  <span>Upload Excel (.xlsx)</span>
+                </button>
 
-            <button
-              type="button"
-              className="btn btn-secondary btn-sm"
-              onClick={downloadSampleDietTemplate}
-              title="Download sample formatted Excel template"
-            >
-              <Download size={15} />
-              <span>Sample Template</span>
-            </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  onClick={downloadSampleDietTemplate}
+                  title="Download sample formatted Excel template"
+                >
+                  <Download size={15} />
+                  <span>Sample Template</span>
+                </button>
+              </>
+            )}
 
             <button
               type="button"
@@ -544,25 +523,29 @@ export const HealthProtocolView = () => {
               <span>Export Plan</span>
             </button>
 
-            <button
-              type="button"
-              className="btn btn-ghost btn-sm text-amber"
-              onClick={handleRevertToDefault}
-              title="Reset back to standard template"
-            >
-              <RotateCcw size={14} />
-              <span>Reset Template</span>
-            </button>
+            {isSuperAdmin && (
+              <>
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm text-amber"
+                  onClick={handleRevertToDefault}
+                  title="Reset back to standard template"
+                >
+                  <RotateCcw size={14} />
+                  <span>Reset Template</span>
+                </button>
 
-            <button
-              type="button"
-              className="btn btn-ghost btn-sm text-danger"
-              onClick={handleClearAllProtocol}
-              title="Delete all protocol data"
-            >
-              <Trash2 size={14} />
-              <span>Delete All Data</span>
-            </button>
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm text-danger"
+                  onClick={handleClearAllProtocol}
+                  title="Delete all protocol data"
+                >
+                  <Trash2 size={14} />
+                  <span>Delete All Data</span>
+                </button>
+              </>
+            )}
           </div>
         </div>
 
@@ -787,36 +770,40 @@ export const HealthProtocolView = () => {
             </div>
 
             <div className="regime-body">
-              <div className="regime-item">
-                <div className="regime-tag tag-daily">
-                  <Clock size={12} />
-                  <span>Daily</span>
-                </div>
-                <div className="regime-content">
-                  <strong>AM & PM:</strong> {skinCare.daily ? skinCare.daily : <span className="text-sub italic">Not configured</span>}
-                </div>
-              </div>
+              {normalizedSkinCare.routines && normalizedSkinCare.routines.length > 0 ? (
+                normalizedSkinCare.routines.map((routine, rIdx) => {
+                  const meta = getFrequencyMeta(routine.frequency);
+                  return (
+                    <div key={routine.id || rIdx} className="regime-item">
+                      <div className={`regime-tag ${meta.tagClass}`}>
+                        {routine.frequency === 'daily' ? <Clock size={12} /> : <Calendar size={12} />}
+                        <span>{meta.badge}</span>
+                      </div>
+                      <div className="regime-content">
+                        {routine.title && <div className="regime-routine-heading"><strong>{routine.title}:</strong></div>}
+                        {routine.points && routine.points.length > 0 ? (
+                          <ul className="regime-points-list">
+                            {routine.points.map((pt, ptIdx) => (
+                              <li key={ptIdx} className="regime-point-item">
+                                <span className="regime-point-bullet">•</span>
+                                <span>{pt}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <span className="text-sub italic">Not configured</span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <span className="text-sub italic">Not configured</span>
+              )}
 
-              <div className="regime-item">
-                <div className="regime-tag tag-weekly">
-                  <Calendar size={12} />
-                  <span>Weekly</span>
-                </div>
-                <div className="regime-content">
-                  {skinCare.weeklySunday || skinCare.weeklyTueFri ? (
-                    <>
-                      {skinCare.weeklySunday && <p>• <strong>Sunday:</strong> {skinCare.weeklySunday}</p>}
-                      {skinCare.weeklyTueFri && <p>• <strong>Tuesday & Friday:</strong> {skinCare.weeklyTueFri}</p>}
-                    </>
-                  ) : (
-                    <span className="text-sub italic">Not configured</span>
-                  )}
-                </div>
-              </div>
-
-              {skinCare.notes && (
+              {normalizedSkinCare.notes && (
                 <div className="regime-notes-box">
-                  💡 {skinCare.notes}
+                  💡 {normalizedSkinCare.notes}
                 </div>
               )}
             </div>
@@ -856,25 +843,36 @@ export const HealthProtocolView = () => {
             </div>
 
             <div className="regime-body">
-              <div className="regime-item">
-                <div className="regime-tag tag-weekly">
-                  <Calendar size={12} />
-                  <span>Sunday</span>
-                </div>
-                <div className="regime-content">
-                  <strong>Sunday Routine:</strong> {bodyCare.sunday ? bodyCare.sunday : <span className="text-sub italic">Not configured</span>}
-                </div>
-              </div>
-
-              <div className="regime-item">
-                <div className="regime-tag tag-weekly">
-                  <Calendar size={12} />
-                  <span>Tue & Fri</span>
-                </div>
-                <div className="regime-content">
-                  <strong>Tuesday & Friday:</strong> {bodyCare.tueFri ? bodyCare.tueFri : <span className="text-sub italic">Not configured</span>}
-                </div>
-              </div>
+              {normalizedBodyCare.routines && normalizedBodyCare.routines.length > 0 ? (
+                normalizedBodyCare.routines.map((routine, rIdx) => {
+                  const meta = getFrequencyMeta(routine.frequency);
+                  return (
+                    <div key={routine.id || rIdx} className="regime-item">
+                      <div className={`regime-tag ${meta.tagClass}`}>
+                        {routine.frequency === 'daily' ? <Clock size={12} /> : <Calendar size={12} />}
+                        <span>{meta.badge}</span>
+                      </div>
+                      <div className="regime-content">
+                        {routine.title && <div className="regime-routine-heading"><strong>{routine.title}:</strong></div>}
+                        {routine.points && routine.points.length > 0 ? (
+                          <ul className="regime-points-list">
+                            {routine.points.map((pt, ptIdx) => (
+                              <li key={ptIdx} className="regime-point-item">
+                                <span className="regime-point-bullet">•</span>
+                                <span>{pt}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <span className="text-sub italic">Not configured</span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <span className="text-sub italic">Not configured</span>
+              )}
 
               {bodyCare.notes && (
                 <div className="regime-notes-box">
@@ -918,35 +916,36 @@ export const HealthProtocolView = () => {
             </div>
 
             <div className="regime-body">
-              <div className="regime-item">
-                <div className="regime-tag tag-daily">
-                  <Clock size={12} />
-                  <span>Daily</span>
-                </div>
-                <div className="regime-content">
-                  <strong>Daily:</strong> {hairCare.daily ? hairCare.daily : <span className="text-sub italic">Not configured</span>}
-                </div>
-              </div>
-
-              <div className="regime-item">
-                <div className="regime-tag tag-weekly">
-                  <Calendar size={12} />
-                  <span>Weekly</span>
-                </div>
-                <div className="regime-content">
-                  <strong>Weekly Routine:</strong> {hairCare.weekly ? hairCare.weekly : <span className="text-sub italic">Not configured</span>}
-                </div>
-              </div>
-
-              <div className="regime-item">
-                <div className="regime-tag tag-biweekly">
-                  <Calendar size={12} />
-                  <span>Two Weeks Once</span>
-                </div>
-                <div className="regime-content">
-                  <strong>Bi-Weekly Cycle:</strong> {hairCare.biWeekly ? hairCare.biWeekly : <span className="text-sub italic">Not configured</span>}
-                </div>
-              </div>
+              {normalizedHairCare.routines && normalizedHairCare.routines.length > 0 ? (
+                normalizedHairCare.routines.map((routine, rIdx) => {
+                  const meta = getFrequencyMeta(routine.frequency);
+                  return (
+                    <div key={routine.id || rIdx} className="regime-item">
+                      <div className={`regime-tag ${meta.tagClass}`}>
+                        {routine.frequency === 'daily' ? <Clock size={12} /> : <Calendar size={12} />}
+                        <span>{meta.badge}</span>
+                      </div>
+                      <div className="regime-content">
+                        {routine.title && <div className="regime-routine-heading"><strong>{routine.title}:</strong></div>}
+                        {routine.points && routine.points.length > 0 ? (
+                          <ul className="regime-points-list">
+                            {routine.points.map((pt, ptIdx) => (
+                              <li key={ptIdx} className="regime-point-item">
+                                <span className="regime-point-bullet">•</span>
+                                <span>{pt}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <span className="text-sub italic">Not configured</span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <span className="text-sub italic">Not configured</span>
+              )}
 
               {hairCare.notes && (
                 <div className="regime-notes-box">
@@ -1292,168 +1291,26 @@ export const HealthProtocolView = () => {
         </form>
       </Modal>
 
-      {/* 3. Edit Skin Care Modal */}
-      <Modal
-        isOpen={activeModal === 'skincare'}
+      {/* 3, 4, 5. Edit Care Regimes Modal (Skin Care, Body Care, Hair Care) */}
+      <CareRegimeModal
+        isOpen={activeModal === 'skincare' || activeModal === 'bodycare' || activeModal === 'haircare'}
         onClose={() => setActiveModal(null)}
-        title="Edit Skin Care Regime"
-        maxWidth="560px"
-      >
-        <form onSubmit={handleSaveSkinCare} className="modal-form">
-          <div className="input-group">
-            <label className="label">Daily AM & PM Routine</label>
-            <input
-              type="text"
-              className="input"
-              placeholder="e.g. AM and PM (Cleanse, hydrate, sunscreen AM, barrier repair PM)"
-              value={formData.daily}
-              onChange={(e) => setFormData({ ...formData, daily: e.target.value })}
-            />
-          </div>
-
-          <div className="input-group">
-            <label className="label">Weekly - Sunday Routine</label>
-            <input
-              type="text"
-              className="input"
-              placeholder="e.g. Sunday: Face shaving and scrub"
-              value={formData.weeklySunday}
-              onChange={(e) => setFormData({ ...formData, weeklySunday: e.target.value })}
-            />
-          </div>
-
-          <div className="input-group">
-            <label className="label">Weekly - Tuesday & Friday Routine</label>
-            <input
-              type="text"
-              className="input"
-              placeholder="e.g. Tuesday & Friday: Face pack"
-              value={formData.weeklyTueFri}
-              onChange={(e) => setFormData({ ...formData, weeklyTueFri: e.target.value })}
-            />
-          </div>
-
-          <div className="input-group">
-            <label className="label">Notes / Guidelines</label>
-            <textarea
-              className="textarea"
-              rows={3}
-              value={formData.notes}
-              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-            />
-          </div>
-
-          <div className="modal-actions">
-            <button type="button" className="btn btn-secondary" onClick={() => setActiveModal(null)}>Cancel</button>
-            <button type="submit" className="btn btn-primary">Save Skin Care</button>
-          </div>
-        </form>
-      </Modal>
-
-      {/* 4. Edit Body Care Modal */}
-      <Modal
-        isOpen={activeModal === 'bodycare'}
-        onClose={() => setActiveModal(null)}
-        title="Edit Body Care Regime"
-        maxWidth="560px"
-      >
-        <form onSubmit={handleSaveBodyCare} className="modal-form">
-          <div className="input-group">
-            <label className="label">Sunday Routine</label>
-            <input
-              type="text"
-              className="input"
-              placeholder="e.g. Sunday: Oiling, scrub, shaving"
-              value={formData.sunday}
-              onChange={(e) => setFormData({ ...formData, sunday: e.target.value })}
-            />
-          </div>
-
-          <div className="input-group">
-            <label className="label">Tuesday & Friday Routine</label>
-            <input
-              type="text"
-              className="input"
-              placeholder="e.g. Tuesday & Friday: Exfoliating body wash"
-              value={formData.tueFri}
-              onChange={(e) => setFormData({ ...formData, tueFri: e.target.value })}
-            />
-          </div>
-
-          <div className="input-group">
-            <label className="label">Notes / Guidelines</label>
-            <textarea
-              className="textarea"
-              rows={3}
-              value={formData.notes}
-              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-            />
-          </div>
-
-          <div className="modal-actions">
-            <button type="button" className="btn btn-secondary" onClick={() => setActiveModal(null)}>Cancel</button>
-            <button type="submit" className="btn btn-primary">Save Body Care</button>
-          </div>
-        </form>
-      </Modal>
-
-      {/* 5. Edit Hair Care Modal */}
-      <Modal
-        isOpen={activeModal === 'haircare'}
-        onClose={() => setActiveModal(null)}
-        title="Edit Hair Care Regime"
-        maxWidth="560px"
-      >
-        <form onSubmit={handleSaveHairCare} className="modal-form">
-          <div className="input-group">
-            <label className="label">Daily Routine</label>
-            <input
-              type="text"
-              className="input"
-              placeholder="e.g. Serum and hair growth water"
-              value={formData.daily}
-              onChange={(e) => setFormData({ ...formData, daily: e.target.value })}
-            />
-          </div>
-
-          <div className="input-group">
-            <label className="label">Weekly Routine</label>
-            <input
-              type="text"
-              className="input"
-              placeholder="e.g. 3x Oiling, hair pack, hair wash"
-              value={formData.weekly}
-              onChange={(e) => setFormData({ ...formData, weekly: e.target.value })}
-            />
-          </div>
-
-          <div className="input-group">
-            <label className="label">Two Weeks Once (Bi-Weekly Cycle)</label>
-            <input
-              type="text"
-              className="input"
-              placeholder="e.g. Two weeks once: Saturday henna and Sunday avari podi"
-              value={formData.biWeekly}
-              onChange={(e) => setFormData({ ...formData, biWeekly: e.target.value })}
-            />
-          </div>
-
-          <div className="input-group">
-            <label className="label">Notes / Guidelines</label>
-            <textarea
-              className="textarea"
-              rows={3}
-              value={formData.notes}
-              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-            />
-          </div>
-
-          <div className="modal-actions">
-            <button type="button" className="btn btn-secondary" onClick={() => setActiveModal(null)}>Cancel</button>
-            <button type="submit" className="btn btn-primary">Save Hair Care</button>
-          </div>
-        </form>
-      </Modal>
+        regimeType={activeModal || 'skincare'}
+        regimeData={
+          activeModal === 'skincare' 
+            ? skinCare 
+            : activeModal === 'bodycare' 
+              ? bodyCare 
+              : hairCare
+        }
+        onSave={
+          activeModal === 'skincare' 
+            ? handleSaveSkinCareRegime 
+            : activeModal === 'bodycare' 
+              ? handleSaveBodyCareRegime 
+              : handleSaveHairCareRegime
+        }
+      />
 
       {/* 6. Edit Exercise Modal */}
       <Modal
@@ -2041,11 +1898,45 @@ export const HealthProtocolView = () => {
         .tag-daily { background: rgba(99, 102, 241, 0.15); color: var(--accent-primary); }
         .tag-weekly { background: rgba(245, 158, 11, 0.15); color: var(--accent-warning); }
         .tag-biweekly { background: rgba(139, 92, 246, 0.15); color: #8b5cf6; }
+        .tag-twodays { background: rgba(6, 182, 212, 0.15); color: #06b6d4; }
+        .tag-sunday { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+        .tag-tuefri { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+        .tag-custom { background: rgba(236, 72, 153, 0.15); color: #ec4899; }
 
         .regime-content {
           font-size: 0.83rem;
           color: var(--text-primary);
           line-height: 1.45;
+        }
+
+        .regime-routine-heading {
+          margin-bottom: 0.25rem;
+          color: var(--text-primary);
+        }
+
+        .regime-points-list {
+          list-style: none;
+          padding: 0;
+          margin: 0.25rem 0 0 0;
+          display: flex;
+          flex-direction: column;
+          gap: 0.25rem;
+        }
+
+        .regime-point-item {
+          display: flex;
+          align-items: flex-start;
+          gap: 0.4rem;
+          font-size: 0.83rem;
+          color: var(--text-primary);
+          line-height: 1.4;
+        }
+
+        .regime-point-bullet {
+          color: var(--accent-primary);
+          font-weight: bold;
+          font-size: 0.95rem;
+          line-height: 1.2;
         }
 
         .regime-content p {

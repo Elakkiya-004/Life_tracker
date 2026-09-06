@@ -20,7 +20,8 @@ import {
   FolderGit2,
   Briefcase,
   Award,
-  Table
+  Table,
+  Check
 } from 'lucide-react';
 
 const MOTIVATIONAL_QUOTES = [
@@ -161,13 +162,17 @@ export const DashboardView = () => {
                 onClick={() => toggleRoadmapTask(currentWeek.id, 'dsa')}
                 title="Click to toggle DSA complete"
               >
-                <div className="dash-task-check">
-                  {currentWeek.completedTasks?.includes('dsa') ? (
-                    <CheckCircle2 size={16} className="text-emerald" />
-                  ) : (
-                    <Circle size={16} className="text-muted" />
-                  )}
-                </div>
+                <button
+                  type="button"
+                  className={`task-checkbox-box ${currentWeek.completedTasks?.includes('dsa') ? 'checked' : ''}`}
+                  aria-label={currentWeek.completedTasks?.includes('dsa') ? "Mark incomplete" : "Mark complete"}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleRoadmapTask(currentWeek.id, 'dsa');
+                  }}
+                >
+                  {currentWeek.completedTasks?.includes('dsa') && <Check size={12} strokeWidth={3} className="task-check-svg" />}
+                </button>
                 <div className="dash-task-content">
                   <span className="dash-track-label dsa">🧠 DSA Focus</span>
                   <span className="dash-task-text">{currentWeek.dsa}</span>
@@ -182,13 +187,17 @@ export const DashboardView = () => {
                 onClick={() => toggleRoadmapTask(currentWeek.id, 'fullstack')}
                 title="Click to toggle Full Stack complete"
               >
-                <div className="dash-task-check">
-                  {currentWeek.completedTasks?.includes('fullstack') ? (
-                    <CheckCircle2 size={16} className="text-emerald" />
-                  ) : (
-                    <Circle size={16} className="text-muted" />
-                  )}
-                </div>
+                <button
+                  type="button"
+                  className={`task-checkbox-box ${currentWeek.completedTasks?.includes('fullstack') ? 'checked' : ''}`}
+                  aria-label={currentWeek.completedTasks?.includes('fullstack') ? "Mark incomplete" : "Mark complete"}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleRoadmapTask(currentWeek.id, 'fullstack');
+                  }}
+                >
+                  {currentWeek.completedTasks?.includes('fullstack') && <Check size={12} strokeWidth={3} className="task-check-svg" />}
+                </button>
                 <div className="dash-task-content">
                   <span className="dash-track-label fullstack">💻 Full Stack</span>
                   <span className="dash-task-text">{currentWeek.fullstack}</span>
@@ -203,13 +212,17 @@ export const DashboardView = () => {
                 onClick={() => toggleRoadmapTask(currentWeek.id, 'mobile')}
                 title="Click to toggle React Native complete"
               >
-                <div className="dash-task-check">
-                  {currentWeek.completedTasks?.includes('mobile') ? (
-                    <CheckCircle2 size={16} className="text-emerald" />
-                  ) : (
-                    <Circle size={16} className="text-muted" />
-                  )}
-                </div>
+                <button
+                  type="button"
+                  className={`task-checkbox-box ${currentWeek.completedTasks?.includes('mobile') ? 'checked' : ''}`}
+                  aria-label={currentWeek.completedTasks?.includes('mobile') ? "Mark incomplete" : "Mark complete"}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleRoadmapTask(currentWeek.id, 'mobile');
+                  }}
+                >
+                  {currentWeek.completedTasks?.includes('mobile') && <Check size={12} strokeWidth={3} className="task-check-svg" />}
+                </button>
                 <div className="dash-task-content">
                   <span className="dash-track-label mobile">📱 React Native</span>
                   <span className="dash-task-text">{currentWeek.mobile}</span>
@@ -224,13 +237,17 @@ export const DashboardView = () => {
                 onClick={() => toggleRoadmapTask(currentWeek.id, 'project')}
                 title="Click to toggle Project complete"
               >
-                <div className="dash-task-check">
-                  {currentWeek.completedTasks?.includes('project') ? (
-                    <CheckCircle2 size={16} className="text-emerald" />
-                  ) : (
-                    <Circle size={16} className="text-muted" />
-                  )}
-                </div>
+                <button
+                  type="button"
+                  className={`task-checkbox-box ${currentWeek.completedTasks?.includes('project') ? 'checked' : ''}`}
+                  aria-label={currentWeek.completedTasks?.includes('project') ? "Mark incomplete" : "Mark complete"}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleRoadmapTask(currentWeek.id, 'project');
+                  }}
+                >
+                  {currentWeek.completedTasks?.includes('project') && <Check size={12} strokeWidth={3} className="task-check-svg" />}
+                </button>
                 <div className="dash-task-content">
                   <span className="dash-track-label project">🚀 Project / Build</span>
                   <span className="dash-task-text">{currentWeek.project}</span>
@@ -245,13 +262,17 @@ export const DashboardView = () => {
                 onClick={() => toggleRoadmapTask(currentWeek.id, 'career')}
                 title="Click to toggle Career Prep complete"
               >
-                <div className="dash-task-check">
-                  {currentWeek.completedTasks?.includes('career') ? (
-                    <CheckCircle2 size={16} className="text-emerald" />
-                  ) : (
-                    <Circle size={16} className="text-muted" />
-                  )}
-                </div>
+                <button
+                  type="button"
+                  className={`task-checkbox-box ${currentWeek.completedTasks?.includes('career') ? 'checked' : ''}`}
+                  aria-label={currentWeek.completedTasks?.includes('career') ? "Mark incomplete" : "Mark complete"}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleRoadmapTask(currentWeek.id, 'career');
+                  }}
+                >
+                  {currentWeek.completedTasks?.includes('career') && <Check size={12} strokeWidth={3} className="task-check-svg" />}
+                </button>
                 <div className="dash-task-content">
                   <span className="dash-track-label career">👔 Career / Mock</span>
                   <span className="dash-task-text">{currentWeek.career}</span>
@@ -631,9 +652,36 @@ export const DashboardView = () => {
           transform: translateY(-1px);
         }
 
-        .dash-task-check {
+        .task-checkbox-box {
+          width: 19px;
+          height: 19px;
+          border-radius: 4px;
+          border: 2px solid rgba(255, 255, 255, 0.25);
+          background: var(--bg-card);
+          cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          padding: 0;
+          transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
           flex-shrink: 0;
-          margin-top: 2px;
+          margin-top: 1px;
+        }
+
+        .task-checkbox-box:hover {
+          border-color: #10b981;
+          background: rgba(16, 185, 129, 0.1);
+          transform: scale(1.12);
+        }
+
+        .task-checkbox-box.checked {
+          background: #10b981;
+          border-color: #10b981;
+          box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+        }
+
+        .task-check-svg {
+          color: #ffffff;
         }
 
         .dash-task-content {

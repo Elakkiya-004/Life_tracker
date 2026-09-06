@@ -6,12 +6,8 @@ import {
   Lock, 
   Eye, 
   EyeOff, 
-  ShieldCheck, 
-  User, 
   AlertCircle, 
-  ArrowRight,
-  KeyRound,
-  CheckCircle2
+  ArrowRight
 } from 'lucide-react';
 
 export const LoginView = () => {
@@ -30,13 +26,6 @@ export const LoginView = () => {
     if (!res.success) {
       setLocalError(res.error);
     }
-  };
-
-  const handleQuickLogin = async (demoEmail, demoPass) => {
-    setEmail(demoEmail);
-    setPassword(demoPass);
-    setLocalError(null);
-    await login(demoEmail, demoPass);
   };
 
   return (
@@ -115,42 +104,6 @@ export const LoginView = () => {
             <ArrowRight size={16} />
           </button>
         </form>
-
-        {/* Role Demo Shortcuts */}
-        <div className="login-quick-demo">
-          <span className="demo-label">Quick Demo Access (1-Click Login):</span>
-          <div className="demo-buttons-grid">
-            <button
-              type="button"
-              className="demo-btn demo-btn-admin"
-              onClick={() => handleQuickLogin('admin@lifetracker.com', 'admin123')}
-            >
-              <div className="demo-btn-left">
-                <ShieldCheck size={16} className="text-amber-400" />
-                <div className="demo-btn-text">
-                  <span className="demo-role">👑 Super Admin</span>
-                  <span className="demo-email">admin@lifetracker.com</span>
-                </div>
-              </div>
-              <span className="demo-tag admin">Add Users</span>
-            </button>
-
-            <button
-              type="button"
-              className="demo-btn demo-btn-user"
-              onClick={() => handleQuickLogin('user@lifetracker.com', 'user123')}
-            >
-              <div className="demo-btn-left">
-                <User size={16} className="text-emerald-400" />
-                <div className="demo-btn-text">
-                  <span className="demo-role">👤 Member (Elakkiya)</span>
-                  <span className="demo-email">user@lifetracker.com</span>
-                </div>
-              </div>
-              <span className="demo-tag user">Tracker App</span>
-            </button>
-          </div>
-        </div>
 
         {/* Footer Info */}
         <div className="login-footer">
@@ -314,88 +267,9 @@ export const LoginView = () => {
           flex-shrink: 0;
         }
 
-        .login-quick-demo {
-          display: flex;
-          flex-direction: column;
-          gap: 0.6rem;
+        .login-footer {
           border-top: 1px solid var(--border-color);
           padding-top: 1.25rem;
-        }
-
-        .demo-label {
-          font-size: 0.75rem;
-          font-weight: 700;
-          color: var(--text-muted);
-          text-transform: uppercase;
-          letter-spacing: 0.04em;
-        }
-
-        .demo-buttons-grid {
-          display: flex;
-          flex-direction: column;
-          gap: 0.5rem;
-        }
-
-        .demo-btn {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 0.65rem 0.85rem;
-          background: var(--bg-secondary);
-          border: 1px solid var(--border-color);
-          border-radius: var(--radius-md);
-          cursor: pointer;
-          transition: all 0.2s;
-          text-align: left;
-        }
-
-        .demo-btn:hover {
-          border-color: var(--primary-color);
-          background: rgba(99, 102, 241, 0.08);
-          transform: translateY(-1px);
-        }
-
-        .demo-btn-left {
-          display: flex;
-          align-items: center;
-          gap: 0.65rem;
-        }
-
-        .demo-btn-text {
-          display: flex;
-          flex-direction: column;
-          gap: 0.1rem;
-        }
-
-        .demo-role {
-          font-size: 0.825rem;
-          font-weight: 700;
-          color: var(--text-main);
-        }
-
-        .demo-email {
-          font-size: 0.72rem;
-          color: var(--text-muted);
-        }
-
-        .demo-tag {
-          font-size: 0.68rem;
-          font-weight: 700;
-          padding: 0.15rem 0.45rem;
-          border-radius: var(--radius-sm);
-        }
-
-        .demo-tag.admin {
-          background: rgba(245, 158, 11, 0.15);
-          color: #f59e0b;
-        }
-
-        .demo-tag.user {
-          background: rgba(16, 185, 129, 0.15);
-          color: #10b981;
-        }
-
-        .login-footer {
           display: flex;
           align-items: center;
           justify-content: center;

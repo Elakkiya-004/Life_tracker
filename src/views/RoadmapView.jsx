@@ -240,12 +240,12 @@ export const RoadmapView = () => {
             <table className="roadmap-excel-table">
               <thead>
                 <tr>
-                  <th className="col-period">Period</th>
+                  <th className="col-period">Period & Progress</th>
                   <th className="col-dsa">🧠 DSA Focus</th>
                   <th className="col-fullstack">💻 Full Stack</th>
                   <th className="col-mobile">📱 React Native</th>
-                  <th className="col-project">🚀 Project / Implementation</th>
-                  <th className="col-career">👔 Career / Interview Prep</th>
+                  <th className="col-project">🚀 Project / Build</th>
+                  <th className="col-career">👔 Career / Prep</th>
                   <th className="col-status">Status</th>
                   <th className="col-actions">Actions</th>
                 </tr>
@@ -259,31 +259,60 @@ export const RoadmapView = () => {
                   </tr>
                 ) : (
                   filteredWeeks.map((week) => {
+                    const completedCount = Array.isArray(week.completedTasks) ? week.completedTasks.length : 0;
                     const dsaDone = week.completedTasks?.includes('dsa');
                     const fsDone = week.completedTasks?.includes('fullstack');
                     const rnDone = week.completedTasks?.includes('mobile');
                     const projDone = week.completedTasks?.includes('project');
                     const careerDone = week.completedTasks?.includes('career');
-                    const isAllDone = (week.completedTasks?.length || 0) === 5;
+                    const isAllDone = completedCount === 5 || week.status === 'Completed';
 
                     return (
                       <tr key={week.id} className={`table-row ${isAllDone ? 'row-all-done' : ''} ${week.isLightWeek ? 'row-light-week' : ''}`}>
-                        {/* Period */}
+                        {/* Period & Milestone Progress */}
                         <td className="cell-period">
-                          <div className="period-badge">{week.period}</div>
+                          <div className="period-badge-wrapper">
+                            <button
+                              type="button"
+                              className={`milestone-quick-check ${isAllDone ? 'checked' : ''}`}
+                              onClick={() => updateWeekStatus(week.id, isAllDone ? 'Not Started' : 'Completed')}
+                              title={isAllDone ? 'Milestone Complete! Click to uncheck all tasks' : 'Click to mark entire milestone (all 5 tasks) complete'}
+                              aria-label={isAllDone ? 'Mark milestone incomplete' : 'Mark milestone complete'}
+                            >
+                              {isAllDone && <Check size={12} strokeWidth={3} className="milestone-check-icon" />}
+                            </button>
+                            <span className="period-badge">{week.period}</span>
+                          </div>
                           {week.dateRange && <span className="period-sub">{week.dateRange}</span>}
+                          <div className="period-progress-tag">
+                            {isAllDone ? (
+                              <span className="tag-all-done">✅ 5/5 Done</span>
+                            ) : (
+                              <span className={`tag-count ${completedCount > 0 ? 'active' : ''}`}>
+                                {completedCount}/5 Done
+                              </span>
+                            )}
+                          </div>
                         </td>
 
                         {/* DSA Focus */}
                         <td 
                           className={`cell-task ${dsaDone ? 'task-cell-done' : ''}`}
                           onClick={() => toggleRoadmapTask(week.id, 'dsa')}
-                          title="Click to toggle DSA complete"
+                          title={dsaDone ? "Completed! Click to mark incomplete" : "Click to mark complete"}
                         >
                           <div className="cell-task-inner">
-                            <div className="cell-check">
-                              {dsaDone ? <CheckCircle2 size={16} className="text-emerald" /> : <Circle size={16} className="text-muted" />}
-                            </div>
+                            <button
+                              type="button"
+                              className={`task-checkbox-box ${dsaDone ? 'checked' : ''}`}
+                              aria-label={dsaDone ? "Mark incomplete" : "Mark complete"}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleRoadmapTask(week.id, 'dsa');
+                              }}
+                            >
+                              {dsaDone && <Check size={12} strokeWidth={3} className="task-check-svg" />}
+                            </button>
                             <span className="cell-text">{week.dsa || '—'}</span>
                           </div>
                         </td>
@@ -292,12 +321,20 @@ export const RoadmapView = () => {
                         <td 
                           className={`cell-task ${fsDone ? 'task-cell-done' : ''}`}
                           onClick={() => toggleRoadmapTask(week.id, 'fullstack')}
-                          title="Click to toggle Full-Stack complete"
+                          title={fsDone ? "Completed! Click to mark incomplete" : "Click to mark complete"}
                         >
                           <div className="cell-task-inner">
-                            <div className="cell-check">
-                              {fsDone ? <CheckCircle2 size={16} className="text-emerald" /> : <Circle size={16} className="text-muted" />}
-                            </div>
+                            <button
+                              type="button"
+                              className={`task-checkbox-box ${fsDone ? 'checked' : ''}`}
+                              aria-label={fsDone ? "Mark incomplete" : "Mark complete"}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleRoadmapTask(week.id, 'fullstack');
+                              }}
+                            >
+                              {fsDone && <Check size={12} strokeWidth={3} className="task-check-svg" />}
+                            </button>
                             <span className="cell-text">{week.fullstack || '—'}</span>
                           </div>
                         </td>
@@ -306,12 +343,20 @@ export const RoadmapView = () => {
                         <td 
                           className={`cell-task ${rnDone ? 'task-cell-done' : ''}`}
                           onClick={() => toggleRoadmapTask(week.id, 'mobile')}
-                          title="Click to toggle React Native complete"
+                          title={rnDone ? "Completed! Click to mark incomplete" : "Click to mark complete"}
                         >
                           <div className="cell-task-inner">
-                            <div className="cell-check">
-                              {rnDone ? <CheckCircle2 size={16} className="text-emerald" /> : <Circle size={16} className="text-muted" />}
-                            </div>
+                            <button
+                              type="button"
+                              className={`task-checkbox-box ${rnDone ? 'checked' : ''}`}
+                              aria-label={rnDone ? "Mark incomplete" : "Mark complete"}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleRoadmapTask(week.id, 'mobile');
+                              }}
+                            >
+                              {rnDone && <Check size={12} strokeWidth={3} className="task-check-svg" />}
+                            </button>
                             <span className="cell-text">{week.mobile || '—'}</span>
                           </div>
                         </td>
@@ -320,12 +365,20 @@ export const RoadmapView = () => {
                         <td 
                           className={`cell-task ${projDone ? 'task-cell-done' : ''}`}
                           onClick={() => toggleRoadmapTask(week.id, 'project')}
-                          title="Click to toggle Project complete"
+                          title={projDone ? "Completed! Click to mark incomplete" : "Click to mark complete"}
                         >
                           <div className="cell-task-inner">
-                            <div className="cell-check">
-                              {projDone ? <CheckCircle2 size={16} className="text-emerald" /> : <Circle size={16} className="text-muted" />}
-                            </div>
+                            <button
+                              type="button"
+                              className={`task-checkbox-box ${projDone ? 'checked' : ''}`}
+                              aria-label={projDone ? "Mark incomplete" : "Mark complete"}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleRoadmapTask(week.id, 'project');
+                              }}
+                            >
+                              {projDone && <Check size={12} strokeWidth={3} className="task-check-svg" />}
+                            </button>
                             <span className="cell-text">{week.project || '—'}</span>
                           </div>
                         </td>
@@ -334,12 +387,20 @@ export const RoadmapView = () => {
                         <td 
                           className={`cell-task ${careerDone ? 'task-cell-done' : ''}`}
                           onClick={() => toggleRoadmapTask(week.id, 'career')}
-                          title="Click to toggle Career/Interview complete"
+                          title={careerDone ? "Completed! Click to mark incomplete" : "Click to mark complete"}
                         >
                           <div className="cell-task-inner">
-                            <div className="cell-check">
-                              {careerDone ? <CheckCircle2 size={16} className="text-emerald" /> : <Circle size={16} className="text-muted" />}
-                            </div>
+                            <button
+                              type="button"
+                              className={`task-checkbox-box ${careerDone ? 'checked' : ''}`}
+                              aria-label={careerDone ? "Mark incomplete" : "Mark complete"}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleRoadmapTask(week.id, 'career');
+                              }}
+                            >
+                              {careerDone && <Check size={12} strokeWidth={3} className="task-check-svg" />}
+                            </button>
                             <span className="cell-text">{week.career || '—'}</span>
                           </div>
                         </td>
@@ -468,11 +529,17 @@ export const RoadmapView = () => {
                         onClick={() => toggleRoadmapTask(week.id, 'dsa')}
                       >
                         <div className="task-checkbox">
-                          {week.completedTasks?.includes('dsa') ? (
-                            <CheckCircle2 size={18} className="text-emerald" />
-                          ) : (
-                            <Circle size={18} className="text-muted" />
-                          )}
+                          <button
+                            type="button"
+                            className={`task-checkbox-box ${week.completedTasks?.includes('dsa') ? 'checked' : ''}`}
+                            aria-label={week.completedTasks?.includes('dsa') ? "Mark incomplete" : "Mark complete"}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleRoadmapTask(week.id, 'dsa');
+                            }}
+                          >
+                            {week.completedTasks?.includes('dsa') && <Check size={12} strokeWidth={3} className="task-check-svg" />}
+                          </button>
                         </div>
                         <div className="task-body">
                           <div className="task-track-badge dsa">
@@ -491,11 +558,17 @@ export const RoadmapView = () => {
                         onClick={() => toggleRoadmapTask(week.id, 'fullstack')}
                       >
                         <div className="task-checkbox">
-                          {week.completedTasks?.includes('fullstack') ? (
-                            <CheckCircle2 size={18} className="text-emerald" />
-                          ) : (
-                            <Circle size={18} className="text-muted" />
-                          )}
+                          <button
+                            type="button"
+                            className={`task-checkbox-box ${week.completedTasks?.includes('fullstack') ? 'checked' : ''}`}
+                            aria-label={week.completedTasks?.includes('fullstack') ? "Mark incomplete" : "Mark complete"}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleRoadmapTask(week.id, 'fullstack');
+                            }}
+                          >
+                            {week.completedTasks?.includes('fullstack') && <Check size={12} strokeWidth={3} className="task-check-svg" />}
+                          </button>
                         </div>
                         <div className="task-body">
                           <div className="task-track-badge fullstack">
@@ -514,11 +587,17 @@ export const RoadmapView = () => {
                         onClick={() => toggleRoadmapTask(week.id, 'mobile')}
                       >
                         <div className="task-checkbox">
-                          {week.completedTasks?.includes('mobile') ? (
-                            <CheckCircle2 size={18} className="text-emerald" />
-                          ) : (
-                            <Circle size={18} className="text-muted" />
-                          )}
+                          <button
+                            type="button"
+                            className={`task-checkbox-box ${week.completedTasks?.includes('mobile') ? 'checked' : ''}`}
+                            aria-label={week.completedTasks?.includes('mobile') ? "Mark incomplete" : "Mark complete"}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleRoadmapTask(week.id, 'mobile');
+                            }}
+                          >
+                            {week.completedTasks?.includes('mobile') && <Check size={12} strokeWidth={3} className="task-check-svg" />}
+                          </button>
                         </div>
                         <div className="task-body">
                           <div className="task-track-badge mobile">
@@ -537,11 +616,17 @@ export const RoadmapView = () => {
                         onClick={() => toggleRoadmapTask(week.id, 'project')}
                       >
                         <div className="task-checkbox">
-                          {week.completedTasks?.includes('project') ? (
-                            <CheckCircle2 size={18} className="text-emerald" />
-                          ) : (
-                            <Circle size={18} className="text-muted" />
-                          )}
+                          <button
+                            type="button"
+                            className={`task-checkbox-box ${week.completedTasks?.includes('project') ? 'checked' : ''}`}
+                            aria-label={week.completedTasks?.includes('project') ? "Mark incomplete" : "Mark complete"}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleRoadmapTask(week.id, 'project');
+                            }}
+                          >
+                            {week.completedTasks?.includes('project') && <Check size={12} strokeWidth={3} className="task-check-svg" />}
+                          </button>
                         </div>
                         <div className="task-body">
                           <div className="task-track-badge project">
@@ -560,11 +645,17 @@ export const RoadmapView = () => {
                         onClick={() => toggleRoadmapTask(week.id, 'career')}
                       >
                         <div className="task-checkbox">
-                          {week.completedTasks?.includes('career') ? (
-                            <CheckCircle2 size={18} className="text-emerald" />
-                          ) : (
-                            <Circle size={18} className="text-muted" />
-                          )}
+                          <button
+                            type="button"
+                            className={`task-checkbox-box ${week.completedTasks?.includes('career') ? 'checked' : ''}`}
+                            aria-label={week.completedTasks?.includes('career') ? "Mark incomplete" : "Mark complete"}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleRoadmapTask(week.id, 'career');
+                            }}
+                          >
+                            {week.completedTasks?.includes('career') && <Check size={12} strokeWidth={3} className="task-check-svg" />}
+                          </button>
                         </div>
                         <div className="task-body">
                           <div className="task-track-badge career">
@@ -893,18 +984,54 @@ export const RoadmapView = () => {
           vertical-align: top;
         }
 
-        .col-period { width: 95px; }
+        .col-period { width: 125px; min-width: 115px; }
         .col-dsa { width: 17%; }
         .col-fullstack { width: 19%; }
-        .col-mobile { width: 18%; }
-        .col-project { width: 19%; }
-        .col-career { width: 18%; }
-        .col-status { width: 125px; }
+        .col-mobile { width: 17%; }
+        .col-project { width: 18%; }
+        .col-career { width: 17%; }
+        .col-status { width: 135px; min-width: 130px; }
         .col-actions { width: 75px; text-align: center; }
 
         .cell-period {
           font-weight: 700;
           background: var(--bg-secondary);
+        }
+
+        .period-badge-wrapper {
+          display: flex;
+          align-items: center;
+          gap: 0.45rem;
+        }
+
+        .milestone-quick-check {
+          width: 18px;
+          height: 18px;
+          border-radius: 4px;
+          border: 2px solid var(--border-color);
+          background: var(--bg-card);
+          cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          padding: 0;
+          transition: all 0.18s ease;
+          flex-shrink: 0;
+        }
+
+        .milestone-quick-check:hover {
+          border-color: #10b981;
+          transform: scale(1.1);
+        }
+
+        .milestone-quick-check.checked {
+          background: #10b981;
+          border-color: #10b981;
+          box-shadow: 0 0 10px rgba(16, 185, 129, 0.45);
+        }
+
+        .milestone-check-icon {
+          color: #ffffff;
         }
 
         .period-badge {
@@ -919,12 +1046,45 @@ export const RoadmapView = () => {
           font-size: 0.7rem;
           color: var(--text-muted);
           font-weight: normal;
-          margin-top: 0.15rem;
+          margin-top: 0.2rem;
+        }
+
+        .period-progress-tag {
+          margin-top: 0.35rem;
+        }
+
+        .tag-all-done {
+          display: inline-block;
+          font-size: 0.68rem;
+          font-weight: 800;
+          color: #10b981;
+          background: rgba(16, 185, 129, 0.15);
+          padding: 0.15rem 0.45rem;
+          border-radius: var(--radius-full);
+          border: 1px solid rgba(16, 185, 129, 0.35);
+        }
+
+        .tag-count {
+          display: inline-block;
+          font-size: 0.68rem;
+          font-weight: 700;
+          color: var(--text-muted);
+          background: var(--bg-card);
+          padding: 0.12rem 0.4rem;
+          border-radius: var(--radius-full);
+          border: 1px solid var(--border-color);
+        }
+
+        .tag-count.active {
+          color: #6366f1;
+          background: rgba(99, 102, 241, 0.15);
+          border-color: rgba(99, 102, 241, 0.35);
         }
 
         .cell-task {
           cursor: pointer;
           transition: background 0.15s ease;
+          user-select: none;
         }
 
         .cell-task:hover {
@@ -934,17 +1094,45 @@ export const RoadmapView = () => {
         .cell-task-inner {
           display: flex;
           align-items: flex-start;
-          gap: 0.45rem;
+          gap: 0.5rem;
         }
 
-        .cell-check {
+        .task-checkbox-box {
+          width: 19px;
+          height: 19px;
+          border-radius: 4px;
+          border: 2px solid rgba(255, 255, 255, 0.25);
+          background: var(--bg-card);
+          cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          padding: 0;
+          transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
           flex-shrink: 0;
-          margin-top: 2px;
+          margin-top: 1px;
+        }
+
+        .task-checkbox-box:hover {
+          border-color: #10b981;
+          background: rgba(16, 185, 129, 0.1);
+          transform: scale(1.12);
+        }
+
+        .task-checkbox-box.checked {
+          background: #10b981;
+          border-color: #10b981;
+          box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+        }
+
+        .task-check-svg {
+          color: #ffffff;
         }
 
         .cell-text {
           line-height: 1.35;
           color: var(--text-main);
+          font-size: 0.8rem;
         }
 
         .task-cell-done {
@@ -957,7 +1145,8 @@ export const RoadmapView = () => {
         }
 
         .row-all-done {
-          background: rgba(16, 185, 129, 0.03);
+          background: rgba(16, 185, 129, 0.06);
+          box-shadow: inset 3px 0 0 #10b981;
         }
 
         .row-light-week {

@@ -31,7 +31,7 @@ export const useApp = () => {
   return context;
 };
 
-export const PATH_TO_TAB = {
+const PATH_TO_TAB = {
   '/': 'dashboard',
   '/dashboard': 'dashboard',
   '/admin': 'admin',
@@ -50,7 +50,7 @@ export const PATH_TO_TAB = {
   '/settings': 'settings',
 };
 
-export const TAB_TO_PATH = {
+const TAB_TO_PATH = {
   'dashboard': '/',
   'admin': '/admin',
   'habits': '/habits',
@@ -121,17 +121,30 @@ export const AppProvider = ({ children }) => {
 
   const mergeRoadmapWithDefaults = (existingList) => {
     if (!Array.isArray(existingList) || existingList.length === 0) return DEFAULT_ROADMAP;
-    return DEFAULT_ROADMAP.map(defaultWeek => {
-      const matched = existingList.find(w => w && (w.id === defaultWeek.id || w.period === defaultWeek.period));
-      if (!matched) return defaultWeek;
+    
+    // Map through existingList to preserve all custom fields, user-completed tasks, and notes
+    const mergedList = existingList.map(week => {
+      const defaultWeek = DEFAULT_ROADMAP.find(d => d.id === week.id || d.period === week.period);
+      if (!defaultWeek) return week;
       return {
         ...defaultWeek,
-        status: matched.status || defaultWeek.status,
-        completedTasks: Array.isArray(matched.completedTasks) ? matched.completedTasks : defaultWeek.completedTasks,
-        isLightWeek: typeof matched.isLightWeek === 'boolean' ? matched.isLightWeek : defaultWeek.isLightWeek,
-        notes: matched.notes !== undefined ? matched.notes : defaultWeek.notes,
+        ...week,
+        status: week.status || defaultWeek.status,
+        completedTasks: Array.isArray(week.completedTasks) ? week.completedTasks : (defaultWeek.completedTasks || []),
+        isLightWeek: typeof week.isLightWeek === 'boolean' ? week.isLightWeek : defaultWeek.isLightWeek,
+        notes: week.notes !== undefined ? week.notes : (defaultWeek.notes || ''),
       };
     });
+
+    // Ensure any default week that wasn't in existingList is preserved
+    DEFAULT_ROADMAP.forEach(defaultWeek => {
+      const exists = mergedList.some(w => w && (w.id === defaultWeek.id || w.period === defaultWeek.period));
+      if (!exists) {
+        mergedList.push(defaultWeek);
+      }
+    });
+
+    return mergedList;
   };
 
   const [roadmap, setRoadmap] = useState(() => {
@@ -722,17 +735,22 @@ export const AppProvider = ({ children }) => {
 
   const toggleRoadmapTask = (weekId, taskKey) => {
     const taskKeys = ['dsa', 'fullstack', 'mobile', 'project', 'career'];
-    const currentRoadmap = Array.isArray(roadmap) ? roadmap : DEFAULT_ROADMAP;
+    const currentRoadmap = Array.isArray(roadmap) && roadmap.length > 0 ? roadmap : DEFAULT_ROADMAP;
     const updated = currentRoadmap.map(week => {
       if (week.id !== weekId) return week;
-      const prevCompleted = week.completedTasks || [];
+      const prevCompleted = Array.isArray(week.completedTasks) ? week.completedTasks : [];
       const isAlreadyDone = prevCompleted.includes(taskKey);
       const newCompleted = isAlreadyDone 
         ? prevCompleted.filter(k => k !== taskKey)
         : [...prevCompleted, taskKey];
 
+      // Determine tasks present on this week
+      const presentTaskKeys = taskKeys.filter(k => Boolean(week[k] && String(week[k]).trim() && String(week[k]).trim() !== '—'));
+      const requiredKeys = presentTaskKeys.length > 0 ? presentTaskKeys : taskKeys;
+      const allDone = requiredKeys.length > 0 && requiredKeys.every(k => newCompleted.includes(k));
+
       let newStatus = week.status;
-      if (newCompleted.length === taskKeys.length) {
+      if (allDone) {
         newStatus = 'Completed';
         triggerCelebration();
       } else if (newCompleted.length > 0) {
@@ -749,22 +767,27 @@ export const AppProvider = ({ children }) => {
     });
 
     setRoadmap(updated);
+    setLocalData(STORAGE_KEYS.ROADMAP, updated);
     pushToCloud({ habits, transactions, jars, roadmap: updated, customLists, settings });
   };
 
   const updateWeekStatus = (weekId, status) => {
-    const currentRoadmap = Array.isArray(roadmap) ? roadmap : DEFAULT_ROADMAP;
+    const currentRoadmap = Array.isArray(roadmap) && roadmap.length > 0 ? roadmap : DEFAULT_ROADMAP;
+    const allTasks = ['dsa', 'fullstack', 'mobile', 'project', 'career'];
+    const isCompleted = status === 'Completed';
+    if (isCompleted) {
+      triggerCelebration();
+    }
     const updated = currentRoadmap.map(week => {
       if (week.id !== weekId) return week;
-      const isCompleted = status === 'Completed';
-      const allTasks = ['dsa', 'fullstack', 'mobile', 'project', 'career'];
       return {
         ...week,
         status,
-        completedTasks: isCompleted ? allTasks : (status === 'Not Started' ? [] : week.completedTasks),
+        completedTasks: isCompleted ? allTasks : (status === 'Not Started' ? [] : (Array.isArray(week.completedTasks) ? week.completedTasks : [])),
       };
     });
     setRoadmap(updated);
+    setLocalData(STORAGE_KEYS.ROADMAP, updated);
     pushToCloud({ habits, transactions, jars, roadmap: updated, customLists, settings });
   };
 
@@ -1065,7 +1088,7 @@ export const AppProvider = ({ children }) => {
   // Calculated Metrics (Guaranteed Safe)
   const safeHabits = Array.isArray(habits) ? habits.filter(Boolean) : [];
   const safeTransactions = Array.isArray(transactions) ? transactions.filter(Boolean) : [];
-  const safeRoadmap = Array.isArray(roadmap) ? roadmap.filter(Boolean) : [];
+  const safeRoadmap = Array.isArray(roadmap) && roadmap.length > 0 ? roadmap.filter(Boolean) : DEFAULT_ROADMAP;
   const safeCustomLists = Array.isArray(customLists) ? customLists.filter(Boolean) : [];
 
   const todayCompletedHabits = safeHabits.filter(h => h && Array.isArray(h.completedDates) && h.completedDates.includes(todayStr)).length;
@@ -1091,6 +1114,10 @@ export const AppProvider = ({ children }) => {
     ? Math.round((totalCompletedRoadmapTasks / totalRoadmapTasks) * 100) 
     : 0;
 
+  // Active current roadmap milestone (the first in-progress or first week)
+  const currentRoadmapWeek = safeRoadmap.find(w => w && w.status === 'In Progress') || safeRoadmap[0] || null;
+  const currentRoadmapWeekDoneTasks = Array.isArray(currentRoadmapWeek?.completedTasks) ? currentRoadmapWeek.completedTasks.length : 0;
+
   // Marvel Watchlist Metrics
   const marvelList = safeCustomLists.find(l => l && l.id === 'list-mcu-doomsday') || safeCustomLists[0] || null;
   const marvelItems = Array.isArray(marvelList?.items) ? marvelList.items : [];
@@ -1107,6 +1134,7 @@ export const AppProvider = ({ children }) => {
         habits: safeHabits,
         transactions: safeTransactions,
         jars: Array.isArray(jars) ? jars : DEFAULT_JARS,
+        roadmap: safeRoadmap,
         customLists: safeCustomLists,
         marvelList,
         marvelItems,
@@ -1141,6 +1169,8 @@ export const AppProvider = ({ children }) => {
         totalRoadmapTasks,
         totalCompletedRoadmapTasks,
         roadmapCompletionPercent,
+        currentRoadmapWeek,
+        currentRoadmapWeekDoneTasks,
         toggleHabit,
         addHabit,
         updateHabit,

@@ -33,14 +33,25 @@ export const AuthProvider = ({ children }) => {
     try {
       const data = getLocalData(STORAGE_KEYS.USERS_DIRECTORY, null);
       if (Array.isArray(data) && data.length > 0) {
+        // Seamlessly migrate previous admin credentials to new email & password
+        const migrated = data.map(u => {
+          if (u && (u.role === 'super_admin' || u.email === 'admin@lifetracker.com')) {
+            return {
+              ...u,
+              name: u.name === 'Super Admin' ? 'Elakkiya' : (u.name || 'Elakkiya'),
+              email: 'elakkiya.sakthivelu3089@gmail.com',
+              password: 'Cr3089',
+              role: 'super_admin',
+            };
+          }
+          return u;
+        });
+
         // Ensure default super admin exists
-        const hasAdmin = data.some(u => u && u.role === 'super_admin');
-        if (!hasAdmin) {
-          const merged = [...DEFAULT_USERS, ...data];
-          setLocalData(STORAGE_KEYS.USERS_DIRECTORY, merged);
-          return merged;
-        }
-        return data;
+        const hasAdmin = migrated.some(u => u && u.role === 'super_admin');
+        const finalList = hasAdmin ? migrated : [DEFAULT_USERS[0], ...migrated];
+        setLocalData(STORAGE_KEYS.USERS_DIRECTORY, finalList);
+        return finalList;
       }
       setLocalData(STORAGE_KEYS.USERS_DIRECTORY, DEFAULT_USERS);
       return DEFAULT_USERS;
@@ -54,6 +65,15 @@ export const AuthProvider = ({ children }) => {
     try {
       const savedUser = getLocalData(STORAGE_KEYS.AUTH_USER, null);
       if (savedUser && savedUser.email) {
+        if (savedUser.role === 'super_admin' || savedUser.email === 'admin@lifetracker.com') {
+          const updatedAdmin = {
+            ...savedUser,
+            name: savedUser.name === 'Super Admin' ? 'Elakkiya' : (savedUser.name || 'Elakkiya'),
+            email: 'elakkiya.sakthivelu3089@gmail.com',
+          };
+          setLocalData(STORAGE_KEYS.AUTH_USER, updatedAdmin);
+          return updatedAdmin;
+        }
         return savedUser;
       }
       return null;
