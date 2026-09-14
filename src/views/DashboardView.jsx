@@ -74,8 +74,8 @@ export const DashboardView = () => {
       <div className="hero-banner card">
         <div className="hero-left">
           <div className="hero-badge">
-            <Sparkles size={14} />
-            <span>DAILY PROGRESS</span>
+            <img src="/favicon-32x32.png" alt="Life Wheel" style={{ width: 18, height: 18, borderRadius: 5 }} />
+            <span>DAILY PROGRESS • WHEEL OF LIFE</span>
           </div>
           <h2 className="hero-title">
             {todayHabitProgress === 100 
@@ -111,8 +111,9 @@ export const DashboardView = () => {
             />
             <defs>
               <linearGradient id="accentGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#6366f1" />
-                <stop offset="100%" stopColor="#10b981" />
+                <stop offset="0%" stopColor="#f59e0b" />
+                <stop offset="50%" stopColor="#10b981" />
+                <stop offset="100%" stopColor="#6366f1" />
               </linearGradient>
             </defs>
           </svg>

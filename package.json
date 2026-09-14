@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "cap:build": "vite build && cap sync android",
     "cap:sync": "cap sync",
-    "cap:open": "cap open android"
+    "cap:open": "cap open android",
+    "resize-icons": "powershell -ExecutionPolicy Bypass -File ./scripts/resize-icons.ps1"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.1",

@@ -38,7 +38,7 @@ export const LoginView = () => {
         {/* Brand Header */}
         <div className="login-brand">
           <div className="login-logo">
-            <Sparkles size={24} className="brand-icon" />
+            <img src="/app-logo.png" alt="LifeTracker Wheel" className="login-logo-img" />
           </div>
           <h1 className="login-title">LifeTracker Pro</h1>
           <p className="login-sub text-sub">
@@ -172,15 +172,29 @@ export const LoginView = () => {
         }
 
         .login-logo {
-          width: 52px;
-          height: 52px;
-          border-radius: var(--radius-md);
-          background: linear-gradient(135deg, #6366f1, #10b981);
+          width: 72px;
+          height: 72px;
+          border-radius: 20px;
+          overflow: hidden;
+          background: #FFFDF7;
           display: flex;
           align-items: center;
           justify-content: center;
-          color: #ffffff;
-          box-shadow: 0 10px 25px rgba(99, 102, 241, 0.35);
+          box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2), 0 0 35px var(--accent-primary-glow);
+          border: 2px solid var(--border-color);
+          margin-bottom: 0.5rem;
+          transition: transform 0.3s ease;
+        }
+
+        .login-logo:hover {
+          transform: scale(1.06) rotate(4deg);
+        }
+
+        .login-logo-img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          display: block;
         }
 
         .login-title {

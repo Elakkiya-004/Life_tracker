@@ -62,12 +62,12 @@ export const Sidebar = () => {
     <aside className="app-sidebar">
       {/* Brand Header */}
       <div className="sidebar-brand">
-        <div className="brand-logo">
-          <Sparkles size={22} className="brand-icon" />
+        <div className="brand-logo" title="LifeTracker Holistic Wheel">
+          <img src="/app-logo.png" alt="LifeTracker Wheel" className="brand-logo-img" />
         </div>
         <div className="brand-info">
           <h1 className="brand-name">LifeTracker</h1>
-          <span className="brand-tag">PRO • HABITS, CAREER & MEDIA</span>
+          <span className="brand-tag">PRO • HOLISTIC LIFE OS</span>
         </div>
       </div>
 
@@ -207,15 +207,30 @@ export const Sidebar = () => {
         }
 
         .brand-logo {
-          width: 40px;
-          height: 40px;
-          border-radius: var(--radius-sm);
-          background: linear-gradient(135deg, var(--accent-primary), var(--accent-purple));
+          width: 42px;
+          height: 42px;
+          border-radius: 12px;
+          overflow: hidden;
           display: flex;
           align-items: center;
           justify-content: center;
-          color: #ffffff;
-          box-shadow: var(--shadow-glow);
+          box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15), 0 0 16px var(--accent-primary-glow);
+          border: 1.5px solid var(--border-color);
+          background: #FFFDF7;
+          flex-shrink: 0;
+          transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
+        }
+
+        .brand-logo:hover {
+          transform: scale(1.08) rotate(3deg);
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22), 0 0 24px var(--accent-primary-glow);
+        }
+
+        .brand-logo-img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          display: block;
         }
 
         .brand-name {

@@ -18,6 +18,7 @@ import {
   Plus, 
   Trash2, 
   Moon, 
+  Sun,
   ListTodo,
   Edit3,
   Shield,
@@ -145,6 +146,79 @@ export const SettingsView = () => {
         </div>
       )}
 
+      {/* Wheel of Life Theme & Aesthetics */}
+      <div className="settings-card card">
+        <div className="settings-card-header">
+          <img src="/favicon-32x32.png" alt="Life Wheel" style={{ width: 22, height: 22, borderRadius: 6 }} />
+          <div>
+            <h3 className="title-md">Wheel of Life Appearance</h3>
+            <span className="text-sub text-xs">Curated color themes inspired by your holistic Life Wheel icon</span>
+          </div>
+        </div>
+
+        <div className="theme-options-grid">
+          {/* Light Mode: Life Wheel Warm Canvas */}
+          <button
+            type="button"
+            className={`theme-preset-card ${settings?.theme === 'light' ? 'active' : ''}`}
+            onClick={() => updateSettings({ theme: 'light' })}
+          >
+            <div className="theme-preview-box light-preview">
+              <div className="preview-top-bar">
+                <Sun size={15} color="#D97706" />
+                <span className="preview-circle amber" />
+                <span className="preview-circle emerald" />
+                <span className="preview-circle indigo" />
+              </div>
+              <div className="preview-content-mock">
+                <div className="mock-card warm" />
+                <div className="mock-pills">
+                  <div className="mock-pill rose" />
+                  <div className="mock-pill mint" />
+                </div>
+              </div>
+            </div>
+            <div className="theme-meta">
+              <div className="theme-title-row">
+                <span className="theme-title">Warm Canvas (Cream)</span>
+                {settings?.theme === 'light' && <span className="theme-badge-active">Active</span>}
+              </div>
+              <span className="theme-desc">Porcelain ivory background, sunny amber warmth, and mindful leaves</span>
+            </div>
+          </button>
+
+          {/* Dark Mode: Life Wheel Midnight Glow */}
+          <button
+            type="button"
+            className={`theme-preset-card ${settings?.theme !== 'light' ? 'active' : ''}`}
+            onClick={() => updateSettings({ theme: 'dark' })}
+          >
+            <div className="theme-preview-box dark-preview">
+              <div className="preview-top-bar">
+                <Moon size={15} color="#818CF8" />
+                <span className="preview-circle indigo" />
+                <span className="preview-circle emerald" />
+                <span className="preview-circle amber" />
+              </div>
+              <div className="preview-content-mock">
+                <div className="mock-card dark" />
+                <div className="mock-pills">
+                  <div className="mock-pill purple" />
+                  <div className="mock-pill cyan" />
+                </div>
+              </div>
+            </div>
+            <div className="theme-meta">
+              <div className="theme-title-row">
+                <span className="theme-title">Midnight Glow (Dark)</span>
+                {settings?.theme !== 'light' && <span className="theme-badge-active">Active</span>}
+              </div>
+              <span className="theme-desc">Deep nocturnal twilight with radiant multi-hue wheel sector glows</span>
+            </div>
+          </button>
+        </div>
+      </div>
+
       {/* App Preferences */}
       <div className="settings-card card">
         <div className="settings-card-header">
@@ -172,14 +246,14 @@ export const SettingsView = () => {
             </div>
 
             <div className="input-group flex-1">
-              <label className="label">10:30 PM Daily Rollover Behavior</label>
+              <label className="label">22:30 IST Daily Rollover Behavior</label>
               <select
                 className="select"
                 value={habitRolloverMode}
                 onChange={(e) => setHabitRolloverMode(e.target.value)}
               >
-                <option value="fresh_checks">🔄 Fresh Checklist (Reset checkmarks for next day)</option>
-                <option value="auto_clear">🧹 Auto-Delete Habits (Clean fresh slate every day)</option>
+                <option value="auto_clear">🧹 Auto-Delete Habits (Wipe daily at 22:30 IST, saved in 30-Day History)</option>
+                <option value="fresh_checks">🔄 Fresh Checklist (Keep routines, reset checkmarks for tomorrow)</option>
               </select>
             </div>
           </div>
@@ -606,6 +680,151 @@ export const SettingsView = () => {
           background: rgba(239, 68, 68, 0.15);
           color: #ef4444;
           font-weight: 700;
+        }
+
+        /* Wheel Theme Selector Styles */
+        .theme-options-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 1rem;
+          margin-top: 0.5rem;
+        }
+
+        @media (min-width: 640px) {
+          .theme-options-grid {
+            grid-template-columns: 1fr 1fr;
+          }
+        }
+
+        .theme-preset-card {
+          border: 2px solid var(--border-color);
+          background: var(--bg-card);
+          border-radius: var(--radius-md);
+          padding: 1rem;
+          cursor: pointer;
+          text-align: left;
+          transition: all 0.25s ease;
+          display: flex;
+          flex-direction: column;
+          gap: 0.85rem;
+          position: relative;
+        }
+
+        .theme-preset-card:hover {
+          border-color: var(--accent-primary);
+          transform: translateY(-2px);
+          box-shadow: var(--shadow-md);
+        }
+
+        .theme-preset-card.active {
+          border-color: var(--accent-primary);
+          box-shadow: 0 0 0 1px var(--accent-primary), var(--shadow-glow);
+          background: var(--bg-card-hover);
+        }
+
+        .theme-preview-box {
+          border-radius: var(--radius-sm);
+          padding: 0.75rem;
+          border: 1px solid var(--border-color);
+          display: flex;
+          flex-direction: column;
+          gap: 0.6rem;
+        }
+
+        .light-preview {
+          background: #FAF7F2;
+          border-color: rgba(220, 212, 200, 0.7);
+        }
+
+        .dark-preview {
+          background: #0B0F17;
+          border-color: rgba(255, 255, 255, 0.12);
+        }
+
+        .preview-top-bar {
+          display: flex;
+          align-items: center;
+          gap: 0.4rem;
+        }
+
+        .preview-circle {
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+        }
+
+        .preview-circle.amber { background: #F59E0B; }
+        .preview-circle.emerald { background: #10B981; }
+        .preview-circle.indigo { background: #6366F1; }
+
+        .preview-content-mock {
+          display: flex;
+          flex-direction: column;
+          gap: 0.4rem;
+        }
+
+        .mock-card {
+          height: 22px;
+          border-radius: 6px;
+        }
+
+        .mock-card.warm {
+          background: #FFFFFF;
+          border: 1px solid rgba(220, 212, 200, 0.6);
+        }
+
+        .mock-card.dark {
+          background: #151C2C;
+          border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .mock-pills {
+          display: flex;
+          gap: 0.35rem;
+        }
+
+        .mock-pill {
+          height: 8px;
+          width: 28px;
+          border-radius: 4px;
+        }
+
+        .mock-pill.rose { background: #F43F5E; }
+        .mock-pill.mint { background: #14B8A6; }
+        .mock-pill.purple { background: #8B5CF6; }
+        .mock-pill.cyan { background: #0EA5E9; }
+
+        .theme-meta {
+          display: flex;
+          flex-direction: column;
+          gap: 0.25rem;
+        }
+
+        .theme-title-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+        }
+
+        .theme-title {
+          font-weight: 700;
+          font-size: 0.95rem;
+          color: var(--text-primary);
+        }
+
+        .theme-badge-active {
+          font-size: 0.7rem;
+          font-weight: 700;
+          padding: 0.15rem 0.5rem;
+          border-radius: var(--radius-full);
+          background: var(--accent-primary);
+          color: #ffffff;
+        }
+
+        .theme-desc {
+          font-size: 0.75rem;
+          color: var(--text-secondary);
+          line-height: 1.4;
         }
       `}</style>
     </div>

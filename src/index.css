@@ -5,35 +5,49 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
 
 :root {
-  /* Color Palette - Dark Mode (Default) */
-  --bg-primary: #090d16;
-  --bg-secondary: #0f172a;
-  --bg-card: rgba(15, 23, 42, 0.75);
-  --bg-card-hover: rgba(30, 41, 59, 0.85);
-  --bg-glass: rgba(15, 23, 42, 0.65);
+  /* Color Palette - Life Wheel Midnight Glow (Dark Mode Default) */
+  --bg-primary: #0B0F17;
+  --bg-secondary: #111726;
+  --bg-card: rgba(17, 23, 38, 0.78);
+  --bg-card-hover: rgba(27, 36, 56, 0.88);
+  --bg-glass: rgba(17, 23, 38, 0.65);
   --border-color: rgba(255, 255, 255, 0.08);
   --border-focus: rgba(99, 102, 241, 0.5);
 
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
+  --text-primary: #F8FAFC;
+  --text-secondary: #94A3B8;
+  --text-muted: #64748B;
 
-  --accent-primary: #6366f1;
-  --accent-primary-hover: #4f46e5;
-  --accent-primary-glow: rgba(99, 102, 241, 0.25);
+  --accent-primary: #6366F1;
+  --accent-primary-hover: #4F46E5;
+  --accent-primary-glow: rgba(99, 102, 241, 0.28);
 
-  --accent-success: #10b981;
+  --accent-success: #10B981;
   --accent-success-glow: rgba(16, 185, 129, 0.2);
-  --accent-warning: #f59e0b;
-  --accent-danger: #f43f5e;
-  --accent-purple: #8b5cf6;
-  --accent-cyan: #0ea5e9;
-  --accent-rose: #ec4899;
+  --accent-warning: #F59E0B;
+  --accent-danger: #F43F5E;
+  --accent-purple: #8B5CF6;
+  --accent-cyan: #0EA5E9;
+  --accent-rose: #EC4899;
 
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
-  --shadow-md: 0 8px 24px -4px rgba(0, 0, 0, 0.35);
-  --shadow-lg: 0 16px 36px -6px rgba(0, 0, 0, 0.45);
-  --shadow-glow: 0 0 20px rgba(99, 102, 241, 0.2);
+  /* Life Wheel 12 Domain Accents */
+  --wheel-target: #F87171;    /* Coral Bullseye - Goals & Milestones */
+  --wheel-fitness: #22C55E;   /* Emerald Dumbbell - Workout & Energy */
+  --wheel-nutrition: #F59E0B; /* Golden Honey - Nutrition & Clean Eating */
+  --wheel-vitals: #F43F5E;    /* Rose Heart - Health & Vitals */
+  --wheel-mind: #A855F7;      /* Lavender Lotus - Mindfulness & Peace */
+  --wheel-routine: #14B8A6;   /* Mint Paw - Routine & Daily Care */
+  --wheel-home: #38BDF8;      /* Sky Blue - Home & Space */
+  --wheel-finance: #818CF8;   /* Rupee Violet - Budget & Wealth */
+  --wheel-learning: #0284C7;  /* Azure Book - Reading & Skills */
+  --wheel-selfcare: #EC4899;  /* Blossom Pink - Skincare & Self-Care */
+  --wheel-growth: #10B981;    /* Fresh Leaf - Personal Growth */
+  --wheel-career: #6366F1;    /* Tech Indigo - Coding & Career */
+
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.25);
+  --shadow-md: 0 8px 24px -4px rgba(0, 0, 0, 0.38);
+  --shadow-lg: 0 16px 36px -6px rgba(0, 0, 0, 0.48);
+  --shadow-glow: 0 0 20px rgba(99, 102, 241, 0.22);
 
   --radius-sm: 10px;
   --radius-md: 16px;
@@ -49,27 +63,36 @@
   --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
 
+/* Life Wheel Warm Canvas / Cream (Light Mode) */
 [data-theme="light"] {
-  --bg-primary: #f1f5f9;
-  --bg-secondary: #ffffff;
-  --bg-card: rgba(255, 255, 255, 0.85);
-  --bg-card-hover: rgba(241, 245, 249, 0.95);
-  --bg-glass: rgba(255, 255, 255, 0.75);
-  --border-color: rgba(0, 0, 0, 0.08);
-  --border-focus: rgba(99, 102, 241, 0.5);
+  --bg-primary: #FAF7F2;
+  --bg-secondary: #FFFFFF;
+  --bg-card: rgba(255, 255, 255, 0.92);
+  --bg-card-hover: #FFFFFF;
+  --bg-glass: rgba(255, 255, 255, 0.82);
+  --border-color: rgba(220, 212, 200, 0.6);
+  --border-focus: rgba(91, 95, 232, 0.55);
 
-  --text-primary: #0f172a;
-  --text-secondary: #475569;
-  --text-muted: #94a3b8;
+  --text-primary: #1C2230;
+  --text-secondary: #566276;
+  --text-muted: #8E99AA;
 
-  --accent-primary: #4f46e5;
-  --accent-primary-hover: #4338ca;
-  --accent-primary-glow: rgba(79, 70, 229, 0.2);
+  --accent-primary: #5B5FE8;
+  --accent-primary-hover: #484CCE;
+  --accent-primary-glow: rgba(91, 95, 232, 0.18);
 
-  --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 8px 20px rgba(0, 0, 0, 0.08);
-  --shadow-lg: 0 16px 32px rgba(0, 0, 0, 0.12);
-  --shadow-glow: 0 0 18px rgba(79, 70, 229, 0.15);
+  --accent-success: #059669;
+  --accent-success-glow: rgba(5, 150, 105, 0.18);
+  --accent-warning: #D97706;
+  --accent-danger: #E11D48;
+  --accent-purple: #7C3AED;
+  --accent-cyan: #0284C7;
+  --accent-rose: #DB2777;
+
+  --shadow-sm: 0 2px 8px rgba(120, 100, 70, 0.06);
+  --shadow-md: 0 8px 22px -4px rgba(120, 100, 70, 0.09);
+  --shadow-lg: 0 16px 36px -6px rgba(120, 100, 70, 0.12);
+  --shadow-glow: 0 0 20px rgba(91, 95, 232, 0.14);
 }
 
 * {
@@ -88,6 +111,7 @@ body {
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* Custom Scrollbars */
@@ -106,13 +130,22 @@ body {
   background: var(--text-muted);
 }
 
-/* App Shell Structure */
+/* App Shell Structure with Wheel Aura Gradients */
 .app-container {
   display: flex;
   min-height: 100vh;
   position: relative;
-  background: radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.08) 0%, transparent 40%),
-              radial-gradient(circle at 90% 80%, rgba(16, 185, 129, 0.06) 0%, transparent 40%);
+  background: radial-gradient(circle at 10% 15%, rgba(99, 102, 241, 0.1) 0%, transparent 45%),
+              radial-gradient(circle at 88% 80%, rgba(16, 185, 129, 0.08) 0%, transparent 45%),
+              radial-gradient(circle at 50% 8%, rgba(245, 158, 11, 0.06) 0%, transparent 40%);
+  transition: background 0.3s ease;
+}
+
+[data-theme="light"] .app-container {
+  background: radial-gradient(circle at 12% 15%, rgba(245, 158, 11, 0.07) 0%, transparent 45%),
+              radial-gradient(circle at 88% 82%, rgba(16, 185, 129, 0.06) 0%, transparent 45%),
+              radial-gradient(circle at 50% 50%, rgba(91, 95, 232, 0.04) 0%, transparent 55%),
+              #FAF7F2;
 }
 
 .main-content {
@@ -470,3 +503,60 @@ body {
 .pulse {
   animation: pulseGlow 2s infinite ease-in-out;
 }
+
+/* =========================================================
+   LIFE WHEEL BRAND & DOMAIN STYLES
+   ========================================================= */
+
+.brand-logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+  display: block;
+}
+
+.brand-logo {
+  width: 44px;
+  height: 44px;
+  border-radius: 13px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid var(--border-color);
+  background: #FFFDF7;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12), 0 0 16px var(--accent-primary-glow);
+  flex-shrink: 0;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
+  user-select: none;
+}
+
+.brand-logo:hover {
+  transform: scale(1.08) rotate(3deg);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2), 0 0 24px var(--accent-primary-glow);
+}
+
+.brand-logo-mini {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border-color);
+  background: #FFFDF7;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
+}
+
+/* Life Wheel Themed Badges */
+.badge-wheel-target { background: rgba(248, 113, 113, 0.15); color: var(--wheel-target); border: 1px solid rgba(248, 113, 113, 0.3); }
+.badge-wheel-fitness { background: rgba(34, 197, 94, 0.15); color: var(--wheel-fitness); border: 1px solid rgba(34, 197, 94, 0.3); }
+.badge-wheel-nutrition { background: rgba(245, 158, 11, 0.15); color: var(--wheel-nutrition); border: 1px solid rgba(245, 158, 11, 0.3); }
+.badge-wheel-vitals { background: rgba(244, 63, 94, 0.15); color: var(--wheel-vitals); border: 1px solid rgba(244, 63, 94, 0.3); }
+.badge-wheel-mind { background: rgba(168, 85, 247, 0.15); color: var(--wheel-mind); border: 1px solid rgba(168, 85, 247, 0.3); }
+.badge-wheel-finance { background: rgba(129, 140, 248, 0.15); color: var(--wheel-finance); border: 1px solid rgba(129, 140, 248, 0.3); }
+.badge-wheel-career { background: rgba(99, 102, 241, 0.15); color: var(--wheel-career); border: 1px solid rgba(99, 102, 241, 0.3); }
+

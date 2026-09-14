@@ -82,11 +82,11 @@ export const MobileDrawer = () => {
         <div className="drawer-header">
           <div className="drawer-brand">
             <div className="brand-logo-mini">
-              <Sparkles size={18} />
+              <img src="/app-logo.png" alt="LifeTracker Wheel" className="brand-logo-img" />
             </div>
             <div>
               <h3 className="brand-title">LifeTracker Pro</h3>
-              <span className="brand-sub">Habits, Career & Media</span>
+              <span className="brand-sub">Holistic Life OS</span>
             </div>
           </div>
           <button 
@@ -252,14 +252,24 @@ export const MobileDrawer = () => {
         }
 
         .brand-logo-mini {
-          width: 32px;
-          height: 32px;
-          border-radius: var(--radius-sm);
-          background: linear-gradient(135deg, var(--accent-primary), var(--accent-purple));
+          width: 36px;
+          height: 36px;
+          border-radius: 10px;
+          overflow: hidden;
           display: flex;
           align-items: center;
           justify-content: center;
-          color: #ffffff;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+          border: 1px solid var(--border-color);
+          background: #FFFDF7;
+          flex-shrink: 0;
+        }
+
+        .brand-logo-mini img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          display: block;
         }
 
         .brand-title {
