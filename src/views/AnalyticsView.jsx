@@ -32,11 +32,16 @@ export const AnalyticsView = () => {
   const currency = settings?.currency || '₹';
   const monthlyBudget = settings?.monthlyBudget || 0;
 
-  // 1. Habit Consistency Score (60% weight)
-  const totalCompletions = safeHabits.reduce((sum, h) => sum + (Array.isArray(h?.completedDates) ? h.completedDates.length : 0), 0);
-  const habitConsistencyScore = safeHabits.length > 0 
-    ? Math.min(100, Math.round((totalCompletions / (safeHabits.length * 7 || 1)) * 100))
-    : 0;
+  // 1. Habit Consistency Score (60% weight) - calculate using 30-day history so wiping habits at 22:30 IST doesn't drop score
+  const pastDaysWithData = historyList.filter(d => d && d.total > 0);
+  const totalTasksAcrossHistory = pastDaysWithData.reduce((sum, d) => sum + d.total, 0);
+  const totalCompletedAcrossHistory = pastDaysWithData.reduce((sum, d) => sum + d.completed, 0);
+
+  const habitConsistencyScore = totalTasksAcrossHistory > 0
+    ? Math.min(100, Math.round((totalCompletedAcrossHistory / totalTasksAcrossHistory) * 100))
+    : safeHabits.length > 0
+    ? Math.min(100, Math.round((safeHabits.reduce((sum, h) => sum + (Array.isArray(h?.completedDates) ? h.completedDates.length : 0), 0) / (safeHabits.length * 7 || 1)) * 100))
+    : 100;
 
   // 2. Budget Health Score (40% weight)
   const budgetHealthScore = (!monthlyBudget || monthlyBudget <= 0)
@@ -107,29 +112,35 @@ export const AnalyticsView = () => {
           </div>
 
           <div className="habits-progress-list">
-            {habits.map((habit) => {
-              const count = habit.completedDates?.length || 0;
-              const rate = Math.min(100, Math.round((count / 14) * 100)); // last 14 days basis
-              return (
-                <div key={habit.id} className="habit-rate-row">
-                  <div className="habit-rate-header">
-                    <span className="habit-rate-name">{habit.name}</span>
-                    <span className="habit-rate-percent" style={{ color: habit.color }}>
-                      {count} check-ins ({habit.streak}d streak)
-                    </span>
+            {habits.length === 0 ? (
+              <div style={{ padding: '1.5rem 1rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.82rem' }}>
+                ✨ Clean slate! Today's checklist reset at 22:30 IST. Add new tasks in Habits or review your past progress in <button type="button" className="btn btn-ghost btn-xs text-primary" style={{ display: 'inline-flex', verticalAlign: 'middle', textDecoration: 'underline' }} onClick={() => setIsHistoryModalOpen(true)}>30-Day History</button>.
+              </div>
+            ) : (
+              habits.map((habit) => {
+                const count = habit.completedDates?.length || 0;
+                const rate = Math.min(100, Math.round((count / 14) * 100)); // last 14 days basis
+                return (
+                  <div key={habit.id} className="habit-rate-row">
+                    <div className="habit-rate-header">
+                      <span className="habit-rate-name">{habit.name}</span>
+                      <span className="habit-rate-percent" style={{ color: habit.color }}>
+                        {count} check-ins ({habit.streak}d streak)
+                      </span>
+                    </div>
+                    <div className="rate-track">
+                      <div 
+                        className="rate-fill" 
+                        style={{ 
+                          width: `${Math.max(8, rate)}%`,
+                          backgroundColor: habit.color 
+                        }} 
+                      />
+                    </div>
                   </div>
-                  <div className="rate-track">
-                    <div 
-                      className="rate-fill" 
-                      style={{ 
-                        width: `${Math.max(8, rate)}%`,
-                        backgroundColor: habit.color 
-                      }} 
-                    />
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })
+            )}
           </div>
         </div>
 

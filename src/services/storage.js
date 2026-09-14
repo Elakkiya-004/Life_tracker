@@ -23,12 +23,13 @@ const STORAGE_KEYS = {
   AUTH_USER: 'life_tracker_auth_user_v1',
   USERS_DIRECTORY: 'life_tracker_users_directory_v1',
   MENU_PERMISSIONS: 'life_tracker_menu_permissions_v1',
+  LAST_TRACKER_DATE: 'life_tracker_last_tracker_date_v1',
 };
 
 // Available Menus for Super Admin Control
 export const AVAILABLE_MENUS = [
   { id: 'dashboard', label: 'Dashboard', path: '/', icon: 'LayoutDashboard', desc: 'Main home overview, habits progress ring, streak tracker' },
-  { id: 'habits', label: 'Habits & Routines', path: '/habits', icon: 'CheckCircle2', desc: 'Daily to-do checklist, routine streaks, 10:30 PM reset' },
+  { id: 'habits', label: 'Habits & Routines', path: '/habits', icon: 'CheckCircle2', desc: 'Daily to-do checklist, routine streaks, 22:30 IST auto-reset' },
   { id: 'protocol', label: 'Health & Diet Protocol', path: '/health', icon: 'HeartPulse', desc: 'Intermittent fasting 16:8, water counter, meal schedule' },
   { id: 'roadmap', label: 'Career Roadmap', path: '/roadmap', icon: 'Compass', desc: '16-Week DSA, Full-Stack, React Native Excel curriculum' },
   { id: 'watchlists', label: 'MCU Watchlist', path: '/mcu', icon: 'Film', desc: 'Marvel Cinematic Universe Phase 1–6 release tracker' },
@@ -169,7 +170,7 @@ export const DEFAULT_SETTINGS = {
   monthlyBudget: 16000, // (₹16,000 monthly spend limit, ₹2,000 guaranteed saved)
   theme: 'dark',
   cloudSyncEnabled: false,
-  habitRolloverMode: 'fresh_checks', // 'fresh_checks' | 'auto_clear'
+  habitRolloverMode: 'auto_clear', // 'auto_clear' (default) | 'fresh_checks'
 };
 
 export const getLocalData = (key, fallback) => {
@@ -190,21 +191,85 @@ export const setLocalData = (key, value) => {
   }
 };
 
-// Calculate effective tracker date with 10:30 PM (22:30) reset cutoff
-export const getEffectiveTrackerDate = (dateObj = new Date()) => {
-  const d = new Date(dateObj);
-  const hours = d.getHours();
-  const minutes = d.getMinutes();
+// Extract date/time parts strictly in Indian Standard Time (Asia/Kolkata, UTC +5:30)
+export const getISTDateParts = (dateObj = new Date()) => {
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Kolkata',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  });
 
-  // If time is >= 22:30 (10:30 PM), advance the tracking date by 1 day
-  if (hours > 22 || (hours === 22 && minutes >= 30)) {
-    d.setDate(d.getDate() + 1);
+  const parts = formatter.formatToParts(dateObj);
+  const m = {};
+  for (const p of parts) m[p.type] = p.value;
+  let hour = parseInt(m.hour, 10);
+  if (hour === 24) hour = 0;
+  const minute = parseInt(m.minute, 10);
+  const second = parseInt(m.second, 10);
+  const year = parseInt(m.year, 10);
+  const month = parseInt(m.month, 10);
+  const day = parseInt(m.day, 10);
+
+  return { year, month, day, hour, minute, second };
+};
+
+// Calculate effective tracker date with 22:30 IST (10:30 PM) reset cutoff
+export const getEffectiveTrackerDate = (dateObj = new Date()) => {
+  const { year, month, day, hour, minute } = getISTDateParts(dateObj);
+  const d = new Date(Date.UTC(year, month - 1, day));
+
+  // If Indian Standard Time is >= 22:30 (10:30 PM), advance the tracking date by 1 day
+  if (hour > 22 || (hour === 22 && minute >= 30)) {
+    d.setUTCDate(d.getUTCDate() + 1);
   }
 
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+  const dt = String(d.getUTCDate()).padStart(2, '0');
+  return `${y}-${m}-${dt}`;
+};
+
+// Archive habits of a specified date into 30-Day History and wipe active habits
+export const archiveAndResetHabits = (habitsToArchive, archiveDate, existingHistory = {}) => {
+  const currentHabits = Array.isArray(habitsToArchive) ? habitsToArchive : [];
+  const completedTasks = currentHabits.filter(h => h && Array.isArray(h.completedDates) && h.completedDates.includes(archiveDate));
+  const totalCount = currentHabits.length;
+  const completedCount = completedTasks.length;
+  const percent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+
+  const archivedTasks = currentHabits.map(h => ({
+    id: h.id,
+    name: h.name,
+    category: h.category || 'General',
+    timeOfDay: h.timeOfDay || 'Morning',
+    color: h.color || '#6366f1',
+    icon: h.icon || 'CheckCircle2',
+    isCompleted: Array.isArray(h.completedDates) && h.completedDates.includes(archiveDate),
+    streak: h.streak || 0,
+    targetDays: h.targetDays || 7,
+    completedDates: Array.isArray(h.completedDates) ? h.completedDates : []
+  }));
+
+  let updatedHistory = { ...(existingHistory || {}) };
+  // Archive if there are tasks or if not yet recorded
+  if (totalCount > 0 || !updatedHistory[archiveDate]) {
+    updatedHistory[archiveDate] = {
+      date: archiveDate,
+      total: totalCount,
+      completed: completedCount,
+      percent,
+      tasks: archivedTasks,
+      archivedAt: new Date().toISOString()
+    };
+  }
+
+  const { prunedHistory } = pruneOldHistoryData(updatedHistory, [], 30);
+  return { updatedHistory: prunedHistory, clearedHabits: [] };
 };
 
 // Clean up daily history and habit completed dates older than 30 days

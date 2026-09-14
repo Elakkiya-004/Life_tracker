@@ -17,6 +17,7 @@ import {
   seedDatabaseIfEmpty,
   getEffectiveTrackerDate,
   pruneOldHistoryData,
+  archiveAndResetHabits,
 } from '../services/storage';
 
 import { initFirebase, syncToCloud, listenToCloud } from '../services/firebase';
@@ -199,7 +200,12 @@ export const AppProvider = ({ children }) => {
 
   const [settings, setSettings] = useState(() => {
     const data = getLocalData(STORAGE_KEYS.SETTINGS, DEFAULT_SETTINGS);
-    return data && typeof data === 'object' ? { ...DEFAULT_SETTINGS, ...data } : DEFAULT_SETTINGS;
+    const resolved = data && typeof data === 'object' ? { ...DEFAULT_SETTINGS, ...data } : DEFAULT_SETTINGS;
+    // Ensure default rollover mode is auto_clear
+    if (!resolved.habitRolloverMode) {
+      resolved.habitRolloverMode = 'auto_clear';
+    }
+    return resolved;
   });
   
   // Real browser URL routing state (Supports /habits, /health, /roadmap, /mcu, /finance, etc.)
@@ -266,42 +272,87 @@ export const AppProvider = ({ children }) => {
     }
   }, [currentUserId, habits, transactions, jars, roadmap, customLists, healthProtocol, dailyHistory, settings]);
 
-  // Dynamic tracker date with 10:30 PM (22:30) auto-reset cutoff for next day
+  // Dynamic tracker date with 22:30 IST (10:30 PM) auto-reset cutoff for next day
   const [todayStr, setTodayStr] = useState(() => getEffectiveTrackerDate());
 
-  // Interval to auto-advance to next day after 10:30 PM (22:30)
+  // Startup & Offline Rollover Check:
+  // If the user closed the app before 22:30 IST and reopens after 22:30 IST or the next day,
+  // we immediately detect that LAST_TRACKER_DATE !== currentEffectiveDate,
+  // archive the previous day's habits with full details into 30-Day History, and wipe active habits!
+  useEffect(() => {
+    const currentEffectiveDate = getEffectiveTrackerDate();
+    const lastTrackerDate = getLocalData(STORAGE_KEYS.LAST_TRACKER_DATE, null);
+
+    if (!lastTrackerDate) {
+      setLocalData(STORAGE_KEYS.LAST_TRACKER_DATE, currentEffectiveDate);
+    } else if (lastTrackerDate !== currentEffectiveDate) {
+      console.log(`🌙 22:30 IST Rollover detected on startup: ${lastTrackerDate} -> ${currentEffectiveDate}`);
+      const rawHabits = getLocalData(STORAGE_KEYS.HABITS, []);
+      const rawHistory = getLocalData(STORAGE_KEYS.DAILY_HISTORY, {});
+
+      const { updatedHistory, clearedHabits } = archiveAndResetHabits(rawHabits, lastTrackerDate, rawHistory);
+      setDailyHistory(updatedHistory);
+      setLocalData(STORAGE_KEYS.DAILY_HISTORY, updatedHistory);
+
+      const rolloverMode = settings?.habitRolloverMode || 'auto_clear';
+      if (rolloverMode === 'auto_clear') {
+        setHabits(clearedHabits);
+        setLocalData(STORAGE_KEYS.HABITS, clearedHabits);
+        pushToCloud({
+          habits: clearedHabits,
+          dailyHistory: updatedHistory,
+          lastTrackerDate: currentEffectiveDate,
+          transactions, jars, roadmap, customLists, healthProtocol, settings
+        });
+      } else {
+        pushToCloud({
+          habits: rawHabits,
+          dailyHistory: updatedHistory,
+          lastTrackerDate: currentEffectiveDate,
+          transactions, jars, roadmap, customLists, healthProtocol, settings
+        });
+      }
+
+      setLocalData(STORAGE_KEYS.LAST_TRACKER_DATE, currentEffectiveDate);
+      setTodayStr(currentEffectiveDate);
+    }
+  }, []); // Run once on startup
+
+  // Live timer: auto-advance and archive at 22:30 IST while app is running
   useEffect(() => {
     const checkTimer = setInterval(() => {
       const currentEffectiveDate = getEffectiveTrackerDate();
       if (todayStr !== currentEffectiveDate) {
-        // Date transition after 10:30 PM!
+        console.log(`🌙 22:30 IST Transition: ${todayStr} -> ${currentEffectiveDate}`);
         const currentHabits = Array.isArray(habits) ? habits : [];
-        const completedCount = currentHabits.filter(h => h && Array.isArray(h.completedDates) && h.completedDates.includes(todayStr)).length;
-        const totalCount = currentHabits.length;
-        const percent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+        const { updatedHistory, clearedHabits } = archiveAndResetHabits(currentHabits, todayStr, dailyHistory);
 
-        const updatedHist = {
-          ...(dailyHistory || {}),
-          [todayStr]: {
-            date: todayStr,
-            total: totalCount,
-            completed: completedCount,
-            percent,
-            archivedAt: new Date().toISOString()
-          }
-        };
-        setDailyHistory(updatedHist);
-        setLocalData(STORAGE_KEYS.DAILY_HISTORY, updatedHist);
+        setDailyHistory(updatedHistory);
+        setLocalData(STORAGE_KEYS.DAILY_HISTORY, updatedHistory);
 
-        if (settings?.habitRolloverMode === 'auto_clear') {
-          setHabits([]);
-          setLocalData(STORAGE_KEYS.HABITS, []);
-          pushToCloud({ habits: [], transactions, jars, roadmap, customLists, healthProtocol, dailyHistory: updatedHist, settings });
+        const rolloverMode = settings?.habitRolloverMode || 'auto_clear';
+        if (rolloverMode === 'auto_clear') {
+          setHabits(clearedHabits);
+          setLocalData(STORAGE_KEYS.HABITS, clearedHabits);
+          pushToCloud({
+            habits: clearedHabits,
+            dailyHistory: updatedHistory,
+            lastTrackerDate: currentEffectiveDate,
+            transactions, jars, roadmap, customLists, healthProtocol, settings
+          });
+        } else {
+          pushToCloud({
+            habits: currentHabits,
+            dailyHistory: updatedHistory,
+            lastTrackerDate: currentEffectiveDate,
+            transactions, jars, roadmap, customLists, healthProtocol, settings
+          });
         }
 
+        setLocalData(STORAGE_KEYS.LAST_TRACKER_DATE, currentEffectiveDate);
         setTodayStr(currentEffectiveDate);
       }
-    }, 10000);
+    }, 5000);
 
     return () => clearInterval(checkTimer);
   }, [todayStr, habits, dailyHistory, settings?.habitRolloverMode, transactions, jars, roadmap, customLists, healthProtocol, pushToCloud]);
@@ -357,7 +408,34 @@ export const AppProvider = ({ children }) => {
 
       const unsubscribe = listenToCloud(currentUserId, (cloudData) => {
         if (!cloudData) return;
-        if (Array.isArray(cloudData.habits)) setHabits(cloudData.habits);
+        const currentEffectiveDate = getEffectiveTrackerDate();
+
+        // 1. Sync dailyHistory (merge local + cloud)
+        let mergedHist = { ...(getLocalData(STORAGE_KEYS.DAILY_HISTORY, {}) || {}) };
+        if (cloudData.dailyHistory && typeof cloudData.dailyHistory === 'object') {
+          mergedHist = { ...mergedHist, ...cloudData.dailyHistory };
+          setDailyHistory(mergedHist);
+          setLocalData(STORAGE_KEYS.DAILY_HISTORY, mergedHist);
+        }
+
+        // 2. Check if cloud habits are from an older day that should have been rolled over
+        const cloudTrackerDate = cloudData.lastTrackerDate;
+        const rolloverMode = cloudData.settings?.habitRolloverMode || settings?.habitRolloverMode || 'auto_clear';
+
+        if (cloudTrackerDate && cloudTrackerDate !== currentEffectiveDate) {
+          const { updatedHistory, clearedHabits } = archiveAndResetHabits(cloudData.habits || [], cloudTrackerDate, mergedHist);
+          setDailyHistory(updatedHistory);
+          setLocalData(STORAGE_KEYS.DAILY_HISTORY, updatedHistory);
+          if (rolloverMode === 'auto_clear') {
+            setHabits(clearedHabits);
+            setLocalData(STORAGE_KEYS.HABITS, clearedHabits);
+            syncToCloud(currentUserId, { habits: clearedHabits, dailyHistory: updatedHistory, lastTrackerDate: currentEffectiveDate });
+          } else if (Array.isArray(cloudData.habits)) {
+            setHabits(cloudData.habits);
+          }
+        } else if (Array.isArray(cloudData.habits)) {
+          setHabits(cloudData.habits);
+        }
         if (Array.isArray(cloudData.transactions)) setTransactions(cloudData.transactions);
         if (Array.isArray(cloudData.jars)) {
           const isOldDefault = !cloudData.jars.some(j => j && j.id === 'jar-snacks');
@@ -404,6 +482,35 @@ export const AppProvider = ({ children }) => {
 
   // Habit Operations
   const toggleHabit = (habitId, dateStr = todayStr) => {
+    // If toggling a task in past archived history:
+    if (dateStr !== todayStr && dailyHistory && dailyHistory[dateStr]) {
+      const entry = dailyHistory[dateStr];
+      const tasks = Array.isArray(entry.tasks) ? [...entry.tasks] : [];
+      const taskIndex = tasks.findIndex(t => t.id === habitId);
+      if (taskIndex >= 0) {
+        const target = { ...tasks[taskIndex], isCompleted: !tasks[taskIndex].isCompleted };
+        tasks[taskIndex] = target;
+        const total = tasks.length;
+        const completed = tasks.filter(t => t.isCompleted).length;
+        const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+        const updatedHist = {
+          ...dailyHistory,
+          [dateStr]: {
+            ...entry,
+            total,
+            completed,
+            percent,
+            tasks,
+            updatedAt: new Date().toISOString()
+          }
+        };
+        setDailyHistory(updatedHist);
+        setLocalData(STORAGE_KEYS.DAILY_HISTORY, updatedHist);
+        pushToCloud({ habits, transactions, jars, roadmap, customLists, healthProtocol, dailyHistory: updatedHist, settings });
+        return;
+      }
+    }
+
     setHabits(prevHabits => {
       const list = Array.isArray(prevHabits) ? prevHabits : DEFAULT_HABITS;
       const updated = list.map(h => {
@@ -1033,26 +1140,40 @@ export const AppProvider = ({ children }) => {
 
   // 30-Day History Progress Query Operations
   const getPastDayProgress = (targetDateStr) => {
-    const safeHabitsList = Array.isArray(habits) ? habits : DEFAULT_HABITS;
-    const completedTasks = safeHabitsList.filter(h => h.completedDates?.includes(targetDateStr));
-    const uncompletedTasks = safeHabitsList.filter(h => !h.completedDates?.includes(targetDateStr));
+    const safeHabitsList = Array.isArray(habits) ? habits : [];
+    if (targetDateStr === todayStr) {
+      const completedTasks = safeHabitsList.filter(h => h && Array.isArray(h.completedDates) && h.completedDates.includes(targetDateStr));
+      const uncompletedTasks = safeHabitsList.filter(h => h && (!Array.isArray(h.completedDates) || !h.completedDates.includes(targetDateStr)));
+      const total = safeHabitsList.length;
+      const completed = completedTasks.length;
+      const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+      return { date: targetDateStr, total, completed, percent, completedTasks, uncompletedTasks };
+    }
+
+    if (dailyHistory && dailyHistory[targetDateStr]) {
+      const entry = dailyHistory[targetDateStr];
+      const tasks = Array.isArray(entry.tasks) ? entry.tasks : [];
+      return {
+        date: targetDateStr,
+        total: entry.total || tasks.length,
+        completed: entry.completed || 0,
+        percent: entry.percent || 0,
+        completedTasks: tasks.filter(t => t.isCompleted),
+        uncompletedTasks: tasks.filter(t => !t.isCompleted)
+      };
+    }
+
+    const completedTasks = safeHabitsList.filter(h => h && Array.isArray(h.completedDates) && h.completedDates.includes(targetDateStr));
+    const uncompletedTasks = safeHabitsList.filter(h => h && (!Array.isArray(h.completedDates) || !h.completedDates.includes(targetDateStr)));
     const total = safeHabitsList.length;
     const completed = completedTasks.length;
     const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
-
-    return {
-      date: targetDateStr,
-      total,
-      completed,
-      percent,
-      completedTasks,
-      uncompletedTasks
-    };
+    return { date: targetDateStr, total, completed, percent, completedTasks, uncompletedTasks };
   };
 
   const getPast30DaysHistory = () => {
     const list = [];
-    const safeHabitsList = Array.isArray(habits) ? habits : DEFAULT_HABITS;
+    const safeHabitsList = Array.isArray(habits) ? habits : [];
     const baseDate = new Date(todayStr + 'T00:00:00');
 
     for (let i = 0; i < 30; i++) {
@@ -1063,11 +1184,37 @@ export const AppProvider = ({ children }) => {
       const day = String(d.getDate()).padStart(2, '0');
       const dateStr = `${year}-${month}-${day}`;
 
-      const completedTasks = safeHabitsList.filter(h => h.completedDates?.includes(dateStr));
-      const uncompletedTasks = safeHabitsList.filter(h => !h.completedDates?.includes(dateStr));
-      const total = safeHabitsList.length;
-      const completed = completedTasks.length;
-      const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+      let total = 0;
+      let completed = 0;
+      let percent = 0;
+      let completedTasks = [];
+      let uncompletedTasks = [];
+
+      if (dateStr === todayStr) {
+        completedTasks = safeHabitsList.filter(h => h && Array.isArray(h.completedDates) && h.completedDates.includes(dateStr));
+        uncompletedTasks = safeHabitsList.filter(h => h && (!Array.isArray(h.completedDates) || !h.completedDates.includes(dateStr)));
+        total = safeHabitsList.length;
+        completed = completedTasks.length;
+        percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+      } else if (dailyHistory && dailyHistory[dateStr]) {
+        const entry = dailyHistory[dateStr];
+        total = entry.total || 0;
+        completed = entry.completed || 0;
+        percent = entry.percent || 0;
+        if (Array.isArray(entry.tasks) && entry.tasks.length > 0) {
+          completedTasks = entry.tasks.filter(t => t.isCompleted);
+          uncompletedTasks = entry.tasks.filter(t => !t.isCompleted);
+        } else {
+          completedTasks = safeHabitsList.filter(h => h && Array.isArray(h.completedDates) && h.completedDates.includes(dateStr));
+          uncompletedTasks = safeHabitsList.filter(h => h && (!Array.isArray(h.completedDates) || !h.completedDates.includes(dateStr)));
+        }
+      } else {
+        completedTasks = safeHabitsList.filter(h => h && Array.isArray(h.completedDates) && h.completedDates.includes(dateStr));
+        uncompletedTasks = safeHabitsList.filter(h => h && (!Array.isArray(h.completedDates) || !h.completedDates.includes(dateStr)));
+        total = completedTasks.length + uncompletedTasks.length;
+        completed = completedTasks.length;
+        percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+      }
 
       list.push({
         date: dateStr,

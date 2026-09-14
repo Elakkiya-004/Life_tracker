@@ -378,7 +378,7 @@ export const DashboardView = () => {
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
               <h3 className="title-md">Today's To-Do & Routines</h3>
-              <span className="badge badge-primary" style={{ fontSize: '0.65rem' }}>🌙 10:30 PM Reset</span>
+              <span className="badge badge-primary" style={{ fontSize: '0.65rem' }}>🌙 22:30 IST Reset</span>
             </div>
             <p className="text-sub">Tick checkboxes to mark complete • {todayCompletedHabits}/{habitsList.length} done</p>
           </div>

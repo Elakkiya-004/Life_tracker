@@ -247,11 +247,11 @@ export const HabitsView = () => {
                 type="button" 
                 className={`reset-pill-badge clickable ${rolloverMode === 'auto_clear' ? 'badge-auto-clear' : ''}`}
                 onClick={() => setShowRolloverConfig(!showRolloverConfig)}
-                title="Click to configure 10:30 PM daily auto-reset behavior"
+                title="Click to configure 22:30 IST daily auto-reset behavior"
               >
                 <Moon size={12} className="text-purple" />
                 <span>
-                  10:30 PM: {rolloverMode === 'auto_clear' ? '🧹 Auto-Clear Tasks' : '🔄 Fresh Checklist'}
+                  22:30 IST: {rolloverMode === 'auto_clear' ? '🧹 Auto-Clear Tasks' : '🔄 Fresh Checklist'}
                 </span>
               </button>
             </div>
@@ -319,13 +319,13 @@ export const HabitsView = () => {
           </div>
         </div>
 
-        {/* 10:30 PM Auto-Rollover Mode Settings Drawer */}
+        {/* 22:30 IST Auto-Rollover Mode Settings Drawer */}
         {showRolloverConfig && (
           <div className="rollover-config-box">
             <div className="rollover-config-header">
               <div className="flex-center gap-2">
                 <Moon size={16} className="text-purple" />
-                <span className="font-bold text-xs">10:30 PM Daily Rollover Behavior</span>
+                <span className="font-bold text-xs">22:30 IST (10:30 PM) Daily Rollover Behavior</span>
               </div>
               <button 
                 type="button" 
@@ -336,25 +336,9 @@ export const HabitsView = () => {
               </button>
             </div>
             <p className="text-xs text-sub">
-              Every day at 10:30 PM (22:30), the app rolls over to the next day and archives today's completions into your 30-Day History. Choose what happens to habits after 10:30 PM:
+              Every night at 22:30 IST (10:30 PM Indian Standard Time), the app rolls over to the next day and archives today's full task routine into your 30-Day History. Choose daily reset mode:
             </p>
             <div className="rollover-options-grid">
-              <label 
-                className={`rollover-option-card ${rolloverMode === 'fresh_checks' ? 'active' : ''}`}
-                onClick={() => updateSettings({ habitRolloverMode: 'fresh_checks' })}
-              >
-                <input 
-                  type="radio" 
-                  name="rollover" 
-                  checked={rolloverMode === 'fresh_checks'} 
-                  onChange={() => updateSettings({ habitRolloverMode: 'fresh_checks' })}
-                />
-                <div>
-                  <div className="option-title">🔄 Fresh Daily Checklist (Default)</div>
-                  <div className="option-desc">Keep your habit routines, but reset all checkboxes fresh and uncompleted for tomorrow.</div>
-                </div>
-              </label>
-
               <label 
                 className={`rollover-option-card ${rolloverMode === 'auto_clear' ? 'active' : ''}`}
                 onClick={() => updateSettings({ habitRolloverMode: 'auto_clear' })}
@@ -366,8 +350,24 @@ export const HabitsView = () => {
                   onChange={() => updateSettings({ habitRolloverMode: 'auto_clear' })}
                 />
                 <div>
-                  <div className="option-title">🧹 Auto-Delete Daily Habits</div>
-                  <div className="option-desc">Automatically clear/delete all habits at 10:30 PM so you get a completely blank fresh slate each day.</div>
+                  <div className="option-title">🧹 Auto-Clear & Fresh Slate (Default)</div>
+                  <div className="option-desc">Automatically wipe daily habits at 22:30 IST so you can add fresh tasks each day. All completed & uncompleted tasks are safely preserved in 30-Day History.</div>
+                </div>
+              </label>
+
+              <label 
+                className={`rollover-option-card ${rolloverMode === 'fresh_checks' ? 'active' : ''}`}
+                onClick={() => updateSettings({ habitRolloverMode: 'fresh_checks' })}
+              >
+                <input 
+                  type="radio" 
+                  name="rollover" 
+                  checked={rolloverMode === 'fresh_checks'} 
+                  onChange={() => updateSettings({ habitRolloverMode: 'fresh_checks' })}
+                />
+                <div>
+                  <div className="option-title">🔄 Fresh Daily Checklist</div>
+                  <div className="option-desc">Keep your existing habit routines, but reset all checkboxes uncompleted for the new day.</div>
                 </div>
               </label>
             </div>
