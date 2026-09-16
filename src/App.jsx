@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import { AuthProvider } from './context/AuthContext';
 import { AppProvider } from './context/AppContext';
+import { PwaProvider } from './context/PwaContext';
 import { Layout } from './components/layout/Layout';
 
 class ErrorBoundary extends Component {
@@ -93,7 +94,9 @@ function App() {
     <ErrorBoundary>
       <AuthProvider>
         <AppProvider>
-          <Layout />
+          <PwaProvider>
+            <Layout />
+          </PwaProvider>
         </AppProvider>
       </AuthProvider>
     </ErrorBoundary>

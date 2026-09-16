@@ -1,16 +1,43 @@
-# React + Vite
+# LifeTracker Pro - Career, Habits & Budget OS
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+A modern, holistic productivity, career roadmap, habit tracker, health protocol, and financial budgeting application built with React 19, Vite, Firebase Firestore, and Progressive Web App (PWA) architecture.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 🚀 Key Features
 
-## React Compiler
+- **PWA (Progressive Web App)**: Installable directly from any browser (Chrome, Edge, Safari, Android, iOS) with offline caching and standalone window display.
+- **Firebase Cloud Sync**: Real-time multi-device synchronization with Firestore and Auth.
+- **Habit & Streak Tracker**: Daily checklists, streak tracking, and daily history archiving.
+- **Career Roadmap**: Technical milestone and skill tracker.
+- **Financial OS**: Jar-based budgeting and expense management.
+- **Health & Diet Protocol**: Wellness tracking and workout logging.
+- **Capacitor Mobile Ready**: Android APK export ready with Capacitor.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+---
 
-## Expanding the Oxlint configuration
+## 🛠️ Getting Started
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+### Development
+```bash
+npm run dev
+```
+
+### Production Build
+```bash
+npm run build
+```
+
+### Deploy to Firebase Hosting
+```bash
+npm run deploy
+```
+> Builds the app and publishes it directly to your Firebase Hosting project (`life-tracker-6e906.web.app`).
+
+---
+
+## 📱 Progressive Web App (PWA) Setup
+
+- **Manifest**: Located at [`public/manifest.json`](./public/manifest.json), configured with icons, shortcuts, and standalone display.
+- **Service Worker**: Located at [`public/sw.js`](./public/sw.js), manages offline asset caching while bypassing dynamic Firebase APIs.
+- **PWA Context**: Managed via [`src/context/PwaContext.jsx`](./src/context/PwaContext.jsx), providing in-app install triggers, update prompts, and offline state banners.

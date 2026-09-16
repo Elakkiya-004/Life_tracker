@@ -7,6 +7,7 @@ import { BottomNav } from './BottomNav';
 import { MobileDrawer } from './MobileDrawer';
 import { QuickAddModal } from '../common/QuickAddModal';
 import { ProfileModal } from '../profile/ProfileModal';
+import { PwaInstallBanner } from '../common/PwaInstallBanner';
 
 import { LoginView } from '../../views/LoginView';
 import { AdminView } from '../../views/AdminView';
@@ -25,7 +26,12 @@ export const Layout = () => {
 
   // If user is not logged in, show Login Portal
   if (!currentUser) {
-    return <LoginView />;
+    return (
+      <>
+        <PwaInstallBanner />
+        <LoginView />
+      </>
+    );
   }
 
   const renderView = () => {
@@ -84,6 +90,9 @@ export const Layout = () => {
 
   return (
     <div className="app-container">
+      {/* PWA Offline Alert & Install Banner */}
+      <PwaInstallBanner />
+
       {/* Laptop & Desktop Sidebar */}
       <Sidebar />
 

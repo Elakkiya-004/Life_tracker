@@ -16,8 +16,11 @@ import {
   Film,
   ShieldCheck,
   LogOut,
-  User
+  User,
+  Download,
+  RefreshCw
 } from 'lucide-react';
+import { usePwa } from '../../context/PwaContext';
 
 export const Sidebar = () => {
   const { 
@@ -33,6 +36,7 @@ export const Sidebar = () => {
   } = useApp();
 
   const { currentUser, logout, isSuperAdmin, isMenuVisible, setIsProfileModalOpen } = useAuth();
+  const { canInstall, isInstalled, updateAvailable, installApp, updateApp } = usePwa();
 
   const userAvatarIsImg = currentUser?.avatar && (currentUser.avatar.startsWith('data:image') || currentUser.avatar.startsWith('http'));
 
@@ -152,6 +156,30 @@ export const Sidebar = () => {
               <LogOut size={16} />
             </button>
           </div>
+        )}
+
+        {/* PWA Update Notification Button */}
+        {updateAvailable && (
+          <button 
+            className="sidebar-pwa-btn sidebar-pwa-update"
+            onClick={updateApp}
+            title="A new version is ready. Click to reload and update."
+          >
+            <RefreshCw size={15} className="spin-slow" />
+            <span>Update Ready (Click)</span>
+          </button>
+        )}
+
+        {/* PWA Install Button */}
+        {canInstall && !isInstalled && (
+          <button 
+            className="sidebar-pwa-btn sidebar-pwa-install"
+            onClick={installApp}
+            title="Install LifeTracker as an app on your computer or mobile"
+          >
+            <Download size={15} />
+            <span>Install Web App</span>
+          </button>
         )}
 
         <div 
@@ -542,6 +570,47 @@ export const Sidebar = () => {
 
         .text-emerald-400 { color: #10b981; }
         .text-slate-400 { color: #94a3b8; }
+
+        .sidebar-pwa-btn {
+          width: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.5rem;
+          padding: 0.55rem 0.75rem;
+          border-radius: var(--radius-md);
+          font-size: 0.78rem;
+          font-weight: 600;
+          cursor: pointer;
+          border: none;
+          transition: all 0.2s ease;
+          margin-bottom: 0.5rem;
+        }
+
+        .sidebar-pwa-install {
+          background: linear-gradient(135deg, #6366f1, #8b5cf6);
+          color: #ffffff;
+          box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+        }
+
+        .sidebar-pwa-install:hover {
+          opacity: 0.92;
+          transform: translateY(-1px);
+        }
+
+        .sidebar-pwa-update {
+          background: linear-gradient(135deg, #059669, #10b981);
+          color: #ffffff;
+          box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+        }
+
+        .sidebar-pwa-update:hover {
+          opacity: 0.92;
+        }
+
+        .spin-slow {
+          animation: spin 3s linear infinite;
+        }
       `}</style>
     </aside>
   );

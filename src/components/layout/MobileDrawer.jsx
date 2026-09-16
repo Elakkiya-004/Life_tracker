@@ -19,8 +19,11 @@ import {
   Film,
   ShieldCheck,
   LogOut,
-  User
+  User,
+  Download,
+  RefreshCw
 } from 'lucide-react';
+import { usePwa } from '../../context/PwaContext';
 
 export const MobileDrawer = () => {
   const { 
@@ -39,6 +42,7 @@ export const MobileDrawer = () => {
   } = useApp();
 
   const { currentUser, logout, isSuperAdmin, isMenuVisible, setIsProfileModalOpen } = useAuth();
+  const { canInstall, isInstalled, updateAvailable, installApp, updateApp } = usePwa();
 
   if (!isMobileDrawerOpen) return null;
 
@@ -173,6 +177,33 @@ export const MobileDrawer = () => {
             );
           })}
         </nav>
+
+        {/* Mobile PWA Actions */}
+        {((canInstall && !isInstalled) || updateAvailable) && (
+          <div className="drawer-pwa-section">
+            {updateAvailable && (
+              <button 
+                className="drawer-pwa-btn drawer-pwa-update"
+                onClick={updateApp}
+              >
+                <RefreshCw size={15} className="spin-slow" />
+                <span>Update LifeTracker</span>
+              </button>
+            )}
+            {canInstall && !isInstalled && (
+              <button 
+                className="drawer-pwa-btn drawer-pwa-install"
+                onClick={() => {
+                  setIsMobileDrawerOpen(false);
+                  installApp();
+                }}
+              >
+                <Download size={15} />
+                <span>Install App on Phone</span>
+              </button>
+            )}
+          </div>
+        )}
 
         {/* Footer Actions */}
         <div className="drawer-footer">
@@ -432,6 +463,48 @@ export const MobileDrawer = () => {
 
         .btn-drawer-logout:hover {
           color: #ef4444;
+        }
+
+        .drawer-pwa-section {
+          display: flex;
+          flex-direction: column;
+          gap: 0.5rem;
+          margin-top: 0.75rem;
+        }
+
+        .drawer-pwa-btn {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.5rem;
+          padding: 0.65rem 1rem;
+          border-radius: var(--radius-md);
+          font-size: 0.82rem;
+          font-weight: 600;
+          border: none;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .drawer-pwa-install {
+          background: linear-gradient(135deg, #6366f1, #8b5cf6);
+          color: #ffffff;
+          box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+        }
+
+        .drawer-pwa-update {
+          background: linear-gradient(135deg, #059669, #10b981);
+          color: #ffffff;
+          box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+        }
+
+        .spin-slow {
+          animation: spin 3s linear infinite;
+        }
+
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
         }
 
         @keyframes slideInLeft {
