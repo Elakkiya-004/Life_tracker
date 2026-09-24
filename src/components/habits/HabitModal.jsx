@@ -429,12 +429,10 @@ export const HabitModal = ({ isOpen, onClose, habitToEdit = null }) => {
           white-space: nowrap;
         }
 
-        .form-actions {
-          display: flex;
-          align-items: center;
-          justify-content: flex-end;
-          gap: 0.75rem;
-          margin-top: 1.25rem;
+        @media (max-width: 440px) {
+          .icon-grid {
+            grid-template-columns: repeat(4, 1fr) !important;
+          }
         }
       `}</style>
     </Modal>

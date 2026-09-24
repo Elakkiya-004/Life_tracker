@@ -40,6 +40,8 @@ export const DashboardView = () => {
     toggleRoadmapTask,
     todayCompletedHabits = 0, 
     todayHabitProgress = 0, 
+    currentStreak = 0,
+    yesterdayProgress = null,
     currentMonthIncome = 0,
     currentMonthExpense = 0,
     netSavings = 0,
@@ -65,7 +67,7 @@ export const DashboardView = () => {
   const habitsList = Array.isArray(habits) ? habits : [];
   const roadmapList = Array.isArray(roadmap) ? roadmap : [];
 
-  const bestStreak = habitsList.reduce((max, h) => Math.max(max, h?.streak || 0), 0);
+  const streakDays = currentStreak || habitsList.reduce((max, h) => Math.max(max, h?.streak || 0), 0);
   const currentWeek = roadmapList.find(w => w?.status === 'In Progress') || roadmapList[0] || null;
 
   return (
@@ -314,9 +316,15 @@ export const DashboardView = () => {
               <span className="text-sub text-base">/ {habitsList.length} Done</span>
             </div>
             <p className="text-sub text-xs">
-              {habitsList.length - todayCompletedHabits === 0 
+              {habitsList.length === 0 ? (
+                yesterdayProgress ? (
+                  <span>Yesterday: {yesterdayProgress.completed}/{yesterdayProgress.total} ({yesterdayProgress.percent}%) • Saved in History</span>
+                ) : (
+                  'Fresh list ready for today'
+                )
+              ) : (habitsList.length - todayCompletedHabits === 0 
                 ? 'All clear for today!' 
-                : `${habitsList.length - todayCompletedHabits} habits remaining today`}
+                : `${habitsList.length - todayCompletedHabits} habits remaining today`)}
             </p>
           </div>
         </div>
@@ -338,9 +346,9 @@ export const DashboardView = () => {
           <div className="streak-widget-content">
             <div className="streak-big-val">
               <Flame size={28} className="text-amber-400 flame-glow" />
-              <span>{bestStreak} Days</span>
+              <span>{streakDays} Days</span>
             </div>
-            <p className="text-sub text-xs">Keep your daily momentum unbroken!</p>
+            <p className="text-sub text-xs">Continuous progress preserved!</p>
           </div>
         </div>
 
@@ -453,11 +461,26 @@ export const DashboardView = () => {
 
         {habitsList.length === 0 ? (
           <div className="card empty-habits">
-            <CheckCircle2 size={36} className="text-muted" />
-            <p>No habits or tasks added yet. Start by typing above!</p>
-            <button className="btn btn-primary" onClick={() => setIsHabitModalOpen(true)}>
-              + Create First Routine
-            </button>
+            <Sparkles size={32} className="text-amber-400" />
+            <div style={{ textAlign: 'center' }}>
+              <h4 style={{ fontWeight: 700, marginBottom: '0.35rem', fontSize: '1.05rem' }}>
+                ✨ Fresh Slate for Today!
+              </h4>
+              <p style={{ color: 'var(--text-sub)', fontSize: '0.85rem', maxWidth: '440px', margin: '0 auto 0.85rem' }}>
+                At 22:30 IST, previous habits cleared to make room for today's goals.
+                {yesterdayProgress && (
+                  <span> Yesterday's progress (<strong>{yesterdayProgress.completed}/{yesterdayProgress.total}</strong> tasks, <strong>{yesterdayProgress.percent}%</strong>) was safely preserved in <strong>30-Day History</strong>.</span>
+                )}
+              </p>
+            </div>
+            <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+              <button className="btn btn-primary btn-sm" onClick={() => setIsHabitModalOpen(true)}>
+                <Plus size={15} /> + Add Today's First Task
+              </button>
+              <button className="btn btn-secondary btn-sm" onClick={() => setIsHistoryModalOpen(true)}>
+                <Calendar size={15} className="text-primary" /> 30-Day Progress History
+              </button>
+            </div>
           </div>
         ) : (
           <div className="dashboard-todo-list">

@@ -72,6 +72,12 @@ export const QuickAddModal = () => {
           </button>
         </div>
 
+        <div className="modal-actions" style={{ marginTop: '1rem', borderTop: '1px solid var(--border-color)', paddingTop: '0.75rem' }}>
+          <button type="button" className="btn btn-secondary btn-sm" style={{ width: '100%' }} onClick={() => setIsQuickAddOpen(false)}>
+            Close
+          </button>
+        </div>
+
         <style>{`
           .quick-add-grid {
             display: flex;
@@ -97,6 +103,15 @@ export const QuickAddModal = () => {
             background: var(--bg-card-hover);
             border-color: var(--accent-primary);
             transform: translateX(4px);
+          }
+
+          .quick-add-card:hover .quick-card-arrow {
+            color: var(--accent-primary);
+            transform: translateX(3px);
+          }
+
+          .quick-add-card:active {
+            transform: scale(0.98);
           }
 
           .quick-card-icon {
@@ -143,6 +158,7 @@ export const QuickAddModal = () => {
 
           .quick-card-arrow {
             color: var(--text-muted);
+            transition: transform 0.2s ease, color 0.2s ease;
           }
         `}</style>
       </Modal>

@@ -114,13 +114,14 @@ export const ExcelUploadModal = ({ isOpen, onClose, onApply, targetUserName = nu
               </p>
             </div>
           </div>
-          <button type="button" className="btn-icon btn-ghost" onClick={onClose}>
+          <button type="button" className="btn-icon btn-ghost" onClick={onClose} aria-label="Close modal">
             <X size={20} />
           </button>
         </div>
 
-        {/* Template Download Banner */}
-        <div className="template-banner">
+        <div className="excel-modal-body">
+          {/* Template Download Banner */}
+          <div className="template-banner">
           <div className="template-banner-info">
             <span className="template-badge">EXCEL TEMPLATE</span>
             <p className="template-text">
@@ -379,6 +380,7 @@ export const ExcelUploadModal = ({ isOpen, onClose, onApply, targetUserName = nu
             )}
           </div>
         )}
+        </div>
 
         {/* Modal Actions */}
         <div className="excel-modal-actions">
@@ -401,15 +403,32 @@ export const ExcelUploadModal = ({ isOpen, onClose, onApply, targetUserName = nu
 
       <style>{`
         .excel-modal-panel {
-          max-width: 720px;
-          padding: 1.5rem;
+          max-width: 760px;
+          max-height: 90vh;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+          padding: 0;
         }
 
         .excel-modal-header {
           display: flex;
           align-items: flex-start;
           justify-content: space-between;
-          margin-bottom: 1.25rem;
+          padding: 1.25rem 1.5rem;
+          border-bottom: 1px solid var(--border-color);
+          background: var(--bg-secondary);
+          flex-shrink: 0;
+        }
+
+        .excel-modal-body {
+          flex: 1;
+          overflow-y: auto;
+          overscroll-behavior: contain;
+          padding: 1.25rem 1.5rem;
+          display: flex;
+          flex-direction: column;
+          gap: 1rem;
         }
 
         .header-icon-wrap {
@@ -809,9 +828,10 @@ export const ExcelUploadModal = ({ isOpen, onClose, onApply, targetUserName = nu
           align-items: center;
           justify-content: flex-end;
           gap: 0.75rem;
-          margin-top: 1.25rem;
-          padding-top: 1rem;
+          padding: 1rem 1.5rem;
           border-top: 1px solid var(--border-color);
+          background: var(--bg-secondary);
+          flex-shrink: 0;
         }
 
         .btn-apply {
@@ -825,6 +845,22 @@ export const ExcelUploadModal = ({ isOpen, onClose, onApply, targetUserName = nu
         .btn-apply:hover {
           background: linear-gradient(135deg, #059669, #047857);
           transform: translateY(-1px);
+        }
+
+        @media (max-width: 640px) {
+          .excel-modal-header {
+            padding: 1rem 1.25rem;
+          }
+          .excel-modal-body {
+            padding: 1rem 1.25rem;
+          }
+          .excel-modal-actions {
+            padding: 0.85rem 1.25rem;
+            flex-wrap: wrap;
+          }
+          .excel-modal-actions > .btn {
+            flex: 1 1 calc(50% - 0.5rem);
+          }
         }
       `}</style>
     </div>

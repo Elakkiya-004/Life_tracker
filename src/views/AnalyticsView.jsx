@@ -17,6 +17,7 @@ export const AnalyticsView = () => {
     habits, 
     transactions, 
     settings, 
+    currentStreak = 0,
     currentMonthIncome, 
     currentMonthExpense, 
     netSavings,
@@ -71,8 +72,8 @@ export const AnalyticsView = () => {
     }))
     .sort((a, b) => b.amount - a.amount);
 
-  // Best streak
-  const bestStreak = safeHabits.reduce((max, h) => Math.max(max, h?.streak || 0), 0);
+  // Best streak - preserved continuously across daily resets from dailyHistory
+  const bestStreak = currentStreak || safeHabits.reduce((max, h) => Math.max(max, h?.streak || 0), 0);
 
   return (
     <div className="analytics-view-container">

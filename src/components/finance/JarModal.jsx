@@ -293,7 +293,9 @@ export const JarModal = ({ isOpen, onClose }) => {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          margin-top: 0.5rem;
+          margin-top: 1rem;
+          padding-top: 1rem;
+          border-top: 1px solid var(--border-color);
           flex-wrap: wrap;
           gap: 0.75rem;
         }
@@ -302,6 +304,24 @@ export const JarModal = ({ isOpen, onClose }) => {
           display: flex;
           align-items: center;
           gap: 0.5rem;
+        }
+
+        @media (max-width: 520px) {
+          .modal-footer-actions {
+            flex-direction: column-reverse;
+            align-items: stretch;
+          }
+          .btn-group-right {
+            display: flex;
+            width: 100%;
+          }
+          .btn-group-right > .btn {
+            flex: 1;
+          }
+          .modal-footer-actions > button {
+            width: 100%;
+            justify-content: center;
+          }
         }
       `}</style>
     </Modal>

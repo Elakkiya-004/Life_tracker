@@ -137,16 +137,18 @@ export const FirebaseConfigModal = ({ isOpen, onClose }) => {
           </div>
         </div>
 
-        <div className="form-actions">
-          <button type="button" className="btn btn-ghost text-sub" onClick={handleClear}>
+        <div className="form-actions firebase-actions">
+          <button type="button" className="btn btn-ghost btn-sm text-sub btn-disconnect" onClick={handleClear}>
             Disconnect / Reset to Local
           </button>
-          <button type="button" className="btn btn-secondary" onClick={onClose}>
-            Cancel
-          </button>
-          <button type="submit" className="btn btn-primary">
-            Save & Connect
-          </button>
+          <div className="btn-group-right">
+            <button type="button" className="btn btn-secondary" onClick={onClose}>
+              Cancel
+            </button>
+            <button type="submit" className="btn btn-primary">
+              Save & Connect
+            </button>
+          </div>
         </div>
       </form>
 
@@ -198,13 +200,38 @@ export const FirebaseConfigModal = ({ isOpen, onClose }) => {
           flex: 1;
         }
 
-        .form-actions {
+        .firebase-actions {
           display: flex;
           align-items: center;
-          justify-content: flex-end;
+          justify-content: space-between;
           gap: 0.75rem;
           margin-top: 1rem;
+          padding-top: 1rem;
+          border-top: 1px solid var(--border-color);
           flex-wrap: wrap;
+        }
+
+        .btn-group-right {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+        }
+
+        @media (max-width: 500px) {
+          .firebase-actions {
+            flex-direction: column-reverse;
+            align-items: stretch;
+          }
+          .btn-group-right {
+            width: 100%;
+          }
+          .btn-group-right > .btn {
+            flex: 1;
+          }
+          .btn-disconnect {
+            width: 100%;
+            justify-content: center;
+          }
         }
       `}</style>
     </Modal>

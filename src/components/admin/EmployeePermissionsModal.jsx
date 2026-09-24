@@ -183,15 +183,13 @@ export const EmployeePermissionsModal = ({ isOpen, onClose, employee = null }) =
               </div>
 
               <div className="quick-action-buttons">
-                <button type="button" className="btn-link text-xs" onClick={handleSelectAll}>
+                <button type="button" className="btn-link" onClick={handleSelectAll}>
                   Select All
                 </button>
-                <span>•</span>
-                <button type="button" className="btn-link text-xs" onClick={handleDeselectAll}>
+                <button type="button" className="btn-link" onClick={handleDeselectAll}>
                   Clear
                 </button>
-                <span>•</span>
-                <button type="button" className="btn-link text-xs" onClick={handleCopyGlobal}>
+                <button type="button" className="btn-link" onClick={handleCopyGlobal}>
                   Match Global
                 </button>
               </div>
@@ -414,16 +412,21 @@ export const EmployeePermissionsModal = ({ isOpen, onClose, employee = null }) =
         }
 
         .btn-link {
-          background: transparent;
-          border: none;
+          background: rgba(99, 102, 241, 0.1);
+          border: 1px solid rgba(99, 102, 241, 0.25);
+          border-radius: var(--radius-full);
           color: var(--primary-color);
           font-weight: 600;
           cursor: pointer;
-          padding: 0;
+          padding: 0.2rem 0.6rem;
+          font-size: 0.72rem;
+          transition: all 0.2s ease;
         }
 
         .btn-link:hover {
-          text-decoration: underline;
+          background: rgba(99, 102, 241, 0.2);
+          border-color: var(--primary-color);
+          text-decoration: none;
         }
 
         .modules-list {

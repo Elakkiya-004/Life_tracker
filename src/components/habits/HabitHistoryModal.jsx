@@ -53,11 +53,12 @@ export const HabitHistoryModal = ({ isOpen, onClose }) => {
               </p>
             </div>
           </div>
-          <button type="button" className="btn-icon btn-ghost" onClick={onClose}><X size={18} /></button>
+          <button type="button" className="btn-icon btn-ghost" onClick={onClose} aria-label="Close modal"><X size={18} /></button>
         </div>
 
-        {/* 30-Day Summary Stat Banner */}
-        <div className="history-stats-banner">
+        <div className="history-modal-body modal-body">
+          {/* 30-Day Summary Stat Banner */}
+          <div className="history-stats-banner">
           <div className="history-stat-box">
             <span className="stat-label">30-Day Adherence</span>
             <span className="stat-val text-primary">{average30DayRate}%</span>
@@ -213,10 +214,13 @@ export const HabitHistoryModal = ({ isOpen, onClose }) => {
           </span>
         </div>
 
+        </div>
+
         {/* Modal Actions */}
-        <div className="modal-actions">
+        <div className="modal-actions history-modal-actions">
           <button type="button" className="btn btn-secondary" onClick={onClose}>
-            Close History
+            <X size={16} />
+            <span>Close History</span>
           </button>
         </div>
       </div>
@@ -224,11 +228,28 @@ export const HabitHistoryModal = ({ isOpen, onClose }) => {
       <style>{`
         .history-modal-panel {
           max-width: 780px !important;
-          max-height: 88vh;
+          max-height: 90vh;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+          padding: 0;
+        }
+
+        .history-modal-body {
+          flex: 1;
+          overflow-y: auto;
           display: flex;
           flex-direction: column;
           gap: 1.15rem;
-          overflow-y: auto;
+          padding: 1.25rem 1.5rem;
+        }
+
+        .history-modal-actions {
+          margin-top: 0;
+          padding: 1rem 1.5rem;
+          background: var(--bg-secondary);
+          border-top: 1px solid var(--border-color);
+          flex-shrink: 0;
         }
 
         .history-modal-title-wrap {
@@ -536,6 +557,18 @@ export const HabitHistoryModal = ({ isOpen, onClose }) => {
           font-size: 0.75rem;
           color: var(--text-secondary);
           line-height: 1.4;
+        }
+
+        @media (max-width: 640px) {
+          .history-stats-banner {
+            grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)) !important;
+          }
+          .history-modal-body {
+            padding: 1rem !important;
+          }
+          .history-modal-actions {
+            padding: 0.75rem 1rem !important;
+          }
         }
       `}</style>
     </div>

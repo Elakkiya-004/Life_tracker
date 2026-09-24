@@ -363,12 +363,8 @@ export const TransactionModal = ({ isOpen, onClose }) => {
           border-radius: var(--radius-full);
         }
 
-        .form-actions {
-          display: flex;
-          align-items: center;
-          justify-content: flex-end;
-          gap: 0.75rem;
-          margin-top: 0.5rem;
+        .remove-receipt-btn:hover {
+          background: rgba(244, 63, 94, 0.8);
         }
       `}</style>
     </Modal>

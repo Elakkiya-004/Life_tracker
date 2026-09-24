@@ -278,14 +278,6 @@ export const RoadmapModal = ({ isOpen, onClose, weekToEdit = null }) => {
           font-weight: 600;
           color: var(--text-primary);
         }
-
-        .form-actions {
-          display: flex;
-          align-items: center;
-          justify-content: flex-end;
-          gap: 0.75rem;
-          margin-top: 0.75rem;
-        }
       `}</style>
     </Modal>
   );

@@ -344,6 +344,12 @@ export const UserModal = ({ isOpen, onClose, userToEdit = null }) => {
           color: var(--text-muted);
           font-family: monospace;
         }
+
+        @media (max-width: 480px) {
+          .user-menus-checklist {
+            grid-template-columns: 1fr;
+          }
+        }
       `}</style>
     </Modal>
   );

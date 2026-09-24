@@ -24,6 +24,7 @@ import {
   Shield,
   Briefcase
 } from 'lucide-react';
+import { FirebaseConfigModal } from '../components/settings/FirebaseConfigModal';
 
 export const SettingsView = () => {
   const { 
@@ -41,11 +42,12 @@ export const SettingsView = () => {
 
   const { currentUser, setIsProfileModalOpen, isSuperAdmin } = useAuth();
 
-  const [currency, setCurrency] = useState(settings.currency || '$');
-  const [habitRolloverMode, setHabitRolloverMode] = useState(settings.habitRolloverMode || 'fresh_checks');
+  const [currency, setCurrency] = useState(settings.currency || '₹');
+  const [habitRolloverMode, setHabitRolloverMode] = useState(settings.habitRolloverMode || 'auto_clear');
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [newListTitle, setNewListTitle] = useState('');
   const [isAddingList, setIsAddingList] = useState(false);
+  const [isFirebaseModalOpen, setIsFirebaseModalOpen] = useState(false);
 
   const handleSavePreferences = (e) => {
     e.preventDefault();
@@ -418,9 +420,15 @@ export const SettingsView = () => {
             </span>
           </div>
 
-          <button className="btn btn-secondary btn-sm" onClick={() => pushToCloud()}>
-            Force Sync to Cloud Now
-          </button>
+          <div className="sync-buttons-row">
+            <button type="button" className="btn btn-secondary btn-sm" onClick={() => pushToCloud()}>
+              Force Sync to Cloud Now
+            </button>
+            <button type="button" className="btn btn-primary btn-sm" onClick={() => setIsFirebaseModalOpen(true)}>
+              <Cloud size={14} />
+              <span>Configure Cloud Sync</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -452,6 +460,12 @@ export const SettingsView = () => {
           </label>
         </div>
       </div>
+
+      {/* Firebase Cloud Sync Modal */}
+      <FirebaseConfigModal
+        isOpen={isFirebaseModalOpen}
+        onClose={() => setIsFirebaseModalOpen(false)}
+      />
 
       <style>{`
         .settings-container {
@@ -660,6 +674,13 @@ export const SettingsView = () => {
           display: flex;
           align-items: center;
           gap: 0.6rem;
+        }
+
+        .sync-buttons-row {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          flex-wrap: wrap;
         }
 
         .backup-actions {

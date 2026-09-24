@@ -32,6 +32,8 @@ export const HabitsView = () => {
     habits = [], 
     todayCompletedHabits = 0, 
     todayHabitProgress = 0, 
+    currentStreak = 0,
+    yesterdayProgress = null,
     addHabit, 
     deleteHabit,
     bulkDeleteHabits,
@@ -65,11 +67,11 @@ export const HabitsView = () => {
   const completedCount = habitsList.filter(h => h.completedDates?.includes(todayStr)).length;
   const remainingCount = totalCount - completedCount;
 
-  const averageStreak = totalCount > 0 
+  const averageStreak = currentStreak || (totalCount > 0 
     ? (habitsList.reduce((sum, h) => sum + (h.streak || 0), 0) / totalCount).toFixed(1) 
-    : 0;
+    : 0);
 
-  const rolloverMode = settings?.habitRolloverMode || 'fresh_checks'; // 'fresh_checks' | 'auto_clear'
+  const rolloverMode = settings?.habitRolloverMode || 'auto_clear'; // 'auto_clear' (default)
 
   // Protocols scheduled for today (e.g. Sunday care protocols)
   const daySchedule = useMemo(() => {
@@ -245,13 +247,13 @@ export const HabitsView = () => {
               </div>
               <button 
                 type="button" 
-                className={`reset-pill-badge clickable ${rolloverMode === 'auto_clear' ? 'badge-auto-clear' : ''}`}
+                className="reset-pill-badge clickable badge-auto-clear"
                 onClick={() => setShowRolloverConfig(!showRolloverConfig)}
-                title="Click to configure 22:30 IST daily auto-reset behavior"
+                title="Click to view 22:30 IST daily auto-reset behavior"
               >
                 <Moon size={12} className="text-purple" />
                 <span>
-                  22:30 IST: {rolloverMode === 'auto_clear' ? '🧹 Auto-Clear Tasks' : '🔄 Fresh Checklist'}
+                  22:30 IST: 🧹 Auto-Clear & Save Progress
                 </span>
               </button>
             </div>
@@ -265,7 +267,7 @@ export const HabitsView = () => {
           {/* Action Buttons: Batch Operations & 30-Day History */}
           <div className="header-actions-group">
             <button 
-              type="button"
+              type="button" 
               className={`btn btn-sm ${isBulkMode ? 'btn-primary' : 'btn-secondary'}`}
               onClick={() => {
                 setIsBulkMode(!isBulkMode);
@@ -278,7 +280,7 @@ export const HabitsView = () => {
             </button>
 
             <button 
-              type="button"
+              type="button" 
               className="btn btn-secondary btn-sm history-open-btn"
               onClick={() => setIsHistoryModalOpen(true)}
               title="View daily completed tasks from past 30 days"
@@ -288,7 +290,7 @@ export const HabitsView = () => {
             </button>
 
             <button 
-              type="button"
+              type="button" 
               className="btn btn-secondary btn-sm"
               onClick={() => {
                 markAllHabitsToday();
@@ -303,7 +305,7 @@ export const HabitsView = () => {
             </button>
 
             <button 
-              type="button"
+              type="button" 
               className="btn btn-ghost btn-sm"
               onClick={() => {
                 resetAllHabitsToday();
@@ -336,38 +338,22 @@ export const HabitsView = () => {
               </button>
             </div>
             <p className="text-xs text-sub">
-              Every night at 22:30 IST (10:30 PM Indian Standard Time), the app rolls over to the next day and archives today's full task routine into your 30-Day History. Choose daily reset mode:
+              Every night at 22:30 IST (10:30 PM Indian Standard Time), the app rolls over to the next day and archives today's full task routine into your 30-Day History, then clears active habits so you can add fresh daily goals:
             </p>
             <div className="rollover-options-grid">
               <label 
-                className={`rollover-option-card ${rolloverMode === 'auto_clear' ? 'active' : ''}`}
+                className="rollover-option-card active"
                 onClick={() => updateSettings({ habitRolloverMode: 'auto_clear' })}
               >
                 <input 
                   type="radio" 
                   name="rollover" 
-                  checked={rolloverMode === 'auto_clear'} 
-                  onChange={() => updateSettings({ habitRolloverMode: 'auto_clear' })}
+                  checked={true}
+                  readOnly
                 />
                 <div>
-                  <div className="option-title">🧹 Auto-Clear & Fresh Slate (Default)</div>
-                  <div className="option-desc">Automatically wipe daily habits at 22:30 IST so you can add fresh tasks each day. All completed & uncompleted tasks are safely preserved in 30-Day History.</div>
-                </div>
-              </label>
-
-              <label 
-                className={`rollover-option-card ${rolloverMode === 'fresh_checks' ? 'active' : ''}`}
-                onClick={() => updateSettings({ habitRolloverMode: 'fresh_checks' })}
-              >
-                <input 
-                  type="radio" 
-                  name="rollover" 
-                  checked={rolloverMode === 'fresh_checks'} 
-                  onChange={() => updateSettings({ habitRolloverMode: 'fresh_checks' })}
-                />
-                <div>
-                  <div className="option-title">🔄 Fresh Daily Checklist</div>
-                  <div className="option-desc">Keep your existing habit routines, but reset all checkboxes uncompleted for the new day.</div>
+                  <div className="option-title">🧹 Auto-Delete & Fresh Slate (Active)</div>
+                  <div className="option-desc">Automatically clears daily habits at 22:30 IST to make room for fresh tasks. All previous tasks, checkmarks, and completion progress are safely preserved in 30-Day History.</div>
                 </div>
               </label>
             </div>
@@ -681,10 +667,10 @@ export const HabitsView = () => {
       {/* Task List / Checklist Grid */}
       {filteredHabits.length === 0 ? (
         <div className="card empty-state">
-          <Sparkles size={40} className="text-muted" />
+          <Sparkles size={40} className="text-amber-400" />
           <h4 className="empty-title">
             {habitsList.length === 0
-              ? '✨ Clean Slate! No habits in your list.'
+              ? '✨ Fresh Slate for Today!'
               : selectedStatusFilter === 'completed' 
               ? 'No completed tasks yet today' 
               : selectedStatusFilter === 'todo'
@@ -692,22 +678,36 @@ export const HabitsView = () => {
               : 'No habits or tasks found.'}
           </h4>
           <p className="text-sub">
-            {habitsList.length === 0
-              ? 'You can add new custom habits above or restore the default daily routine.'
-              : selectedStatusFilter === 'completed'
+            {habitsList.length === 0 ? (
+              yesterdayProgress ? (
+                <span>Yesterday's routine (<strong>{yesterdayProgress.completed}/{yesterdayProgress.total}</strong> tasks, <strong>{yesterdayProgress.percent}%</strong>) was preserved in <strong>30-Day History</strong>. Board cleared at 22:30 IST for fresh tasks!</span>
+              ) : (
+                'All active habits auto-reset at 22:30 IST so you can add new goals for today. Add your first routine task above!'
+              )
+            ) : selectedStatusFilter === 'completed'
               ? 'Check off tasks above to build your daily streak.'
               : 'Add your first daily routine task using the bar above.'}
           </p>
           <div className="empty-actions-row">
             {habitsList.length === 0 && (
-              <button 
-                type="button" 
-                className="btn btn-primary btn-sm"
-                onClick={handleRestoreDefaults}
-              >
-                <RotateCcw size={14} />
-                <span>Restore Default Routines (14 Tasks)</span>
-              </button>
+              <>
+                <button 
+                  type="button" 
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => setIsHistoryModalOpen(true)}
+                >
+                  <Calendar size={14} className="text-primary" />
+                  <span>View 30-Day History</span>
+                </button>
+                <button 
+                  type="button" 
+                  className="btn btn-primary btn-sm"
+                  onClick={handleRestoreDefaults}
+                >
+                  <RotateCcw size={14} />
+                  <span>Restore Default Routines (14 Tasks)</span>
+                </button>
+              </>
             )}
             {selectedStatusFilter !== 'all' && (
               <button 

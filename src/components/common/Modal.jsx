@@ -19,52 +19,32 @@ export const Modal = ({ isOpen, onClose, title, children, maxWidth = '500px' }) 
   if (!isOpen) return null;
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" onClick={onClose} role="dialog" aria-modal="true">
       <div 
         className="modal-content" 
         style={{ maxWidth }} 
         onClick={(e) => e.stopPropagation()}
       >
         <div className="modal-header">
-          <h3 className="modal-title">{title}</h3>
-          <button className="btn-icon btn-ghost close-btn" onClick={onClose} aria-label="Close modal">
-            <X size={20} />
+          {typeof title === 'string' ? (
+            <h3 className="modal-title">{title}</h3>
+          ) : (
+            <div className="modal-title-custom">{title}</div>
+          )}
+          <button 
+            type="button" 
+            className="btn-icon btn-ghost close-btn" 
+            onClick={onClose} 
+            aria-label="Close modal"
+          >
+            <X size={18} />
           </button>
         </div>
         <div className="modal-body">
           {children}
         </div>
       </div>
-
-      <style>{`
-        .modal-header {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 1.25rem 1.5rem;
-          border-bottom: 1px solid var(--border-color);
-        }
-
-        .modal-title {
-          font-size: 1.15rem;
-          font-weight: 700;
-          color: var(--text-primary);
-        }
-
-        .close-btn {
-          color: var(--text-muted);
-          transition: color 0.2s ease;
-        }
-
-        .close-btn:hover {
-          color: var(--text-primary);
-        }
-
-        .modal-body {
-          padding: 1.5rem;
-          overflow-y: auto;
-        }
-      `}</style>
     </div>
   );
 };
+
