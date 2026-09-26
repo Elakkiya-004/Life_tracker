@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "deploy": "vite build && firebase deploy --only hosting",
+    "deploy": "vite build && npx firebase-tools deploy --only hosting",
     "lint": "oxlint",
     "preview": "vite preview",
     "cap:build": "vite build && cap sync android",
@@ -19,7 +19,7 @@
     "@capacitor/cli": "^8.5.1",
     "@capacitor/core": "^8.5.1",
     "canvas-confetti": "^1.9.4",
-    "firebase": "^12.18.0",
+    "firebase": "^12.19.0",
     "lucide-react": "^1.39.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",

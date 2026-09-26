@@ -4,19 +4,26 @@ import { useApp } from '../../context/AppContext';
 import { HabitModal } from '../habits/HabitModal';
 import { TransactionModal } from '../finance/TransactionModal';
 import { RoadmapModal } from '../roadmap/RoadmapModal';
+import { CalorieCalculatorModal } from '../health/CalorieCalculatorModal';
 import { 
   CheckCircle2, 
   Wallet, 
   Compass,
-  ArrowRight 
+  ArrowRight,
+  Calculator,
+  FileText
 } from 'lucide-react';
 
 export const QuickAddModal = () => {
-  const { isQuickAddOpen, setIsQuickAddOpen } = useApp();
-  const [activeModal, setActiveModal] = useState(null); // 'habit' | 'transaction' | 'roadmap' | null
+  const { isQuickAddOpen, setIsQuickAddOpen, setActiveTab } = useApp();
+  const [activeModal, setActiveModal] = useState(null); // 'habit' | 'transaction' | 'roadmap' | 'calorie' | null
 
   const handleSelect = (type) => {
     setIsQuickAddOpen(false);
+    if (type === 'daily_note') {
+      setActiveTab('habits');
+      return;
+    }
     setActiveModal(type);
   };
 
@@ -26,9 +33,37 @@ export const QuickAddModal = () => {
         isOpen={isQuickAddOpen}
         onClose={() => setIsQuickAddOpen(false)}
         title="Quick Log"
-        maxWidth="420px"
+        maxWidth="440px"
       >
         <div className="quick-add-grid">
+          <button 
+            className="quick-add-card" 
+            onClick={() => handleSelect('daily_note')}
+          >
+            <div className="quick-card-icon habit-bg">
+              <FileText size={24} />
+            </div>
+            <div className="quick-card-info">
+              <span className="quick-card-title">Daily Habit Note</span>
+              <span className="quick-card-desc">Write today's habit reflection & mood</span>
+            </div>
+            <ArrowRight size={16} className="quick-card-arrow" />
+          </button>
+
+          <button 
+            className="quick-add-card" 
+            onClick={() => handleSelect('calorie')}
+          >
+            <div className="quick-card-icon calorie-bg">
+              <Calculator size={24} />
+            </div>
+            <div className="quick-card-info">
+              <span className="quick-card-title">Calorie & Nutrition Calculator</span>
+              <span className="quick-card-desc">Calculate TDEE, macros & log food</span>
+            </div>
+            <ArrowRight size={16} className="quick-card-arrow" />
+          </button>
+
           <button 
             className="quick-add-card" 
             onClick={() => handleSelect('roadmap')}
@@ -110,18 +145,19 @@ export const QuickAddModal = () => {
             transform: translateX(3px);
           }
 
-          .quick-add-card:active {
-            transform: scale(0.98);
-          }
-
           .quick-card-icon {
-            width: 46px;
-            height: 46px;
+            width: 44px;
+            height: 44px;
             border-radius: var(--radius-sm);
             display: flex;
             align-items: center;
             justify-content: center;
             flex-shrink: 0;
+          }
+
+          .calorie-bg {
+            background: rgba(99, 102, 241, 0.15);
+            color: var(--accent-primary);
           }
 
           .roadmap-bg {
@@ -164,6 +200,13 @@ export const QuickAddModal = () => {
       </Modal>
 
       {/* Sub Modals */}
+      {activeModal === 'calorie' && (
+        <CalorieCalculatorModal
+          isOpen={true}
+          onClose={() => setActiveModal(null)}
+        />
+      )}
+
       {activeModal === 'roadmap' && (
         <RoadmapModal
           isOpen={true}

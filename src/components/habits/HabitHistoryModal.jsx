@@ -10,13 +10,15 @@ import {
   X, 
   ChevronRight, 
   Sparkles,
-  Check
+  Check,
+  FileText
 } from 'lucide-react';
 
 export const HabitHistoryModal = ({ isOpen, onClose }) => {
   const { 
     habits = [], 
     todayStr, 
+    dailyHabitNotes = {},
     getPast30DaysHistory,
     toggleHabit 
   } = useApp();
@@ -28,6 +30,17 @@ export const HabitHistoryModal = ({ isOpen, onClose }) => {
 
   const selectedDayData = historyList.find(d => d.date === selectedDateStr) || historyList[0] || {};
   
+  const selectedDayNote = dailyHabitNotes[selectedDateStr] || null;
+  const moodMap = {
+    energized: { icon: '⚡', label: 'Energized', color: '#10b981' },
+    productive: { icon: '🔥', label: 'Productive', color: '#6366f1' },
+    focused: { icon: '🎯', label: 'Focused', color: '#0ea5e9' },
+    calm: { icon: '🧘', label: 'Calm & Steady', color: '#8b5cf6' },
+    tired: { icon: '😴', label: 'Low Energy', color: '#f59e0b' },
+    recovery: { icon: '🩹', label: 'Recovery / Rest', color: '#ec4899' },
+  };
+  const selectedDayMood = selectedDayNote?.mood ? moodMap[selectedDayNote.mood] : null;
+
   // Calculate 30-day stats
   const totalTasksPossible = historyList.reduce((sum, d) => sum + d.total, 0);
   const totalTasksDone = historyList.reduce((sum, d) => sum + d.completed, 0);
@@ -132,6 +145,32 @@ export const HabitHistoryModal = ({ isOpen, onClose }) => {
               style={{ width: `${selectedDayData.percent}%` }}
             />
           </div>
+
+          {/* Daily Note for Selected History Date */}
+          {selectedDayNote && selectedDayNote.note?.trim() && (
+            <div className="history-daily-note-box">
+              <div className="hdnb-header">
+                <div className="flex-center gap-2">
+                  <FileText size={15} className="text-primary" />
+                  <span className="hdnb-title">Daily Note for {selectedDayData.formattedDate || selectedDateStr}:</span>
+                </div>
+                {selectedDayMood && (
+                  <span 
+                    className="hdnb-mood-tag"
+                    style={{ 
+                      borderColor: selectedDayMood.color, 
+                      backgroundColor: `${selectedDayMood.color}18`,
+                      color: selectedDayMood.color 
+                    }}
+                  >
+                    <span>{selectedDayMood.icon}</span>
+                    <span>{selectedDayMood.label}</span>
+                  </span>
+                )}
+              </div>
+              <p className="hdnb-text">{selectedDayNote.note}</p>
+            </div>
+          )}
 
           {/* Completed Tasks List */}
           <div className="tasks-breakdown-container">
@@ -557,6 +596,49 @@ export const HabitHistoryModal = ({ isOpen, onClose }) => {
           font-size: 0.75rem;
           color: var(--text-secondary);
           line-height: 1.4;
+        }
+
+        .history-daily-note-box {
+          background: rgba(99, 102, 241, 0.07);
+          border: 1px solid rgba(99, 102, 241, 0.25);
+          border-left: 3px solid var(--accent-primary);
+          border-radius: var(--radius-sm);
+          padding: 0.85rem 1.1rem;
+          display: flex;
+          flex-direction: column;
+          gap: 0.5rem;
+        }
+
+        .hdnb-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          flex-wrap: wrap;
+          gap: 0.5rem;
+        }
+
+        .hdnb-title {
+          font-size: 0.8rem;
+          font-weight: 700;
+          color: var(--text-primary);
+        }
+
+        .hdnb-mood-tag {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.3rem;
+          font-size: 0.72rem;
+          font-weight: 700;
+          padding: 2px 8px;
+          border-radius: 12px;
+          border: 1px solid;
+        }
+
+        .hdnb-text {
+          font-size: 0.84rem;
+          line-height: 1.5;
+          color: var(--text-primary);
+          white-space: pre-wrap;
         }
 
         @media (max-width: 640px) {

@@ -8,6 +8,7 @@ import {
   Edit3, 
   Calendar,
   ChevronDown,
+  GripVertical,
   ChevronUp,
   Droplets, 
   Dumbbell, 
@@ -43,8 +44,19 @@ export const HabitTodoItem = ({
   onEdit, 
   isCompact = false, 
   isBulkMode = false, 
-  isSelected = false, 
-  onToggleSelect 
+  isSelected = false,
+  onToggleSelect,
+  isDraggable = true,
+  isDragging = false,
+  isDropTarget = false,
+  dropPosition = null,
+  onDragStart,
+  onDragOver,
+  onDrop,
+  onDragEnd,
+  onTouchStart,
+  onTouchMove,
+  onTouchEnd
 }) => {
   const { toggleHabit, deleteHabit, todayStr } = useApp();
   const [showHistory, setShowHistory] = useState(false);
@@ -63,12 +75,30 @@ export const HabitTodoItem = ({
 
   return (
     <div 
-      className={`todo-item-card ${isDoneToday ? 'is-completed' : ''} ${isCompact ? 'is-compact' : ''} ${isBulkMode ? 'is-bulk-mode' : ''} ${isSelected ? 'is-selected' : ''}`}
+      data-id={habit.id}
+      draggable={isDraggable && !isBulkMode}
+      onDragStart={(e) => onDragStart && onDragStart(e, habit.id)}
+      onDragOver={(e) => onDragOver && onDragOver(e, habit.id)}
+      onDrop={(e) => onDrop && onDrop(e, habit.id)}
+      onDragEnd={onDragEnd}
+      className={`todo-item-card ${isDoneToday ? 'is-completed' : ''} ${isCompact ? 'is-compact' : ''} ${isBulkMode ? 'is-bulk-mode' : ''} ${isSelected ? 'is-selected' : ''} ${isDragging ? 'is-dragging' : ''} ${isDropTarget && dropPosition === 'before' ? 'drop-target-before' : ''} ${isDropTarget && dropPosition === 'after' ? 'drop-target-after' : ''}`}
       style={{
         borderLeftColor: isSelected ? 'var(--accent-danger)' : habitColor,
       }}
     >
       <div className="todo-item-main">
+        {/* Drag Handle */}
+        {!isBulkMode && isDraggable && (
+          <div
+            className="todo-drag-handle"
+            title="Drag to rearrange order"
+            onTouchStart={(e) => onTouchStart && onTouchStart(e, habit.id)}
+            onTouchMove={onTouchMove}
+            onTouchEnd={onTouchEnd}
+          >
+            <GripVertical size={16} />
+          </div>
+        )}
         {/* Bulk Selection Checkbox (When Bulk Mode is Active) */}
         {isBulkMode && (
           <button
@@ -201,6 +231,56 @@ export const HabitTodoItem = ({
       )}
 
       <style>{`
+        .todo-item-card.is-dragging {
+          opacity: 0.35 !important;
+          transform: scale(0.98);
+          border: 1px dashed var(--accent-primary) !important;
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+        }
+
+        .todo-item-card.drop-target-before {
+          border-top: 3px solid #6366f1 !important;
+          box-shadow: 0 -4px 14px rgba(99, 102, 241, 0.35);
+          transform: translateY(2px);
+        }
+
+        .todo-item-card.drop-target-after {
+          border-bottom: 3px solid #6366f1 !important;
+          box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+          transform: translateY(-2px);
+        }
+
+        .todo-drag-handle {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: var(--text-sub);
+          opacity: 0.35;
+          cursor: grab;
+          padding: 2px 4px;
+          margin-left: -4px;
+          border-radius: 4px;
+          transition: all 0.18s ease;
+          touch-action: none;
+          user-select: none;
+          flex-shrink: 0;
+        }
+
+        .todo-item-card:hover .todo-drag-handle {
+          opacity: 0.85;
+          color: var(--text-primary);
+        }
+
+        .todo-drag-handle:hover {
+          opacity: 1 !important;
+          color: #6366f1 !important;
+          background: rgba(99, 102, 241, 0.12);
+        }
+
+        .todo-drag-handle:active {
+          cursor: grabbing;
+        }
+
         .todo-item-card {
           background: var(--bg-card);
           border: 1px solid var(--border-color);

@@ -24,6 +24,7 @@ const STORAGE_KEYS = {
   USERS_DIRECTORY: 'life_tracker_users_directory_v1',
   MENU_PERMISSIONS: 'life_tracker_menu_permissions_v1',
   LAST_TRACKER_DATE: 'life_tracker_last_tracker_date_v1',
+  HABIT_DAILY_NOTES: 'life_tracker_habit_daily_notes_v1',
 };
 
 // Available Menus for Super Admin Control
@@ -312,6 +313,7 @@ export const exportAllData = () => {
     customLists: getLocalData(STORAGE_KEYS.CUSTOM_LISTS, DEFAULT_CUSTOM_LISTS),
     healthProtocol: getLocalData(STORAGE_KEYS.HEALTH_PROTOCOL, DEFAULT_HEALTH_PROTOCOL),
     dailyHistory: getLocalData(STORAGE_KEYS.DAILY_HISTORY, {}),
+    habitDailyNotes: getLocalData(STORAGE_KEYS.HABIT_DAILY_NOTES, {}),
     settings: getLocalData(STORAGE_KEYS.SETTINGS, DEFAULT_SETTINGS),
   };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -333,6 +335,7 @@ export const importAllData = (jsonString) => {
     if (data.customLists) setLocalData(STORAGE_KEYS.CUSTOM_LISTS, data.customLists);
     if (data.healthProtocol) setLocalData(STORAGE_KEYS.HEALTH_PROTOCOL, data.healthProtocol);
     if (data.dailyHistory) setLocalData(STORAGE_KEYS.DAILY_HISTORY, data.dailyHistory);
+    if (data.habitDailyNotes) setLocalData(STORAGE_KEYS.HABIT_DAILY_NOTES, data.habitDailyNotes);
     if (data.settings) setLocalData(STORAGE_KEYS.SETTINGS, data.settings);
     return { success: true, data };
   } catch (e) {

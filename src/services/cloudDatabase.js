@@ -104,8 +104,81 @@ export const DB_HEALTH_PROTOCOL_TEMPLATE = {
       { week: 'Week 3', action: 'Sugar strictly limited to festival / weekly cheat day', status: 'Phase 3' }
     ],
     cravingHack: '🧠 Craving Hack: Drink 1 glass warm water + take 5 slow deep breaths. Cravings fade in 90 seconds.'
+  },
+  juiceProtocol: {
+    enabled: true,
+    frequency: 'two_days_once',
+    startDate: '2026-09-26',
+    notes: 'Drink fresh on an empty stomach or mid-morning for optimal nutrient absorption.',
+    juices: [
+      {
+        id: 'juice-1',
+        name: 'Carrot + amla juice',
+        emoji: '🥕',
+        ingredients: 'Carrot + amla',
+        benefits: 'Antioxidants + vitamin C',
+        color: '#f97316',
+        timeOfDay: 'Morning',
+      },
+      {
+        id: 'juice-2',
+        name: 'Apple + cucumber juice',
+        emoji: '🍎',
+        ingredients: 'Apple + cucumber',
+        benefits: 'Hydration + some gut-supportive polyphenols',
+        color: '#ef4444',
+        timeOfDay: 'Morning',
+      },
+      {
+        id: 'juice-3',
+        name: 'Orange + carrot juice',
+        emoji: '🍊',
+        ingredients: 'Orange + carrot',
+        benefits: 'Vitamin C + carotenoids',
+        color: '#f59e0b',
+        timeOfDay: 'Morning',
+      },
+      {
+        id: 'juice-4',
+        name: 'Watermelon + mint juice',
+        emoji: '🍉',
+        ingredients: 'Watermelon + mint',
+        benefits: 'Hydration',
+        color: '#ec4899',
+        timeOfDay: 'Morning',
+      },
+      {
+        id: 'juice-5',
+        name: 'Papaya + ginger smoothie/juice',
+        emoji: '🥭',
+        ingredients: 'Papaya + ginger',
+        benefits: 'Fiber and digestive enzymes',
+        color: '#eab308',
+        timeOfDay: 'Morning',
+      },
+      {
+        id: 'juice-6',
+        name: 'Pear + cucumber juice',
+        emoji: '🍐',
+        ingredients: 'Pear + cucumber',
+        benefits: 'Hydration + gentle fiber if blended',
+        color: '#84cc16',
+        timeOfDay: 'Morning',
+      },
+      {
+        id: 'juice-7',
+        name: 'Tomato + carrot juice',
+        emoji: '🍅',
+        ingredients: 'Tomato + carrot',
+        benefits: 'Lycopene + carotenoids',
+        color: '#dc2626',
+        timeOfDay: 'Morning',
+      },
+    ],
   }
 };
+
+export const DEFAULT_JUICES = DB_HEALTH_PROTOCOL_TEMPLATE.juiceProtocol.juices;
 
 export const sanitizeHealthProtocol = (raw) => {
   if (!raw || typeof raw !== 'object') return DB_HEALTH_PROTOCOL_TEMPLATE;
@@ -133,30 +206,38 @@ export const sanitizeHealthProtocol = (raw) => {
     }
   }
 
+  if (!protocol.juiceProtocol || !Array.isArray(protocol.juiceProtocol.juices) || protocol.juiceProtocol.juices.length === 0) {
+    protocol.juiceProtocol = {
+      ...DB_HEALTH_PROTOCOL_TEMPLATE.juiceProtocol,
+      ...(protocol.juiceProtocol || {}),
+      juices: DEFAULT_JUICES,
+    };
+  }
+
   return protocol;
 };
 
 export const DB_CAREER_ROADMAP_TEMPLATE = [
   {
     id: 'sep-w1',
-    period: 'Sep W1',
+    period: 'Week 1',
     month: 'September',
-    dateRange: 'Sep 1 - Sep 7',
+    dateRange: 'Sep 25 - Oct 1',
     dsa: 'Big-O, arrays, two pointers',
     fullstack: 'React fundamentals, components, JSX',
     mobile: 'RN setup, environment (CLI / Expo), core components',
     project: 'Refactor one existing UI into clean modular components',
     career: 'Git/GitHub portfolio setup, profile audit',
     status: 'In Progress',
-    completedTasks: ['dsa'],
+    completedTasks: [],
     isLightWeek: false,
     notes: 'Focus on core array algorithms and clean Git commit history.',
   },
   {
     id: 'sep-w2',
-    period: 'Sep W2',
-    month: 'September',
-    dateRange: 'Sep 8 - Sep 14',
+    period: 'Week 2',
+    month: 'October',
+    dateRange: 'Oct 2 - Oct 8',
     dsa: 'Hash maps, frequency counters, sliding window',
     fullstack: 'Hooks, forms, state management (Context/Zustand)',
     mobile: 'Flexbox, styling, responsive mobile layouts',
@@ -169,9 +250,9 @@ export const DB_CAREER_ROADMAP_TEMPLATE = [
   },
   {
     id: 'sep-w3',
-    period: 'Sep W3',
-    month: 'September',
-    dateRange: 'Sep 15 - Sep 21',
+    period: 'Week 3',
+    month: 'October',
+    dateRange: 'Oct 9 - Oct 15',
     dsa: 'Stack, queue, monotonic stack basics',
     fullstack: 'Context, custom hooks, API integration (Axios/Fetch)',
     mobile: 'Navigation (React Navigation: Stack & Tabs)',
@@ -184,9 +265,9 @@ export const DB_CAREER_ROADMAP_TEMPLATE = [
   },
   {
     id: 'sep-w4',
-    period: 'Sep W4',
-    month: 'September',
-    dateRange: 'Sep 22 - Sep 30',
+    period: 'Week 4',
+    month: 'October',
+    dateRange: 'Oct 16 - Oct 22',
     dsa: 'Binary search, search on answers',
     fullstack: 'TypeScript fundamentals in React & state typing',
     mobile: 'AsyncStorage, local persistence, offline state',
@@ -199,9 +280,9 @@ export const DB_CAREER_ROADMAP_TEMPLATE = [
   },
   {
     id: 'oct-w1',
-    period: 'Oct W1',
+    period: 'Week 5',
     month: 'October',
-    dateRange: 'Oct 1 - Oct 7',
+    dateRange: 'Oct 23 - Oct 29',
     dsa: 'Linked lists, fast-slow pointers, reversal patterns',
     fullstack: 'Advanced React: memoization, performance optimization, React 19 features',
     mobile: 'Native animations (Reanimated 3 / Animated API)',
@@ -214,9 +295,9 @@ export const DB_CAREER_ROADMAP_TEMPLATE = [
   },
   {
     id: 'oct-w2',
-    period: 'Oct W2',
+    period: 'Week 6',
     month: 'October',
-    dateRange: 'Oct 8 - Oct 14',
+    dateRange: 'Oct 30 - Nov 5',
     dsa: 'Recursion fundamentals & backtracking basics',
     fullstack: 'Backend API design with Node.js/Express & Firestore',
     mobile: 'State management in React Native (Zustand & Context)',
@@ -229,9 +310,9 @@ export const DB_CAREER_ROADMAP_TEMPLATE = [
   },
   {
     id: 'oct-w3',
-    period: 'Oct W3',
-    month: 'October',
-    dateRange: 'Oct 15 - Oct 21',
+    period: 'Week 7',
+    month: 'November',
+    dateRange: 'Nov 6 - Nov 12',
     dsa: 'Binary Trees: traversals, DFS, BFS, level order',
     fullstack: 'Authentication & RBAC security: JWT, Firebase Auth, sessions',
     mobile: 'Push notifications & background tasks (Expo / Notifee)',
@@ -244,9 +325,9 @@ export const DB_CAREER_ROADMAP_TEMPLATE = [
   },
   {
     id: 'oct-w4',
-    period: 'Oct W4',
-    month: 'October',
-    dateRange: 'Oct 22 - Oct 31',
+    period: 'Week 8',
+    month: 'November',
+    dateRange: 'Nov 13 - Nov 19',
     dsa: 'Binary Search Trees (BST) & tree validation',
     fullstack: 'Database optimization, indexing, queries & pagination',
     mobile: 'Device camera, photo uploads, image compression',
@@ -259,9 +340,9 @@ export const DB_CAREER_ROADMAP_TEMPLATE = [
   },
   {
     id: 'nov-w1',
-    period: 'Nov W1',
+    period: 'Week 9',
     month: 'November',
-    dateRange: 'Nov 1 - Nov 7',
+    dateRange: 'Nov 20 - Nov 26',
     dsa: 'Graphs: BFS, DFS, adjacency list representations',
     fullstack: 'Excel parser / exporter with sheetjs & CSV processing',
     mobile: 'Offline-first SQLite / WatermelonDB in React Native',
@@ -274,9 +355,9 @@ export const DB_CAREER_ROADMAP_TEMPLATE = [
   },
   {
     id: 'nov-w2',
-    period: 'Nov W2',
+    period: 'Week 10',
     month: 'November',
-    dateRange: 'Nov 8 - Nov 14',
+    dateRange: 'Nov 27 - Dec 3',
     dsa: 'Graph cycle detection, topological sort & bipartite check',
     fullstack: 'Real-time WebSockets & cloud listener architectures',
     mobile: 'App performance profiling, bundle optimization & Hermes',
@@ -289,9 +370,9 @@ export const DB_CAREER_ROADMAP_TEMPLATE = [
   },
   {
     id: 'nov-w3',
-    period: 'Nov W3',
-    month: 'November',
-    dateRange: 'Nov 15 - Nov 21',
+    period: 'Week 11',
+    month: 'December',
+    dateRange: 'Dec 4 - Dec 10',
     dsa: 'Dynamic Programming (DP) 1D: memoization & tabulation',
     fullstack: 'Testing: Unit & Integration tests with Vitest / Jest',
     mobile: 'End-to-end mobile testing with Detox / Maestro',
@@ -304,9 +385,9 @@ export const DB_CAREER_ROADMAP_TEMPLATE = [
   },
   {
     id: 'nov-w4',
-    period: 'Nov W4',
-    month: 'November',
-    dateRange: 'Nov 22 - Nov 30',
+    period: 'Week 12',
+    month: 'December',
+    dateRange: 'Dec 11 - Dec 17',
     dsa: 'Dynamic Programming 2D: grid paths, knapsack patterns',
     fullstack: 'CI/CD pipeline: GitHub Actions, automated builds & deployment',
     mobile: 'Android APK / iOS build pipeline with Fastlane',
@@ -319,9 +400,9 @@ export const DB_CAREER_ROADMAP_TEMPLATE = [
   },
   {
     id: 'dec-w1',
-    period: 'Dec W1',
+    period: 'Week 13',
     month: 'December',
-    dateRange: 'Dec 1 - Dec 7',
+    dateRange: 'Dec 18 - Dec 24',
     dsa: 'Trie, Disjoint Set Union (DSU) & interval problems',
     fullstack: 'Micro-frontends, monorepos (Turborepo) & design systems',
     mobile: 'Publishing: Google Play Store & Apple App Store readiness',
@@ -334,9 +415,9 @@ export const DB_CAREER_ROADMAP_TEMPLATE = [
   },
   {
     id: 'dec-w2',
-    period: 'Dec W2',
+    period: 'Week 14',
     month: 'December',
-    dateRange: 'Dec 8 - Dec 14',
+    dateRange: 'Dec 25 - Dec 31',
     dsa: 'Top 50 Blind 75 / NeetCode high-frequency problem marathon',
     fullstack: 'Advanced security: CSRF, XSS, rate limiting, encryption',
     mobile: 'Crash analytics, Sentry error monitoring & telemetry',
@@ -349,9 +430,9 @@ export const DB_CAREER_ROADMAP_TEMPLATE = [
   },
   {
     id: 'dec-w3',
-    period: 'Dec W3',
-    month: 'December',
-    dateRange: 'Dec 15 - Dec 21',
+    period: 'Week 15',
+    month: 'January',
+    dateRange: 'Jan 1 - Jan 7',
     dsa: 'Mock coding interview simulations under 45-minute timer',
     fullstack: 'Full-stack engineering recap & edge cases',
     mobile: 'Mobile system design recap: Feed architecture & caching',
@@ -364,9 +445,9 @@ export const DB_CAREER_ROADMAP_TEMPLATE = [
   },
   {
     id: 'dec-w4',
-    period: 'Dec W4',
-    month: 'December',
-    dateRange: 'Dec 22 - Dec 31',
+    period: 'Week 16',
+    month: 'January',
+    dateRange: 'Jan 8 - Jan 15',
     dsa: 'Light review & algorithmic intuition mastery',
     fullstack: 'Annual achievement audit & career retrospective',
     mobile: 'Play Store release celebration',

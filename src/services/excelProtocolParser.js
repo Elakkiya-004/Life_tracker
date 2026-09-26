@@ -206,6 +206,33 @@ export const exportHealthProtocolToExcel = (protocol = DEFAULT_HEALTH_PROTOCOL, 
     ];
     XLSX.utils.book_append_sheet(wb, wsFitness, 'Fitness_And_Sugar');
 
+    // --- SHEET: Juices & Hydration ---
+    const juiceProto = cleanProtocol.juiceProtocol || {};
+    const juicesList = Array.isArray(juiceProto.juices) && juiceProto.juices.length > 0 ? juiceProto.juices : [];
+    const juiceRows = juicesList.map((j, idx) => ({
+      'Recipe #': idx + 1,
+      'Juice Name': j.name,
+      'Emoji': j.emoji || '🥤',
+      'Key Ingredients': j.ingredients || '',
+      'Health Focus & Benefits': j.benefits || '',
+      'Schedule Cadence': 'Alternate Days (Every 2 Days)',
+      'Timing': j.timeOfDay || 'Morning',
+      'Special Guidelines': juiceProto.notes || 'Drink fresh on empty stomach or mid-morning'
+    }));
+
+    const wsJuices = XLSX.utils.json_to_sheet(juiceRows);
+    wsJuices['!cols'] = [
+      { wch: 10 },
+      { wch: 30 },
+      { wch: 8 },
+      { wch: 25 },
+      { wch: 45 },
+      { wch: 28 },
+      { wch: 15 },
+      { wch: 50 },
+    ];
+    XLSX.utils.book_append_sheet(wb, wsJuices, 'Healthy_Juices');
+
     // Trigger file download in browser
     const cleanUserName = (userName || 'Custom').replace(/[^a-zA-Z0-9_-]/g, '_');
     const fileName = `LifeTracker_Diet_Health_Protocol_${cleanUserName}_${new Date().toISOString().split('T')[0]}.xlsx`;

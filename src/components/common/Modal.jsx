@@ -22,7 +22,7 @@ export const Modal = ({ isOpen, onClose, title, children, maxWidth = '500px' }) 
     <div className="modal-overlay" onClick={onClose} role="dialog" aria-modal="true">
       <div 
         className="modal-content" 
-        style={{ maxWidth }} 
+        style={{ maxWidth: `min(${maxWidth}, 95vw)` }} 
         onClick={(e) => e.stopPropagation()}
       >
         <div className="modal-header">

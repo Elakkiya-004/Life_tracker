@@ -7,7 +7,6 @@ import {
   setLocalData,
   STORAGE_KEYS,
   DEFAULT_HABITS,
-  DEFAULT_TRANSACTIONS,
   DEFAULT_JARS,
   DEFAULT_ROADMAP,
   DEFAULT_CUSTOM_LISTS,
@@ -130,6 +129,9 @@ export const AppProvider = ({ children }) => {
       return {
         ...defaultWeek,
         ...week,
+        period: defaultWeek.period,
+        month: defaultWeek.month,
+        dateRange: defaultWeek.dateRange,
         status: week.status || defaultWeek.status,
         completedTasks: Array.isArray(week.completedTasks) ? week.completedTasks : (defaultWeek.completedTasks || []),
         isLightWeek: typeof week.isLightWeek === 'boolean' ? week.isLightWeek : defaultWeek.isLightWeek,
@@ -197,6 +199,47 @@ export const AppProvider = ({ children }) => {
     const { prunedHistory } = pruneOldHistoryData(data, [], 30);
     return prunedHistory;
   });
+
+  const [dailyHabitNotes, setDailyHabitNotes] = useState(() => {
+    try {
+      const data = getLocalData(STORAGE_KEYS.HABIT_DAILY_NOTES, {});
+      return (data && typeof data === 'object') ? data : {};
+    } catch {
+      return {};
+    }
+  });
+
+  const saveHabitDailyNote = useCallback((dateStr, noteData) => {
+    if (!dateStr) return;
+    setDailyHabitNotes(prev => {
+      const existing = prev[dateStr] || {};
+      const updated = {
+        ...prev,
+        [dateStr]: {
+          ...existing,
+          ...noteData,
+          date: dateStr,
+          updatedAt: new Date().toISOString(),
+        }
+      };
+      setLocalData(STORAGE_KEYS.HABIT_DAILY_NOTES, updated);
+      return updated;
+    });
+  }, []);
+
+  const getHabitDailyNote = useCallback((dateStr) => {
+    return dailyHabitNotes[dateStr] || null;
+  }, [dailyHabitNotes]);
+
+  const deleteHabitDailyNote = useCallback((dateStr) => {
+    if (!dateStr) return;
+    setDailyHabitNotes(prev => {
+      const nextNotes = { ...prev };
+      delete nextNotes[dateStr];
+      setLocalData(STORAGE_KEYS.HABIT_DAILY_NOTES, nextNotes);
+      return nextNotes;
+    });
+  }, []);
 
   const [settings, setSettings] = useState(() => {
     const data = getLocalData(STORAGE_KEYS.SETTINGS, DEFAULT_SETTINGS);
@@ -651,6 +694,34 @@ export const AppProvider = ({ children }) => {
       syncTodayIntoDailyHistory(updated, todayStr);
       pushToCloud({ habits: updated, transactions, jars, roadmap, customLists, healthProtocol, dailyHistory, settings });
       return updated;
+    });
+  };
+
+  const reorderHabits = (newOrderedHabits) => {
+    if (!Array.isArray(newOrderedHabits)) return;
+    setHabits(newOrderedHabits);
+    setLocalData(STORAGE_KEYS.HABITS, newOrderedHabits);
+    syncTodayIntoDailyHistory(newOrderedHabits, todayStr);
+    pushToCloud({ habits: newOrderedHabits, transactions, jars, roadmap, customLists, healthProtocol, dailyHistory, settings });
+  };
+
+  const moveHabit = (draggedId, targetId, position = 'before') => {
+    setHabits(prevHabits => {
+      const currentHabits = Array.isArray(prevHabits) ? prevHabits : [];
+      const sourceIndex = currentHabits.findIndex(h => h.id === draggedId);
+      const targetIndex = currentHabits.findIndex(h => h.id === targetId);
+      if (sourceIndex === -1 || targetIndex === -1 || sourceIndex === targetIndex) return prevHabits;
+
+      const newHabits = [...currentHabits];
+      const [movedItem] = newHabits.splice(sourceIndex, 1);
+      const newTargetIndex = newHabits.findIndex(h => h.id === targetId);
+      const insertIndex = position === 'after' ? newTargetIndex + 1 : newTargetIndex;
+      newHabits.splice(insertIndex, 0, movedItem);
+
+      setLocalData(STORAGE_KEYS.HABITS, newHabits);
+      syncTodayIntoDailyHistory(newHabits, todayStr);
+      pushToCloud({ habits: newHabits, transactions, jars, roadmap, customLists, healthProtocol, dailyHistory, settings });
+      return newHabits;
     });
   };
 
@@ -1401,6 +1472,10 @@ export const AppProvider = ({ children }) => {
         yesterdayStr,
         yesterdayProgress,
         dailyHistory,
+        dailyHabitNotes,
+        saveHabitDailyNote,
+        getHabitDailyNote,
+        deleteHabitDailyNote,
         getPastDayProgress,
         getPast30DaysHistory,
         currentMonthIncome,
@@ -1415,6 +1490,8 @@ export const AppProvider = ({ children }) => {
         addHabit,
         updateHabit,
         deleteHabit,
+        reorderHabits,
+        moveHabit,
         bulkDeleteHabits,
         clearAllHabits,
         resetHabitsToDefault,

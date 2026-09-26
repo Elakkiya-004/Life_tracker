@@ -52,13 +52,13 @@ export const RoadmapView = () => {
 
   // Filter weeks by month
   const safeRoadmap = Array.isArray(roadmap) && roadmap.length > 0 ? roadmap : DEFAULT_ROADMAP;
-  const months = ['All', 'September', 'October', 'November', 'December'];
+  const months = ['All', 'September', 'October', 'November', 'December', 'January'];
   const filteredWeeks = selectedMonth === 'All'
     ? safeRoadmap
     : safeRoadmap.filter(w => w && w.month === selectedMonth);
 
   // Calculate days left to Dec 31, 2026
-  const targetDate = new Date('2026-12-31T23:59:59');
+  const targetDate = new Date('2027-01-15T23:59:59');
   const now = new Date();
   const diffTime = targetDate - now;
   const daysRemaining = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
@@ -157,7 +157,7 @@ export const RoadmapView = () => {
 
         <div className="countdown-pill">
           <span className="countdown-val">{daysRemaining}</span>
-          <span className="countdown-label">Days to Dec 31</span>
+          <span className="countdown-label">Days to Target</span>
         </div>
       </div>
 

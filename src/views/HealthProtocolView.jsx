@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
 import { 
@@ -15,12 +15,14 @@ import {
   Trash2,
   Calendar,
   Sparkle,
-  Clock,
-  X,
+  Clock, 
   UploadCloud,
   Download,
   RotateCcw,
-  FileDown
+  FileDown,
+  Calculator,
+  Droplets,
+  CheckCheck
 } from 'lucide-react';
 import { 
   exportHealthProtocolToExcel, 
@@ -28,7 +30,10 @@ import {
 } from '../services/excelProtocolParser';
 import { ExcelUploadModal } from '../components/health/ExcelUploadModal';
 import { CareRegimeModal } from '../components/health/CareRegimeModal';
-import { normalizeCareRegime, getFrequencyMeta } from '../services/careProtocolUtils';
+import { CalorieCalculatorModal } from '../components/health/CalorieCalculatorModal';
+import { WorkoutSection } from '../components/health/WorkoutSection';
+import { normalizeCareRegime, getFrequencyMeta, getJuiceSchedule } from '../services/careProtocolUtils';
+import { DEFAULT_JUICES } from '../services/cloudDatabase';
 import { Modal } from '../components/common/Modal';
 
 export const HealthProtocolView = () => {
@@ -37,12 +42,16 @@ export const HealthProtocolView = () => {
     updateHealthProtocol, 
     importHealthProtocolFromExcel,
     resetHealthProtocolToDefault,
+    addHabit,
+    habits = [],
+    todayStr,
   } = useApp();
 
   const { currentUser, isSuperAdmin } = useAuth();
 
   const [notificationMsg, setNotificationMsg] = useState(null);
   const [isExcelModalOpen, setIsExcelModalOpen] = useState(false);
+  const [isCalorieCalcOpen, setIsCalorieCalcOpen] = useState(false);
 
   // Edit Modals State: 'calories' | 'micronutrients' | 'exercise' | 'sugar' | 'skincare' | 'bodycare' | 'haircare' | null
   const [activeModal, setActiveModal] = useState(null);
@@ -69,6 +78,95 @@ export const HealthProtocolView = () => {
   const normalizedSkinCare = normalizeCareRegime(skinCare, 'skincare');
   const normalizedBodyCare = normalizeCareRegime(bodyCare, 'bodycare');
   const normalizedHairCare = normalizeCareRegime(hairCare, 'haircare');
+
+  const juiceProtocol = protocol.juiceProtocol || {};
+  const juices = Array.isArray(juiceProtocol.juices) && juiceProtocol.juices.length > 0
+    ? juiceProtocol.juices
+    : DEFAULT_JUICES;
+
+  const juiceSchedule = useMemo(() => {
+    return getJuiceSchedule(todayStr, juiceProtocol);
+  }, [todayStr, juiceProtocol]);
+
+  const habitsList = Array.isArray(habits) ? habits : [];
+  const isJuiceAdded = (juiceName) => {
+    if (!juiceName) return false;
+    return habitsList.some(h => h.name && h.name.toLowerCase().includes(juiceName.toLowerCase()));
+  };
+
+  const handleAddJuiceToRoutine = (juice) => {
+    if (!juice) return;
+    const habitName = `Drink ${juice.emoji} ${juice.name}`;
+    if (isJuiceAdded(juice.name)) return;
+    addHabit({
+      name: habitName,
+      category: 'Diet & Nutrition',
+      timeOfDay: 'Morning',
+      icon: 'Droplets',
+      color: juice.color || '#f97316',
+      frequency: 'two_days_once',
+      targetDays: 3,
+    });
+    showToast(`🥤 Added "${juice.name}" to today's habits!`);
+  };
+
+  const handleOpenEditJuices = () => {
+    setFormData({
+      notes: juiceProtocol.notes || 'Drink fresh on an empty stomach or mid-morning for optimal nutrient absorption.',
+      juices: juices.map(j => ({ ...j })),
+    });
+    setActiveModal('juices');
+  };
+
+  const handleAddJuiceRow = () => {
+    setFormData(prev => ({
+      ...prev,
+      juices: [
+        ...(prev.juices || []),
+        {
+          id: `juice-${Date.now()}`,
+          name: '',
+          emoji: '🥤',
+          ingredients: '',
+          benefits: '',
+          color: '#f97316',
+          timeOfDay: 'Morning',
+        }
+      ]
+    }));
+  };
+
+  const handleRemoveJuiceRow = (idx) => {
+    setFormData(prev => ({
+      ...prev,
+      juices: prev.juices.filter((_, i) => i !== idx)
+    }));
+  };
+
+  const handleUpdateJuiceRow = (idx, field, value) => {
+    setFormData(prev => {
+      const updated = [...prev.juices];
+      updated[idx] = { ...updated[idx], [field]: value };
+      return { ...prev, juices: updated };
+    });
+  };
+
+  const handleSaveJuices = (e) => {
+    e.preventDefault();
+    const cleanJuices = (formData.juices || []).filter(j => j.name && j.name.trim() !== '');
+    updateHealthProtocol(prev => ({
+      ...prev,
+      juiceProtocol: {
+        ...(prev.juiceProtocol || {}),
+        enabled: true,
+        frequency: 'two_days_once',
+        notes: formData.notes || '',
+        juices: cleanJuices.length > 0 ? cleanJuices : DEFAULT_JUICES,
+      }
+    }));
+    setActiveModal(null);
+    showToast('✅ Healthy Juices & Hydration regime updated!');
+  };
 
   const showToast = (msg) => {
     setNotificationMsg(msg);
@@ -465,6 +563,13 @@ export const HealthProtocolView = () => {
         />
       )}
 
+      {/* Calorie Calculator Suite Modal */}
+      <CalorieCalculatorModal
+        isOpen={isCalorieCalcOpen}
+        onClose={() => setIsCalorieCalcOpen(false)}
+        onApplySuccess={() => showToast('🎉 Calorie targets updated from Calculator!')}
+      />
+
       {/* Hero Banner with Plan Badge & Dynamic Actions */}
       <div className="protocol-hero card">
         <div className="hero-top-bar">
@@ -489,6 +594,15 @@ export const HealthProtocolView = () => {
 
           {/* Quick Action Buttons */}
           <div className="hero-action-buttons">
+            <button
+              type="button"
+              className="btn btn-primary btn-sm"
+              onClick={() => setIsCalorieCalcOpen(true)}
+              title="Open Calorie & TDEE Target Calculator & Meal Tracker"
+            >
+              <Calculator size={15} />
+              <span>Calorie Calculator</span>
+            </button>
             {isSuperAdmin && (
               <>
                 <button
@@ -571,6 +685,15 @@ export const HealthProtocolView = () => {
             <h3 className="section-title">1. Daily Calorie & Macronutrient Targets</h3>
           </div>
           <div className="title-actions">
+            <button 
+              type="button" 
+              className="btn btn-primary btn-sm"
+              onClick={() => setIsCalorieCalcOpen(true)}
+              title="Calculate TDEE, BMR, and track daily meal calories"
+            >
+              <Calculator size={14} />
+              <span>Calorie Calculator</span>
+            </button>
             <button 
               type="button" 
               className="btn btn-secondary btn-sm"
@@ -724,7 +847,176 @@ export const HealthProtocolView = () => {
       </div>
 
       {/* ========================================================================= */}
-      {/* 3. Skin, Body & Hair Care Regimes */}
+      {/* 3. Healthy Juices & Hydration Protocol (Alternate Days Schedule) */}
+      {/* ========================================================================= */}
+      <div className="section-container">
+        <div className="section-title-row">
+          <div className="title-with-icon">
+            <Droplets size={20} className="text-orange" />
+            <h3 className="section-title">3. Healthy Juices & Hydration Protocol</h3>
+            <span className="badge badge-primary" style={{ fontSize: '0.7rem', padding: '0.2rem 0.55rem' }}>
+              ALTERNATE DAYS
+            </span>
+          </div>
+          <div className="title-actions">
+            <button 
+              type="button" 
+              className="btn btn-secondary btn-sm"
+              onClick={handleOpenEditJuices}
+            >
+              <Edit3 size={14} />
+              <span>Edit Juices</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Live Today & Tomorrow Rotation Banner */}
+        {juiceSchedule && (
+          <div className={`juice-live-banner card ${juiceSchedule.isJuiceDayToday ? 'banner-active-day' : 'banner-rest-day'}`}>
+            <div className="juice-live-left">
+              <div 
+                className="juice-live-icon-wrap" 
+                style={{ 
+                  backgroundColor: juiceSchedule.isJuiceDayToday && juiceSchedule.todayJuice 
+                    ? `${juiceSchedule.todayJuice.color}25` 
+                    : 'rgba(99, 102, 241, 0.15)' 
+                }}
+              >
+                <span style={{ fontSize: '1.75rem', lineHeight: 1 }}>
+                  {juiceSchedule.isJuiceDayToday && juiceSchedule.todayJuice ? juiceSchedule.todayJuice.emoji : '🥤'}
+                </span>
+              </div>
+              <div className="juice-live-details">
+                <div className="juice-live-tag-row">
+                  <span className={`live-pill ${juiceSchedule.isJuiceDayToday ? 'pill-green' : 'pill-purple'}`}>
+                    {juiceSchedule.isJuiceDayToday ? "✨ TODAY'S SCHEDULED JUICE" : '🌿 TODAY IS A REST DAY'}
+                  </span>
+                  <span className="live-cadence-pill">Alternate Days Cadence</span>
+                </div>
+                {juiceSchedule.isJuiceDayToday && juiceSchedule.todayJuice ? (
+                  <>
+                    <h4 className="juice-live-name">{juiceSchedule.todayJuice.name}</h4>
+                    <p className="juice-live-desc">
+                      <strong>Key Focus:</strong> {juiceSchedule.todayJuice.benefits} • <strong>Ingredients:</strong> {juiceSchedule.todayJuice.ingredients}
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <h4 className="juice-live-name">Rest & Hydrate Today</h4>
+                    <p className="juice-live-desc">
+                      Rest day from juices. Drink plenty of fresh water & herbal teas.
+                    </p>
+                  </>
+                )}
+                <div className="juice-live-tomorrow">
+                  <Calendar size={13} className="text-sub" />
+                  <span>
+                    <strong>Tomorrow:</strong>{' '}
+                    {juiceSchedule.isJuiceDayTomorrow && juiceSchedule.tomorrowJuice ? (
+                      <span className="text-primary font-bold">
+                        {juiceSchedule.tomorrowJuice.emoji} {juiceSchedule.tomorrowJuice.name} ({juiceSchedule.tomorrowJuice.benefits})
+                      </span>
+                    ) : (
+                      <span className="text-sub">Rest day (Next up: {juiceSchedule.nextJuice ? `${juiceSchedule.nextJuice.emoji} ${juiceSchedule.nextJuice.name}` : 'Next Scheduled Juice'})</span>
+                    )}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="juice-live-actions">
+              {juiceSchedule.isJuiceDayToday && juiceSchedule.todayJuice ? (
+                isJuiceAdded(juiceSchedule.todayJuice.name) ? (
+                  <span className="badge badge-success" style={{ padding: '0.45rem 0.8rem', gap: '0.35rem' }}>
+                    <CheckCheck size={14} />
+                    <span>In Today's Routine</span>
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    className="btn btn-primary btn-sm"
+                    style={{ backgroundColor: juiceSchedule.todayJuice.color, borderColor: juiceSchedule.todayJuice.color }}
+                    onClick={() => handleAddJuiceToRoutine(juiceSchedule.todayJuice)}
+                  >
+                    <Plus size={14} />
+                    <span>Add to Today's Routine</span>
+                  </button>
+                )
+              ) : (
+                juiceSchedule.tomorrowJuice && (
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm"
+                    onClick={() => handleAddJuiceToRoutine(juiceSchedule.tomorrowJuice)}
+                    title="Drink this juice today instead"
+                  >
+                    <span>Drink Today Anyway</span>
+                  </button>
+                )
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Grid of all 7 Juices */}
+        <div className="juices-grid">
+          {juices.map((j, idx) => {
+            const isToday = juiceSchedule?.isJuiceDayToday && juiceSchedule?.todayJuice?.id === j.id;
+            const isTomorrow = juiceSchedule?.isJuiceDayTomorrow && juiceSchedule?.tomorrowJuice?.id === j.id;
+            const alreadyAdded = isJuiceAdded(j.name);
+
+            return (
+              <div 
+                key={j.id || idx} 
+                className={`card juice-recipe-card ${isToday ? 'is-today-active' : ''}`}
+                style={{ borderTopColor: j.color || '#f97316' }}
+              >
+                <div className="juice-recipe-header">
+                  <div className="juice-emoji-tag-wrap">
+                    <span className="juice-recipe-emoji">{j.emoji}</span>
+                    <span className="juice-index-badge">#{idx + 1}</span>
+                  </div>
+                  <div className="juice-schedule-badges">
+                    {isToday && <span className="badge badge-success text-xs">Today's Pick</span>}
+                    {isTomorrow && <span className="badge badge-primary text-xs">Tomorrow</span>}
+                  </div>
+                </div>
+
+                <h4 className="juice-recipe-title">{j.name}</h4>
+
+                <div className="juice-recipe-ingredients">
+                  <span className="juice-recipe-label">Ingredients:</span>
+                  <span className="juice-recipe-text">{j.ingredients}</span>
+                </div>
+
+                <div className="juice-recipe-benefits" style={{ backgroundColor: `${j.color || '#f97316'}15`, color: j.color || 'var(--text-primary)' }}>
+                  <span className="benefits-label">Benefits:</span>
+                  <span>{j.benefits}</span>
+                </div>
+
+                <div className="juice-recipe-footer">
+                  {alreadyAdded ? (
+                    <span className="juice-already-added">
+                      <CheckCheck size={13} /> In Habits
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-xs text-primary juice-quick-add"
+                      onClick={() => handleAddJuiceToRoutine(j)}
+                    >
+                      <Plus size={12} /> Add to Today's Tasks
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ========================================================================= */}
+      {/* 4. Skin, Body & Hair Care Regimes */}
       {/* ========================================================================= */}
       <div className="section-container">
         <div className="section-title-row">
@@ -958,69 +1250,16 @@ export const HealthProtocolView = () => {
       </div>
 
       {/* ========================================================================= */}
-      {/* 4. Fitness & Sugar Protocols */}
+      {/* 4. 6-Day 20-Min Guided Workout Protocol & Records */}
       {/* ========================================================================= */}
-      <div className="protocol-cards-grid">
-        {/* Exercise Routine */}
-        <div className="card protocol-section-card">
-          <div className="proto-card-header">
-            <div className="proto-header-left">
-              <div className="proto-icon-wrap bg-cyan">
-                <Dumbbell size={22} />
-              </div>
-              <div>
-                <h4 className="proto-title">Exercise Routine</h4>
-                <span className="proto-sub">Consistency over intensity</span>
-              </div>
-            </div>
-            <div className="proto-actions">
-              <button 
-                type="button" 
-                className="btn btn-secondary btn-sm"
-                onClick={handleOpenEditExercise}
-              >
-                <Edit3 size={13} />
-                <span>Edit</span>
-              </button>
-              <button 
-                type="button" 
-                className="btn-icon-sm btn-ghost text-danger"
-                onClick={handleClearExercise}
-                title="Clear Exercise Routine"
-              >
-                <Trash2 size={14} />
-              </button>
-            </div>
-          </div>
+      <div className="section-container">
+        <WorkoutSection />
+      </div>
 
-          {!hasExercise ? (
-            <div className="empty-section-placeholder">
-              <p className="text-sub text-sm">No exercise routines configured.</p>
-              <button type="button" className="btn btn-secondary btn-sm" onClick={handleOpenEditExercise}>
-                <Plus size={14} />
-                <span>Configure Exercise Routine</span>
-              </button>
-            </div>
-          ) : (
-            <div className="exercise-grid">
-              {exerciseRoutine.morning?.activities && (
-                <div className="exercise-card">
-                  <span className="exercise-title">{exerciseRoutine.morning?.title || '🌅 Morning Cardio (30–40 Mins)'}</span>
-                  <p className="exercise-activities"><strong>Activities:</strong> {exerciseRoutine.morning.activities}</p>
-                  {exerciseRoutine.morning.benefits && <span className="exercise-benefits">✨ {exerciseRoutine.morning.benefits}</span>}
-                </div>
-              )}
-
-              {exerciseRoutine.evening?.activities && (
-                <div className="exercise-card">
-                  <span className="exercise-title">{exerciseRoutine.evening?.title || '💪 Evening Bodyweight Routine (20 Mins)'}</span>
-                  <p className="exercise-activities"><strong>Activities:</strong> {exerciseRoutine.evening.activities}</p>
-                  {exerciseRoutine.evening.benefits && <span className="exercise-benefits">✨ {exerciseRoutine.evening.benefits}</span>}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+      {/* ========================================================================= */}
+      {/* 5. Sugar Cutting Protocol */}
+      {/* ========================================================================= */}
+      <div className="protocol-cards-grid" style={{ marginTop: '1.25rem' }}>
 
         {/* Sugar Cutting Strategy */}
         <div className="card protocol-section-card">
@@ -1445,6 +1684,106 @@ export const HealthProtocolView = () => {
           <div className="modal-actions">
             <button type="button" className="btn btn-secondary" onClick={() => setActiveModal(null)}>Cancel</button>
             <button type="submit" className="btn btn-primary">Save Strategy</button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Edit Juices Modal */}
+      <Modal
+        isOpen={activeModal === 'juices'}
+        onClose={() => setActiveModal(null)}
+        title="Edit Healthy Juices & Hydration Regime"
+        maxWidth="740px"
+      >
+        <form onSubmit={handleSaveJuices} className="modal-form">
+          <div className="input-group">
+            <label className="label">Juice Regime Guidelines / Notes</label>
+            <input
+              type="text"
+              className="input"
+              value={formData.notes || ''}
+              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+              placeholder="e.g. Drink fresh on an empty stomach or mid-morning"
+            />
+          </div>
+
+          <div className="modal-subsection">
+            <div className="subsection-header">
+              <label className="label" style={{ marginBottom: 0 }}>
+                Juice Recipes (Alternate Days Rotation)
+              </label>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={handleAddJuiceRow}
+              >
+                <Plus size={13} />
+                <span>Add Recipe</span>
+              </button>
+            </div>
+
+            <div className="modal-scroll-area" style={{ maxHeight: '420px', overflowY: 'auto' }}>
+              {(formData.juices || []).map((j, idx) => (
+                <div key={idx} className="edit-juice-card" style={{ marginBottom: '0.75rem', padding: '0.75rem', background: 'rgba(255,255,255,0.03)', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                  <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem', alignItems: 'center' }}>
+                    <input
+                      type="text"
+                      className="input"
+                      style={{ width: '48px', textAlign: 'center', fontSize: '1.2rem', padding: '0.3rem' }}
+                      title="Fruit Emoji"
+                      value={j.emoji || '🥤'}
+                      onChange={(e) => handleUpdateJuiceRow(idx, 'emoji', e.target.value)}
+                    />
+                    <input
+                      type="text"
+                      className="input flex-1"
+                      placeholder="Juice Name (e.g. Carrot + amla juice)"
+                      value={j.name || ''}
+                      onChange={(e) => handleUpdateJuiceRow(idx, 'name', e.target.value)}
+                      required
+                    />
+                    <input
+                      type="color"
+                      className="input"
+                      style={{ width: '42px', padding: '0.2rem', height: '36px', cursor: 'pointer' }}
+                      title="Theme Color"
+                      value={j.color || '#f97316'}
+                      onChange={(e) => handleUpdateJuiceRow(idx, 'color', e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      className="btn-icon-sm btn-ghost text-danger"
+                      onClick={() => handleRemoveJuiceRow(idx)}
+                      title="Delete recipe"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <input
+                      type="text"
+                      className="input flex-1"
+                      placeholder="Ingredients (e.g. Carrot + Amla)"
+                      value={j.ingredients || ''}
+                      onChange={(e) => handleUpdateJuiceRow(idx, 'ingredients', e.target.value)}
+                    />
+                    <input
+                      type="text"
+                      className="input flex-1"
+                      placeholder="Health Focus / Benefits (e.g. Antioxidants + Vitamin C)"
+                      value={j.benefits || ''}
+                      onChange={(e) => handleUpdateJuiceRow(idx, 'benefits', e.target.value)}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="modal-actions" style={{ marginTop: '1rem' }}>
+            <button type="button" className="btn btn-secondary" onClick={() => setActiveModal(null)}>Cancel</button>
+            <button type="submit" className="btn btn-primary">Save Juice Protocol</button>
           </div>
         </form>
       </Modal>
@@ -2183,6 +2522,227 @@ export const HealthProtocolView = () => {
           display: flex;
           align-items: center;
           gap: 0.5rem;
+        }
+
+        /* 🥤 Healthy Juices & Hydration Styles */
+        .juice-live-banner {
+          margin-top: 1rem;
+          margin-bottom: 1.25rem;
+          padding: 1.15rem 1.4rem;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 1.25rem;
+          flex-wrap: wrap;
+          border-radius: var(--radius-md);
+        }
+
+        .juice-live-banner.banner-active-day {
+          border-left: 4px solid #f97316;
+          background: linear-gradient(135deg, rgba(249, 115, 22, 0.09) 0%, rgba(18, 18, 28, 0.8) 100%);
+        }
+
+        .juice-live-banner.banner-rest-day {
+          border-left: 4px solid #6366f1;
+          background: linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(18, 18, 28, 0.8) 100%);
+        }
+
+        .juice-live-left {
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+          flex: 1;
+          min-width: 260px;
+        }
+
+        .juice-live-icon-wrap {
+          width: 52px;
+          height: 52px;
+          border-radius: var(--radius-md);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        }
+
+        .juice-live-details {
+          display: flex;
+          flex-direction: column;
+          gap: 0.25rem;
+        }
+
+        .juice-live-tag-row {
+          display: flex;
+          align-items: center;
+          gap: 0.45rem;
+        }
+
+        .live-pill {
+          font-size: 0.68rem;
+          font-weight: 800;
+          letter-spacing: 0.04em;
+          padding: 0.15rem 0.45rem;
+          border-radius: var(--radius-xs);
+        }
+
+        .live-pill.pill-green {
+          background: rgba(249, 115, 22, 0.2);
+          color: #f97316;
+          border: 1px solid rgba(249, 115, 22, 0.35);
+        }
+
+        .live-pill.pill-purple {
+          background: rgba(99, 102, 241, 0.18);
+          color: #818cf8;
+          border: 1px solid rgba(99, 102, 241, 0.35);
+        }
+
+        .live-cadence-pill {
+          font-size: 0.7rem;
+          color: var(--text-muted);
+          font-weight: 600;
+        }
+
+        .juice-live-name {
+          margin: 0;
+          font-size: 1.05rem;
+          font-weight: 700;
+          color: var(--text-primary);
+        }
+
+        .juice-live-desc {
+          margin: 0;
+          font-size: 0.8rem;
+          color: var(--text-secondary);
+        }
+
+        .juice-live-tomorrow {
+          display: flex;
+          align-items: center;
+          gap: 0.35rem;
+          font-size: 0.76rem;
+          color: var(--text-secondary);
+          margin-top: 0.15rem;
+          padding-top: 0.25rem;
+          border-top: 1px dashed rgba(255, 255, 255, 0.08);
+        }
+
+        .juice-live-actions {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        }
+
+        .juices-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+          gap: 1rem;
+        }
+
+        .juice-recipe-card {
+          padding: 1.1rem;
+          display: flex;
+          flex-direction: column;
+          gap: 0.65rem;
+          border-top-width: 3px;
+          border-top-style: solid;
+          background: rgba(18, 18, 28, 0.6);
+          position: relative;
+          transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .juice-recipe-card:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
+
+        .juice-recipe-card.is-today-active {
+          box-shadow: 0 0 0 1px #f97316, 0 6px 20px rgba(249, 115, 22, 0.15);
+          background: rgba(249, 115, 22, 0.04);
+        }
+
+        .juice-recipe-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+        }
+
+        .juice-emoji-tag-wrap {
+          display: flex;
+          align-items: center;
+          gap: 0.45rem;
+        }
+
+        .juice-recipe-emoji {
+          font-size: 1.6rem;
+          line-height: 1;
+        }
+
+        .juice-index-badge {
+          font-size: 0.68rem;
+          font-weight: 700;
+          color: var(--text-muted);
+          background: rgba(255, 255, 255, 0.06);
+          padding: 0.15rem 0.4rem;
+          border-radius: var(--radius-xs);
+        }
+
+        .juice-recipe-title {
+          margin: 0;
+          font-size: 0.95rem;
+          font-weight: 700;
+          color: var(--text-primary);
+        }
+
+        .juice-recipe-ingredients {
+          font-size: 0.78rem;
+          color: var(--text-secondary);
+          display: flex;
+          gap: 0.35rem;
+        }
+
+        .juice-recipe-label {
+          font-weight: 600;
+          color: var(--text-muted);
+        }
+
+        .juice-recipe-benefits {
+          font-size: 0.76rem;
+          font-weight: 600;
+          padding: 0.35rem 0.6rem;
+          border-radius: var(--radius-sm);
+          display: flex;
+          align-items: center;
+          gap: 0.35rem;
+        }
+
+        .benefits-label {
+          font-weight: 800;
+          opacity: 0.75;
+        }
+
+        .juice-recipe-footer {
+          margin-top: auto;
+          padding-top: 0.45rem;
+          border-top: 1px solid rgba(255, 255, 255, 0.05);
+          display: flex;
+          align-items: center;
+          justify-content: flex-end;
+        }
+
+        .juice-already-added {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.25rem;
+          font-size: 0.74rem;
+          font-weight: 700;
+          color: #10b981;
+        }
+
+        .juice-quick-add {
+          gap: 0.25rem;
+          font-size: 0.76rem;
+          font-weight: 600;
         }
       `}</style>
     </div>

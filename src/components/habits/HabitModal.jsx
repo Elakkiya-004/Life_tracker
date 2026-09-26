@@ -77,12 +77,13 @@ export const HabitModal = ({ isOpen, onClose, habitToEdit = null }) => {
 
   const handleApplyProtocol = (proto) => {
     setName(proto.suggestedHabitName);
-    setCategory('Self Care');
+    const isJuice = proto.regimeKey === 'juiceProtocol';
+    setCategory(proto.category || (isJuice ? 'Diet & Nutrition' : 'Self Care'));
     setTimeOfDay(proto.suggestedHabitName.toLowerCase().includes('pm') ? 'Evening' : 'Morning');
-    setIcon(proto.iconName === 'Sun' ? 'Sunrise' : 'Sparkles');
-    setColor(proto.color || '#ec4899');
-    setFrequency('weekly');
-    setTargetDays(1);
+    setIcon(proto.iconName === 'Droplets' ? 'Droplets' : (proto.iconName === 'Sun' ? 'Sunrise' : 'Sparkles'));
+    setColor(proto.color || (isJuice ? '#f97316' : '#ec4899'));
+    setFrequency(proto.frequency || (isJuice ? 'two_days_once' : 'weekly'));
+    setTargetDays(isJuice ? 3 : 1);
   };
 
   useEffect(() => {

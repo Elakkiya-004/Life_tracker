@@ -4,6 +4,7 @@ import { HabitTodoItem } from '../components/habits/HabitTodoItem';
 import { HabitModal } from '../components/habits/HabitModal';
 import { HabitHistoryModal } from '../components/habits/HabitHistoryModal';
 import { TransactionModal } from '../components/finance/TransactionModal';
+import { useTaskDragAndDrop } from '../hooks/useTaskDragAndDrop';
 import { 
   Flame, 
   Plus, 
@@ -63,6 +64,24 @@ export const DashboardView = () => {
   const currency = settings?.currency || '₹';
   const monthlySalary = settings?.monthlySalary || 18000;
   const budgetLeft = Math.max(0, monthlySalary - currentMonthExpense);
+
+  // Drag and Drop Task Reordering
+  const {
+    draggedId,
+    dropTargetId,
+    dropPosition,
+    handleDragStart,
+    handleDragOver,
+    handleDrop,
+    handleDragEnd,
+    handleTouchStart,
+    handleTouchMove,
+    handleTouchEnd,
+  } = useTaskDragAndDrop({
+    onReorder: (srcId, tgtId, pos) => {
+      if (moveHabit) moveHabit(srcId, tgtId, pos);
+    },
+  });
 
   const habitsList = Array.isArray(habits) ? habits : [];
   const roadmapList = Array.isArray(roadmap) ? roadmap : [];
@@ -488,7 +507,21 @@ export const DashboardView = () => {
               ? habitsList.filter(h => !h.completedDates?.includes(todayStr))
               : habitsList
             ).map((habit) => (
-              <HabitTodoItem key={habit.id} habit={habit} isCompact={true} />
+              <HabitTodoItem 
+                key={habit.id} 
+                habit={habit} 
+                isCompact={true}
+                isDragging={draggedId === habit.id}
+                isDropTarget={dropTargetId === habit.id}
+                dropPosition={dropTargetId === habit.id ? dropPosition : null}
+                onDragStart={handleDragStart}
+                onDragOver={handleDragOver}
+                onDrop={handleDrop}
+                onDragEnd={handleDragEnd}
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+              />
             ))}
           </div>
         )}

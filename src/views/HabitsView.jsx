@@ -4,6 +4,8 @@ import { HabitTodoItem } from '../components/habits/HabitTodoItem';
 import { HabitCard } from '../components/habits/HabitCard';
 import { HabitModal } from '../components/habits/HabitModal';
 import { HabitHistoryModal } from '../components/habits/HabitHistoryModal';
+import { DailyHabitNoteCard } from '../components/habits/DailyHabitNoteCard';
+import { useTaskDragAndDrop } from '../hooks/useTaskDragAndDrop';
 import { getScheduledProtocolsForDay } from '../services/careProtocolUtils';
 import { 
   Plus, 
@@ -12,7 +14,8 @@ import {
   Sun, 
   Moon, 
   Clock, 
-  Sparkles, 
+  Sparkles,
+  GripVertical,
   ListTodo,
   LayoutGrid,
   RotateCcw,
@@ -24,7 +27,8 @@ import {
   Square,
   X,
   RefreshCw,
-  Sliders
+  Sliders,
+  Droplets
 } from 'lucide-react';
 
 export const HabitsView = () => {
@@ -37,6 +41,7 @@ export const HabitsView = () => {
     addHabit, 
     deleteHabit,
     bulkDeleteHabits,
+    moveHabit,
     clearAllHabits,
     resetHabitsToDefault,
     markAllHabitsToday, 
@@ -87,18 +92,62 @@ export const HabitsView = () => {
     );
   };
 
-  const handleAddProtocolHabit = (proto) => {
-    if (isProtocolAdded(proto)) return;
+  const juiceSchedule = daySchedule?.juiceSchedule;
+
+  const isJuiceAdded = (juiceName) => {
+    if (!juiceName) return false;
+    const clean = juiceName.toLowerCase();
+    return habitsList.some(h => h.name && h.name.toLowerCase().includes(clean));
+  };
+
+  const handleAddJuice = (juice) => {
+    if (!juice) return;
+    const habitName = `Drink ${juice.emoji} ${juice.name}`;
+    if (isJuiceAdded(juice.name)) return;
     addHabit({
-      name: proto.suggestedHabitName,
-      category: proto.category || 'Self Care',
-      timeOfDay: proto.suggestedHabitName.toLowerCase().includes('pm') ? 'Evening' : 'Morning',
-      icon: proto.iconName === 'Sun' ? 'Sunrise' : 'Sparkles',
-      color: proto.color || '#ec4899',
-      frequency: 'weekly',
-      targetDays: 1,
+      name: habitName,
+      category: 'Diet & Nutrition',
+      timeOfDay: 'Morning',
+      icon: 'Droplets',
+      color: juice.color || '#f97316',
+      frequency: 'two_days_once',
+      targetDays: 3,
     });
   };
+
+  const handleAddProtocolHabit = (proto) => {
+    if (isProtocolAdded(proto)) return;
+    const isJuice = proto.regimeKey === 'juiceProtocol';
+    addHabit({
+      name: proto.suggestedHabitName,
+      category: proto.category || (isJuice ? 'Diet & Nutrition' : 'Self Care'),
+      timeOfDay: proto.suggestedHabitName.toLowerCase().includes('pm') ? 'Evening' : 'Morning',
+      icon: isJuice ? 'Droplets' : (proto.iconName === 'Sun' ? 'Sunrise' : 'Sparkles'),
+      color: proto.color || (isJuice ? '#f97316' : '#ec4899'),
+      frequency: proto.frequency || (isJuice ? 'two_days_once' : 'weekly'),
+      targetDays: isJuice ? 3 : 1,
+    });
+  };
+
+  // Drag and Drop Task Reordering
+  const {
+    draggedId,
+    dropTargetId,
+    dropPosition,
+    handleDragStart,
+    handleDragOver,
+    handleDrop,
+    handleDragEnd,
+    handleTouchStart,
+    handleTouchMove,
+    handleTouchEnd,
+  } = useTaskDragAndDrop({
+    onReorder: (srcId, tgtId, pos) => {
+      if (moveHabit) {
+        moveHabit(srcId, tgtId, pos);
+      }
+    },
+  });
 
   // Filter habits based on Status, Time of Day, and Search Query
   const filteredHabits = useMemo(() => {
@@ -456,6 +505,110 @@ export const HabitsView = () => {
       )}
       */}
 
+      {/* 📝 Daily Habit Note & Reflection for Today */}
+      <DailyHabitNoteCard />
+
+      {/* 🥤 Alternate-Day Healthy Juice Routine Reminder */}
+      {juiceSchedule && (
+        <div className={`juice-reminder-card card ${juiceSchedule.isJuiceDayToday ? 'is-juice-day' : 'is-rest-day'}`}>
+          <div className="juice-reminder-main">
+            <div 
+              className="juice-icon-box"
+              style={{ 
+                backgroundColor: juiceSchedule.isJuiceDayToday && juiceSchedule.todayJuice 
+                  ? `${juiceSchedule.todayJuice.color}22` 
+                  : 'rgba(99, 102, 241, 0.12)' 
+              }}
+            >
+              <span className="juice-emoji">
+                {juiceSchedule.isJuiceDayToday && juiceSchedule.todayJuice ? juiceSchedule.todayJuice.emoji : '🥤'}
+              </span>
+            </div>
+
+            <div className="juice-info-col">
+              <div className="juice-status-tag-row">
+                <span className={`juice-status-pill ${juiceSchedule.isJuiceDayToday ? 'pill-active' : 'pill-rest'}`}>
+                  {juiceSchedule.isJuiceDayToday ? '✨ TODAY IS JUICE DAY' : '🌿 JUICE REST DAY'}
+                </span>
+                <span className="juice-cadence-pill">Alternate Days Schedule</span>
+              </div>
+
+              {juiceSchedule.isJuiceDayToday && juiceSchedule.todayJuice ? (
+                <>
+                  <h4 className="juice-card-title">
+                    Today's Scheduled Juice: <span style={{ color: juiceSchedule.todayJuice.color }}>{juiceSchedule.todayJuice.name}</span>
+                  </h4>
+                  <p className="juice-card-benefits">
+                    🎯 <strong>Benefits:</strong> {juiceSchedule.todayJuice.benefits}
+                    <span className="juice-dot">•</span>
+                    <span><strong>Ingredients:</strong> {juiceSchedule.todayJuice.ingredients}</span>
+                  </p>
+                </>
+              ) : (
+                <>
+                  <h4 className="juice-card-title">
+                    Juice Break Today
+                  </h4>
+                  <p className="juice-card-benefits">
+                    💧 Hydrate with fresh water, coconut water or herbal tea today. Your next nutrient juice is scheduled for tomorrow!
+                  </p>
+                </>
+              )}
+
+              {/* Tomorrow's Schedule Preview */}
+              <div className="juice-tomorrow-preview">
+                <Calendar size={13} className="text-sub" />
+                <span>
+                  <strong>Tomorrow's Schedule:</strong>{' '}
+                  {juiceSchedule.isJuiceDayTomorrow && juiceSchedule.tomorrowJuice ? (
+                    <span className="tomorrow-highlight">
+                      {juiceSchedule.tomorrowJuice.emoji} {juiceSchedule.tomorrowJuice.name} <small>({juiceSchedule.tomorrowJuice.benefits})</small>
+                    </span>
+                  ) : (
+                    <span className="text-sub">
+                      Rest Day (Next juice: {juiceSchedule.nextJuice ? `${juiceSchedule.nextJuice.emoji} ${juiceSchedule.nextJuice.name}` : 'Scheduled Juice'})
+                    </span>
+                  )}
+                </span>
+              </div>
+            </div>
+
+            <div className="juice-action-col">
+              {juiceSchedule.isJuiceDayToday && juiceSchedule.todayJuice ? (
+                isJuiceAdded(juiceSchedule.todayJuice.name) ? (
+                  <span className="juice-added-badge">
+                    <CheckCheck size={14} />
+                    <span>In Today's Routine</span>
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    className="btn btn-primary btn-sm juice-add-btn"
+                    style={{ backgroundColor: juiceSchedule.todayJuice.color, borderColor: juiceSchedule.todayJuice.color }}
+                    onClick={() => handleAddJuice(juiceSchedule.todayJuice)}
+                    title={`Add "${juiceSchedule.todayJuice.name}" to today's habits list`}
+                  >
+                    <Plus size={14} />
+                    <span>Add to Routine</span>
+                  </button>
+                )
+              ) : (
+                juiceSchedule.tomorrowJuice && (
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm juice-preview-btn"
+                    onClick={() => handleAddJuice(juiceSchedule.tomorrowJuice)}
+                    title="Drink this juice today instead"
+                  >
+                    <span>Drink Today Anyway</span>
+                  </button>
+                )
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ⚡ Inline Fast Add Input Bar */}
       <form onSubmit={handleQuickAdd} className="quick-todo-bar card">
         <div className="quick-input-wrap">
@@ -582,7 +735,16 @@ export const HabitsView = () => {
             />
           </div>
 
-          <div className="view-mode-toggle">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <span 
+              className="text-sub" 
+              style={{ fontSize: '0.72rem', display: 'inline-flex', alignItems: 'center', gap: '3px', opacity: 0.7 }}
+              title="You can drag tasks using the grip handle to arrange them"
+            >
+              <GripVertical size={13} />
+              <span>Drag to Reorder</span>
+            </span>
+            <div className="view-mode-toggle">
             <button
               type="button"
               className={`view-mode-btn ${viewMode === 'checklist' ? 'active' : ''}`}
@@ -601,6 +763,7 @@ export const HabitsView = () => {
             </button>
           </div>
         </div>
+      </div>
       </div>
 
       {/* Bulk Action Controls Bar (When Selection Mode is Active) */}
@@ -734,6 +897,16 @@ export const HabitsView = () => {
               isBulkMode={isBulkMode}
               isSelected={selectedIds.includes(habit.id)}
               onToggleSelect={handleToggleSelect}
+              isDragging={draggedId === habit.id}
+              isDropTarget={dropTargetId === habit.id}
+              dropPosition={dropTargetId === habit.id ? dropPosition : null}
+              onDragStart={handleDragStart}
+              onDragOver={handleDragOver}
+              onDrop={handleDrop}
+              onDragEnd={handleDragEnd}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
             />
           ))}
         </div>
@@ -1479,6 +1652,152 @@ export const HabitsView = () => {
           height: 7px;
           border-radius: 50%;
           flex-shrink: 0;
+        }
+
+        .juice-reminder-card {
+          margin-bottom: 0.85rem;
+          padding: 0.85rem 1.1rem;
+          background: rgba(18, 18, 28, 0.7);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: var(--radius-md);
+          position: relative;
+          overflow: hidden;
+          transition: all 0.2s ease;
+        }
+
+        .juice-reminder-card.is-juice-day {
+          border-left: 4px solid #f97316;
+          background: linear-gradient(135deg, rgba(249, 115, 22, 0.08) 0%, rgba(18, 18, 28, 0.75) 100%);
+        }
+
+        .juice-reminder-card.is-rest-day {
+          border-left: 4px solid #6366f1;
+          background: linear-gradient(135deg, rgba(99, 102, 241, 0.06) 0%, rgba(18, 18, 28, 0.75) 100%);
+        }
+
+        .juice-reminder-main {
+          display: flex;
+          align-items: center;
+          gap: 0.9rem;
+          flex-wrap: wrap;
+        }
+
+        .juice-icon-box {
+          width: 44px;
+          height: 44px;
+          border-radius: var(--radius-md);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        }
+
+        .juice-emoji {
+          font-size: 1.5rem;
+          line-height: 1;
+        }
+
+        .juice-info-col {
+          flex: 1;
+          min-width: 240px;
+          display: flex;
+          flex-direction: column;
+          gap: 0.2rem;
+        }
+
+        .juice-status-tag-row {
+          display: flex;
+          align-items: center;
+          gap: 0.4rem;
+        }
+
+        .juice-status-pill {
+          font-size: 0.68rem;
+          font-weight: 800;
+          letter-spacing: 0.04em;
+          padding: 0.15rem 0.45rem;
+          border-radius: var(--radius-xs);
+        }
+
+        .juice-status-pill.pill-active {
+          background: rgba(249, 115, 22, 0.18);
+          color: #f97316;
+          border: 1px solid rgba(249, 115, 22, 0.3);
+        }
+
+        .juice-status-pill.pill-rest {
+          background: rgba(99, 102, 241, 0.15);
+          color: #818cf8;
+          border: 1px solid rgba(99, 102, 241, 0.3);
+        }
+
+        .juice-cadence-pill {
+          font-size: 0.68rem;
+          color: var(--text-muted);
+          font-weight: 600;
+        }
+
+        .juice-card-title {
+          margin: 0;
+          font-size: 0.95rem;
+          font-weight: 700;
+          color: var(--text-primary);
+        }
+
+        .juice-card-benefits {
+          margin: 0;
+          font-size: 0.78rem;
+          color: var(--text-secondary);
+          display: flex;
+          align-items: center;
+          gap: 0.4rem;
+          flex-wrap: wrap;
+        }
+
+        .juice-dot {
+          opacity: 0.4;
+        }
+
+        .juice-tomorrow-preview {
+          display: flex;
+          align-items: center;
+          gap: 0.35rem;
+          font-size: 0.74rem;
+          color: var(--text-secondary);
+          margin-top: 0.2rem;
+          padding-top: 0.25rem;
+          border-top: 1px dashed rgba(255, 255, 255, 0.06);
+        }
+
+        .tomorrow-highlight {
+          color: var(--accent-primary);
+          font-weight: 600;
+        }
+
+        .juice-action-col {
+          display: flex;
+          align-items: center;
+          gap: 0.45rem;
+        }
+
+        .juice-add-btn {
+          font-weight: 700;
+          padding: 0.4rem 0.85rem;
+          gap: 0.35rem;
+          box-shadow: 0 2px 10px rgba(249, 115, 22, 0.3);
+        }
+
+        .juice-added-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.3rem;
+          padding: 0.35rem 0.65rem;
+          background: rgba(16, 185, 129, 0.15);
+          color: #10b981;
+          font-size: 0.78rem;
+          font-weight: 700;
+          border-radius: var(--radius-sm);
+          border: 1px solid rgba(16, 185, 129, 0.3);
         }
       `}</style>
     </div>

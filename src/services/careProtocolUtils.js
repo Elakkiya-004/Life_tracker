@@ -1,3 +1,5 @@
+import { DEFAULT_JUICES } from './cloudDatabase';
+
 /**
  * Utility functions for Skin Care, Body Care, and Hair Care regimes:
  * - Frequency dropdown options & badges
@@ -402,9 +404,119 @@ export const getScheduledProtocolsForDay = (healthProtocol = {}, dateOrDayName =
     }
   });
 
+  // 4. Healthy Juices & Hydration Regime (Alternate Days)
+  const juiceSchedule = getJuiceSchedule(dateOrDayName, healthProtocol.juiceProtocol);
+  if (juiceSchedule.isJuiceDayToday && juiceSchedule.todayJuice) {
+    const j = juiceSchedule.todayJuice;
+    results.push({
+      id: `proto-juice-${j.id}`,
+      regimeKey: 'juiceProtocol',
+      regimeName: 'Diet & Juice',
+      iconName: 'Droplets',
+      color: j.color || '#f97316',
+      category: 'Diet & Nutrition',
+      title: `${j.emoji} ${j.name}`,
+      frequencyLabel: 'Alternate Days (Today)',
+      frequency: 'two_days_once',
+      points: [
+        `${j.ingredients} — ${j.benefits}`,
+        juiceSchedule.tomorrowJuice 
+          ? `Tomorrow: ${juiceSchedule.tomorrowJuice.emoji} ${juiceSchedule.tomorrowJuice.name}` 
+          : `Tomorrow: Rest Day (Next: ${juiceSchedule.nextJuice ? juiceSchedule.nextJuice.emoji + ' ' + juiceSchedule.nextJuice.name : 'Scheduled Juice'})`
+      ],
+      notes: 'Drink fresh on an empty stomach or mid-morning for optimal nutrient absorption.',
+      suggestedHabitName: `Drink ${j.name}`,
+      juiceData: j,
+    });
+  }
+
   return {
     dayName: targetDay,
     protocols: results,
     hasProtocols: results.length > 0,
+    juiceSchedule,
+  };
+};
+
+/**
+ * Calculates the alternate-day juice rotation for any given date.
+ * Returns information for both Today and Tomorrow, as well as the next scheduled juice.
+ */
+export const getJuiceSchedule = (dateOrStr, juiceProtocol = {}) => {
+  const protocol = juiceProtocol || {};
+  const juices = Array.isArray(protocol.juices) && protocol.juices.length > 0
+    ? protocol.juices
+    : DEFAULT_JUICES;
+
+  let targetDate;
+  if (!dateOrStr) {
+    targetDate = new Date();
+  } else if (typeof dateOrStr === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateOrStr)) {
+    targetDate = new Date(dateOrStr + 'T12:00:00');
+  } else if (typeof dateOrStr === 'string') {
+    const daysMap = { sunday: 0, monday: 1, tuesday: 2, wednesday: 3, thursday: 4, friday: 5, saturday: 6 };
+    const dayNum = daysMap[dateOrStr.toLowerCase()];
+    if (dayNum !== undefined) {
+      const now = new Date();
+      const currentDayNum = now.getDay();
+      const diff = dayNum - currentDayNum;
+      targetDate = new Date(now.getTime() + diff * 86400000);
+    } else {
+      targetDate = new Date();
+    }
+  } else if (dateOrStr instanceof Date) {
+    targetDate = dateOrStr;
+  } else {
+    targetDate = new Date();
+  }
+
+  const y = targetDate.getFullYear();
+  const m = String(targetDate.getMonth() + 1).padStart(2, '0');
+  const d = String(targetDate.getDate()).padStart(2, '0');
+  const targetDateStr = `${y}-${m}-${d}`;
+
+  // Anchor date (Default: '2026-09-26' - Day 0 is Juice 1)
+  const anchorStr = protocol.startDate || '2026-09-26';
+  const anchorDate = new Date(anchorStr + 'T12:00:00');
+
+  const msPerDay = 1000 * 60 * 60 * 24;
+  const diffDays = Math.round((new Date(targetDateStr + 'T12:00:00').getTime() - anchorDate.getTime()) / msPerDay);
+
+  // Even days from anchor are juice days (0, 2, 4...)
+  const isJuiceDayToday = ((diffDays % 2) + 2) % 2 === 0;
+  const cycleCount = Math.floor(diffDays / 2);
+  const todayJuiceIndex = ((cycleCount % juices.length) + juices.length) % juices.length;
+  const todayJuice = isJuiceDayToday ? juices[todayJuiceIndex] : null;
+
+  // Tomorrow calculation (diffDays + 1)
+  const tomorrowDiff = diffDays + 1;
+  const isJuiceDayTomorrow = ((tomorrowDiff % 2) + 2) % 2 === 0;
+  const tomorrowCycle = Math.floor(tomorrowDiff / 2);
+  const tomorrowJuiceIndex = ((tomorrowCycle % juices.length) + juices.length) % juices.length;
+  const tomorrowJuice = isJuiceDayTomorrow ? juices[tomorrowJuiceIndex] : null;
+
+  // Next scheduled juice
+  let nextJuice;
+  let nextJuiceDateStr;
+  if (isJuiceDayToday) {
+    nextJuice = juices[(todayJuiceIndex + 1) % juices.length];
+    const nextDate = new Date(new Date(targetDateStr + 'T12:00:00').getTime() + 2 * msPerDay);
+    nextJuiceDateStr = `${nextDate.getFullYear()}-${String(nextDate.getMonth() + 1).padStart(2, '0')}-${String(nextDate.getDate()).padStart(2, '0')}`;
+  } else {
+    nextJuice = tomorrowJuice;
+    const nextDate = new Date(new Date(targetDateStr + 'T12:00:00').getTime() + 1 * msPerDay);
+    nextJuiceDateStr = `${nextDate.getFullYear()}-${String(nextDate.getMonth() + 1).padStart(2, '0')}-${String(nextDate.getDate()).padStart(2, '0')}`;
+  }
+
+  return {
+    targetDateStr,
+    isJuiceDayToday,
+    todayJuice,
+    isJuiceDayTomorrow,
+    tomorrowJuice,
+    nextJuice,
+    nextJuiceDateStr,
+    allJuices: juices,
+    cadenceLabel: 'Alternate Days (Every 2 days)',
   };
 };
