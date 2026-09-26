@@ -5,6 +5,7 @@ import { HabitCard } from '../components/habits/HabitCard';
 import { HabitModal } from '../components/habits/HabitModal';
 import { HabitHistoryModal } from '../components/habits/HabitHistoryModal';
 import { DailyHabitNoteCard } from '../components/habits/DailyHabitNoteCard';
+import { WaterReminderCard } from '../components/health/WaterReminderCard';
 import { useTaskDragAndDrop } from '../hooks/useTaskDragAndDrop';
 import { getScheduledProtocolsForDay } from '../services/careProtocolUtils';
 import { 
@@ -507,6 +508,9 @@ export const HabitsView = () => {
 
       {/* 📝 Daily Habit Note & Reflection for Today */}
       <DailyHabitNoteCard />
+
+      {/* 💧 Daily Hydration Tracker & Scheduled Water Reminder */}
+      <WaterReminderCard />
 
       {/* 🥤 Alternate-Day Healthy Juice Routine Reminder */}
       {juiceSchedule && (

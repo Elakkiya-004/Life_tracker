@@ -242,7 +242,9 @@ export const WorkoutSection = () => {
               <ExerciseAnimation 
                 animationType={exercise.animationType}
                 isPlaying={true}
-                size={140}
+                size={145}
+                showGuide={true}
+                showFormBreakdown={false}
               />
             </div>
 

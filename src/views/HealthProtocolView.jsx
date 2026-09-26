@@ -32,6 +32,7 @@ import { ExcelUploadModal } from '../components/health/ExcelUploadModal';
 import { CareRegimeModal } from '../components/health/CareRegimeModal';
 import { CalorieCalculatorModal } from '../components/health/CalorieCalculatorModal';
 import { WorkoutSection } from '../components/health/WorkoutSection';
+import { WaterReminderCard } from '../components/health/WaterReminderCard';
 import { normalizeCareRegime, getFrequencyMeta, getJuiceSchedule } from '../services/careProtocolUtils';
 import { DEFAULT_JUICES } from '../services/cloudDatabase';
 import { Modal } from '../components/common/Modal';
@@ -869,6 +870,9 @@ export const HealthProtocolView = () => {
             </button>
           </div>
         </div>
+
+        {/* 💧 Daily Hydration Tracker & Scheduled Water Reminder */}
+        <WaterReminderCard />
 
         {/* Live Today & Tomorrow Rotation Banner */}
         {juiceSchedule && (

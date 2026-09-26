@@ -252,6 +252,8 @@ export const WorkoutPlayerModal = ({
                       animationType={currentExercise.animationType}
                       isPlaying={!isPaused && phase === 'work'}
                       size={200}
+                      showGuide={true}
+                      showFormBreakdown={true}
                     />
                     <div className="anim-caption">
                       <span className="anim-exercise-name">{currentExercise.name}</span>
