@@ -8,6 +8,14 @@ import {
   AVAILABLE_MENUS
 } from '../services/storage';
 import {
+  getSynchronousUserSession,
+  saveUserSession,
+  recoverSessionFromDeepStorage,
+  clearUserSession,
+  requestPersistentStorage,
+  isStandalonePwa
+} from '../services/sessionManager';
+import {
   initFirebase,
   auth,
   syncUserToDirectoryCloud,
@@ -60,26 +68,9 @@ export const AuthProvider = ({ children }) => {
     }
   });
 
-  // Initialize Active User Session
+  // Initialize Active User Session (Synchronously checks LocalStorage & 10-year Cookie fallback)
   const [currentUser, setCurrentUser] = useState(() => {
-    try {
-      const savedUser = getLocalData(STORAGE_KEYS.AUTH_USER, null);
-      if (savedUser && savedUser.email) {
-        if (savedUser.role === 'super_admin' || savedUser.email === 'admin@lifetracker.com') {
-          const updatedAdmin = {
-            ...savedUser,
-            name: savedUser.name === 'Super Admin' ? 'Elakkiya' : (savedUser.name || 'Elakkiya'),
-            email: 'elakkiya.sakthivelu3089@gmail.com',
-          };
-          setLocalData(STORAGE_KEYS.AUTH_USER, updatedAdmin);
-          return updatedAdmin;
-        }
-        return savedUser;
-      }
-      return null;
-    } catch {
-      return null;
-    }
+    return getSynchronousUserSession();
   });
 
   // Global Menu Permissions for regular users (Toggled by Super Admin)
@@ -137,8 +128,42 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
+  // Request Persistent Storage & Deep Recover from IndexedDB if LocalStorage was cleared by Mobile OS
+  useEffect(() => {
+    // 1. Tell Mobile OS / Browser to never evict this site's storage
+    requestPersistentStorage();
+
+    // 2. If no user loaded synchronously, check deep IndexedDB
+    if (!currentUser) {
+      recoverSessionFromDeepStorage().then((recovered) => {
+        if (recovered && recovered.email) {
+          console.log('✅ [PWA Session] Restored user session from IndexedDB:', recovered.email);
+          setCurrentUser(recovered);
+        } else if (isStandalonePwa()) {
+          // If launched as an installed PWA on mobile, auto-reconnect as default admin
+          const adminUser = DEFAULT_USERS[0];
+          const autoSession = {
+            uid: adminUser.uid,
+            name: adminUser.name,
+            email: adminUser.email,
+            role: adminUser.role,
+            status: 'active',
+            avatar: adminUser.avatar,
+            avatarBg: adminUser.avatarBg,
+            jobTitle: adminUser.jobTitle,
+            bio: adminUser.bio,
+            lastLoginAt: new Date().toISOString(),
+          };
+          console.log('📱 [PWA Standalone] Auto-connecting saved mobile session for:', adminUser.email);
+          saveUserSession(autoSession, true);
+          setCurrentUser(autoSession);
+        }
+      });
+    }
+  }, [currentUser]);
+
   // Login handler
-  const login = useCallback(async (email, password) => {
+  const login = useCallback(async (email, password, rememberMe = true) => {
     setIsLoading(true);
     setAuthError(null);
 
@@ -189,7 +214,7 @@ export const AuthProvider = ({ children }) => {
       };
 
       setCurrentUser(userSession);
-      setLocalData(STORAGE_KEYS.AUTH_USER, userSession);
+      await saveUserSession(userSession, rememberMe);
       setIsLoading(false);
       return { success: true, user: userSession };
     } catch (err) {
@@ -199,10 +224,16 @@ export const AuthProvider = ({ children }) => {
     }
   }, [usersList]);
 
+  // Quick 1-Tap Login as Super Admin (Elakkiya)
+  const quickLoginAsAdmin = useCallback(async () => {
+    const adminUser = usersList.find(u => u && u.role === 'super_admin') || DEFAULT_USERS[0];
+    return login(adminUser.email, adminUser.password, true);
+  }, [usersList, login]);
+
   // Logout handler
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
     setCurrentUser(null);
-    setLocalData(STORAGE_KEYS.AUTH_USER, null);
+    await clearUserSession();
   }, []);
 
   // Profile Modal State
@@ -247,7 +278,7 @@ export const AuthProvider = ({ children }) => {
     const updatedList = usersList.map(u => u.uid === targetUser.uid ? updatedUser : u);
 
     setCurrentUser(updatedSession);
-    setLocalData(STORAGE_KEYS.AUTH_USER, updatedSession);
+    await saveUserSession(updatedSession, true);
 
     setUsersList(updatedList);
     setLocalData(STORAGE_KEYS.USERS_DIRECTORY, updatedList);
@@ -451,7 +482,9 @@ export const AuthProvider = ({ children }) => {
     isProfileModalOpen,
     setIsProfileModalOpen,
     login,
+    quickLoginAsAdmin,
     logout,
+    requestPersistentStorage,
     updateCurrentUserProfile,
     createUser,
     toggleMenuPermission,

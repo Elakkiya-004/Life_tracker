@@ -10,6 +10,11 @@ import {
   onSnapshot
 } from 'firebase/firestore';
 import { db, isInitialized, initFirebase } from './firebase';
+import { 
+  NIGHT_DIET_SOUPS, 
+  WEEKLY_SOUP_ROTATION, 
+  SOUP_WEIGHT_LOSS_TIPS 
+} from './nightDietSoupData';
 
 // ============================================================================
 // 1. DATABASE DEFAULT SCHEMAS & SEED TEMPLATES
@@ -113,65 +118,92 @@ export const DB_HEALTH_PROTOCOL_TEMPLATE = {
     juices: [
       {
         id: 'juice-1',
-        name: 'Carrot + amla juice',
+        name: 'Carrot + Amla + Ginger Juice',
         emoji: '🥕',
-        ingredients: 'Carrot + amla',
-        benefits: 'Antioxidants + vitamin C',
+        ingredients: 'Carrot + amla + small piece of ginger + water',
+        benefits: 'Vitamin C + carotenoids + antioxidants + digestive support',
         color: '#f97316',
         timeOfDay: 'Morning',
       },
       {
         id: 'juice-2',
-        name: 'Apple + cucumber juice',
-        emoji: '🍎',
-        ingredients: 'Apple + cucumber',
-        benefits: 'Hydration + some gut-supportive polyphenols',
-        color: '#ef4444',
+        name: 'Cucumber + Mint + Lemon Juice',
+        emoji: '🥒',
+        ingredients: 'Cucumber + mint + lemon + water',
+        benefits: 'Hydration + vitamin C + refreshing + very low calorie',
+        color: '#10b981',
         timeOfDay: 'Morning',
       },
       {
         id: 'juice-3',
-        name: 'Orange + carrot juice',
-        emoji: '🍊',
-        ingredients: 'Orange + carrot',
-        benefits: 'Vitamin C + carotenoids',
-        color: '#f59e0b',
+        name: 'Apple + Cucumber + Ginger Smoothie',
+        emoji: '🍎',
+        ingredients: 'Apple + cucumber + ginger + water',
+        benefits: 'Fibre + polyphenols + hydration + digestive support',
+        color: '#ef4444',
         timeOfDay: 'Morning',
       },
       {
         id: 'juice-4',
-        name: 'Watermelon + mint juice',
-        emoji: '🍉',
-        ingredients: 'Watermelon + mint',
-        benefits: 'Hydration',
-        color: '#ec4899',
+        name: 'Orange + Carrot + Ginger Juice',
+        emoji: '🍊',
+        ingredients: 'Orange + carrot + small piece of ginger + water',
+        benefits: 'Vitamin C + carotenoids + antioxidants + skin support',
+        color: '#f59e0b',
         timeOfDay: 'Morning',
       },
       {
         id: 'juice-5',
-        name: 'Papaya + ginger smoothie/juice',
-        emoji: '🥭',
-        ingredients: 'Papaya + ginger',
-        benefits: 'Fiber and digestive enzymes',
-        color: '#eab308',
+        name: 'Watermelon + Mint + Lemon Juice',
+        emoji: '🍉',
+        ingredients: 'Watermelon + mint + lemon + water',
+        benefits: 'Hydration + vitamin C + refreshing + supports healthy-looking skin',
+        color: '#ec4899',
         timeOfDay: 'Morning',
       },
       {
         id: 'juice-6',
-        name: 'Pear + cucumber juice',
-        emoji: '🍐',
-        ingredients: 'Pear + cucumber',
-        benefits: 'Hydration + gentle fiber if blended',
-        color: '#84cc16',
+        name: 'Papaya + Amla Smoothie',
+        emoji: '🧡',
+        ingredients: 'Ripe papaya + amla + water',
+        benefits: 'Fibre + vitamin C + carotenoids + digestive support',
+        color: '#ea580c',
         timeOfDay: 'Morning',
       },
       {
         id: 'juice-7',
-        name: 'Tomato + carrot juice',
+        name: 'Tomato + Carrot + Amla Juice',
         emoji: '🍅',
-        ingredients: 'Tomato + carrot',
-        benefits: 'Lycopene + carotenoids',
+        ingredients: 'Tomato + carrot + amla + water',
+        benefits: 'Lycopene + carotenoids + vitamin C + antioxidants',
         color: '#dc2626',
+        timeOfDay: 'Morning',
+      },
+      {
+        id: 'juice-8',
+        name: 'Pineapple + Mint + Ginger Smoothie',
+        emoji: '🍍',
+        ingredients: 'Pineapple + mint + small piece of ginger + water',
+        benefits: 'Vitamin C + antioxidants + fibre + digestive support',
+        color: '#eab308',
+        timeOfDay: 'Morning',
+      },
+      {
+        id: 'juice-9',
+        name: 'Cucumber + Amla + Coriander Juice',
+        emoji: '🥒',
+        ingredients: 'Cucumber + amla + coriander leaves + lemon + water',
+        benefits: 'Hydration + vitamin C + antioxidants + refreshing',
+        color: '#059669',
+        timeOfDay: 'Morning',
+      },
+      {
+        id: 'juice-10',
+        name: 'Tomato + Watermelon + Mint Juice',
+        emoji: '🍅',
+        ingredients: 'Tomato + watermelon + mint + lemon',
+        benefits: 'Lycopene + hydration + antioxidants + vitamin C',
+        color: '#e11d48',
         timeOfDay: 'Morning',
       },
     ],
@@ -206,7 +238,10 @@ export const sanitizeHealthProtocol = (raw) => {
     }
   }
 
-  if (!protocol.juiceProtocol || !Array.isArray(protocol.juiceProtocol.juices) || protocol.juiceProtocol.juices.length === 0) {
+  const isOldDefaultList = protocol.juiceProtocol?.juices?.length === 7 && 
+    protocol.juiceProtocol.juices.some(j => j.name && (j.name.toLowerCase().includes('pear') || j.name.toLowerCase().includes('papaya + ginger')));
+
+  if (!protocol.juiceProtocol || !Array.isArray(protocol.juiceProtocol.juices) || protocol.juiceProtocol.juices.length === 0 || isOldDefaultList) {
     protocol.juiceProtocol = {
       ...DB_HEALTH_PROTOCOL_TEMPLATE.juiceProtocol,
       ...(protocol.juiceProtocol || {}),
@@ -555,6 +590,20 @@ export const seedDatabaseIfEmpty = async () => {
       console.log('🌱 Seeded system_templates/mcu_watchlist in Cloud Database');
     }
 
+    // 4. Seed 20 Night Diet Soups & Weekly Rotation in Firestore
+    const soupsDocRef = doc(db, 'system_templates', 'night_diet_soups');
+    const soupsSnap = await getDoc(soupsDocRef);
+    if (!soupsSnap.exists()) {
+      await setDoc(soupsDocRef, {
+        soups: NIGHT_DIET_SOUPS,
+        weeklyRotation: WEEKLY_SOUP_ROTATION,
+        tips: SOUP_WEIGHT_LOSS_TIPS,
+        count: NIGHT_DIET_SOUPS.length,
+        seededAt: new Date().toISOString()
+      });
+      console.log('🌱 Seeded system_templates/night_diet_soups in Cloud Database');
+    }
+
     return { success: true };
   } catch (err) {
     console.error('Error seeding Cloud Database:', err);
@@ -635,5 +684,48 @@ export const listenToHealthProtocolDB = (userId, onUpdate) => {
   } catch (err) {
     console.error('Failed to attach health protocol DB listener:', err);
     return () => {};
+  }
+};
+
+/**
+ * Fetch Night Diet Soups from Firestore with fallback to bundled master data
+ */
+export const getNightDietSoupsFromDB = async () => {
+  if (!db || !isInitialized) {
+    initFirebase();
+  }
+  try {
+    const soupsDocRef = doc(db, 'system_templates', 'night_diet_soups');
+    const snap = await getDoc(soupsDocRef);
+    if (snap.exists() && snap.data()?.soups) {
+      return snap.data();
+    }
+  } catch (err) {
+    console.warn('Error fetching soups from DB, using bundled data:', err);
+  }
+  return {
+    soups: NIGHT_DIET_SOUPS,
+    weeklyRotation: WEEKLY_SOUP_ROTATION,
+    tips: SOUP_WEIGHT_LOSS_TIPS,
+  };
+};
+
+/**
+ * Save Night Diet Soups directly to Cloud Firestore
+ */
+export const saveNightDietSoupsToDB = async (soupsData) => {
+  if (!db || !isInitialized) {
+    initFirebase();
+  }
+  try {
+    const soupsDocRef = doc(db, 'system_templates', 'night_diet_soups');
+    await setDoc(soupsDocRef, {
+      ...soupsData,
+      updatedAt: new Date().toISOString()
+    }, { merge: true });
+    return { success: true };
+  } catch (err) {
+    console.error('Error saving night diet soups to DB:', err);
+    return { success: false, error: err };
   }
 };

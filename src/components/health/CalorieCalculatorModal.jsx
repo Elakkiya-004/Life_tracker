@@ -1214,14 +1214,14 @@ export const CalorieCalculatorModal = ({ isOpen, onClose, onApplySuccess }) => {
 
                 {/* Categories */}
                 <div className="category-chips">
-                  {['All', 'Protein', 'Carbs', 'Fats', 'Produce'].map(cat => (
+                  {['All', 'Night Diet Soups', 'Protein', 'Carbs', 'Fats', 'Produce'].map(cat => (
                     <button
                       key={cat}
                       type="button"
                       className={`cat-chip ${selectedCategory === cat ? 'active' : ''}`}
                       onClick={() => setSelectedCategory(cat)}
                     >
-                      {cat}
+                      {cat === 'Night Diet Soups' ? '🍲 Night Diet Soups (20)' : cat}
                     </button>
                   ))}
                 </div>

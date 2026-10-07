@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { requestPersistentStorage } from '../services/sessionManager';
 
 const PwaContext = createContext(null);
 
@@ -11,6 +12,9 @@ export const PwaProvider = ({ children }) => {
   const [swRegistration, setSwRegistration] = useState(null);
 
   useEffect(() => {
+    // 0. Request Persistent Storage to prevent Mobile OS from purging local data
+    requestPersistentStorage();
+
     // 1. Check if running in standalone mode (already installed as PWA)
     const isStandalone =
       window.matchMedia('(display-mode: standalone)').matches ||

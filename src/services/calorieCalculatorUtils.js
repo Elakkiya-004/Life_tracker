@@ -2,6 +2,7 @@
  * Calorie, TDEE, BMR & Macro Calculation Utilities
  * Based on gold-standard Mifflin-St Jeor formula and nutritional guidelines.
  */
+import { NIGHT_DIET_SOUPS } from './nightDietSoupData';
 
 export const ACTIVITY_LEVELS = {
   sedentary: {
@@ -245,10 +246,32 @@ export const calculateNutritionPlan = ({
 };
 
 /**
+ * 20 Oil-Free Night Diet Soups mapped into Food Database items
+ */
+export const SOUP_FOOD_ITEMS = NIGHT_DIET_SOUPS.map(s => ({
+  id: `food_${s.id}`,
+  name: s.name,
+  category: 'Night Diet Soups',
+  unit: s.servingSize,
+  servingGrams: s.servingGrams,
+  calories: s.calories,
+  protein: s.protein,
+  carbs: s.carbs,
+  fats: s.fats,
+  fibre: s.fibre,
+  icon: s.emoji || '🍲',
+  isNightDietSoup: true,
+  description: s.description,
+}));
+
+/**
  * Built-in Food & Nutrition Database
  * High-utility common foods with calories and macronutrient values per 100g.
  */
 export const FOOD_DATABASE = [
+  // --- 20 Oil-Free Night Diet Soups (Weight Management) ---
+  ...SOUP_FOOD_ITEMS,
+
   // --- High Protein ---
   {
     id: 'boiled_egg',
@@ -615,6 +638,128 @@ export const FOOD_DATABASE = [
     carbs: 15.0,
     fats: 0.4,
     icon: '🍈',
+  },
+
+  // --- 10 Fresh Healthy Juices & Smoothies ---
+  {
+    id: 'juice_carrot_amla_ginger',
+    name: 'Carrot + Amla + Ginger Juice',
+    category: 'Produce',
+    unit: '1 glass (~250ml)',
+    servingGrams: 250,
+    calories: 55,
+    protein: 1.2,
+    carbs: 12.5,
+    fats: 0.3,
+    icon: '🥕',
+  },
+  {
+    id: 'juice_cucumber_mint_lemon',
+    name: 'Cucumber + Mint + Lemon Juice',
+    category: 'Produce',
+    unit: '1 glass (~250ml)',
+    servingGrams: 250,
+    calories: 25,
+    protein: 0.9,
+    carbs: 5.2,
+    fats: 0.1,
+    icon: '🥒',
+  },
+  {
+    id: 'juice_apple_cucumber_ginger',
+    name: 'Apple + Cucumber + Ginger Smoothie',
+    category: 'Produce',
+    unit: '1 glass (~250ml)',
+    servingGrams: 250,
+    calories: 68,
+    protein: 1.1,
+    carbs: 16.0,
+    fats: 0.3,
+    icon: '🍎',
+  },
+  {
+    id: 'juice_orange_carrot_ginger',
+    name: 'Orange + Carrot + Ginger Juice',
+    category: 'Produce',
+    unit: '1 glass (~250ml)',
+    servingGrams: 250,
+    calories: 62,
+    protein: 1.3,
+    carbs: 14.2,
+    fats: 0.2,
+    icon: '🍊',
+  },
+  {
+    id: 'juice_watermelon_mint_lemon',
+    name: 'Watermelon + Mint + Lemon Juice',
+    category: 'Produce',
+    unit: '1 glass (~250ml)',
+    servingGrams: 250,
+    calories: 45,
+    protein: 0.9,
+    carbs: 10.5,
+    fats: 0.2,
+    icon: '🍉',
+  },
+  {
+    id: 'juice_papaya_amla_smoothie',
+    name: 'Papaya + Amla Smoothie',
+    category: 'Produce',
+    unit: '1 glass (~250ml)',
+    servingGrams: 250,
+    calories: 70,
+    protein: 1.2,
+    carbs: 16.5,
+    fats: 0.3,
+    icon: '🧡',
+  },
+  {
+    id: 'juice_tomato_carrot_amla',
+    name: 'Tomato + Carrot + Amla Juice',
+    category: 'Produce',
+    unit: '1 glass (~250ml)',
+    servingGrams: 250,
+    calories: 48,
+    protein: 1.5,
+    carbs: 10.8,
+    fats: 0.3,
+    icon: '🍅',
+  },
+  {
+    id: 'juice_pineapple_mint_ginger',
+    name: 'Pineapple + Mint + Ginger Smoothie',
+    category: 'Produce',
+    unit: '1 glass (~250ml)',
+    servingGrams: 250,
+    calories: 75,
+    protein: 1.0,
+    carbs: 18.0,
+    fats: 0.2,
+    icon: '🍍',
+  },
+  {
+    id: 'juice_cucumber_amla_coriander',
+    name: 'Cucumber + Amla + Coriander Juice',
+    category: 'Produce',
+    unit: '1 glass (~250ml)',
+    servingGrams: 250,
+    calories: 28,
+    protein: 1.0,
+    carbs: 5.8,
+    fats: 0.2,
+    icon: '🥒',
+  },
+  {
+    id: 'juice_tomato_watermelon_mint',
+    name: 'Tomato + Watermelon + Mint Juice',
+    category: 'Produce',
+    unit: '1 glass (~250ml)',
+    servingGrams: 250,
+    calories: 42,
+    protein: 1.1,
+    carbs: 9.5,
+    fats: 0.2,
+    icon: '🍅',
   }
 ];
 

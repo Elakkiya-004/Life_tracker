@@ -22,7 +22,8 @@ import {
   FileDown,
   Calculator,
   Droplets,
-  CheckCheck
+  CheckCheck,
+  BookOpen
 } from 'lucide-react';
 import { 
   exportHealthProtocolToExcel, 
@@ -32,7 +33,7 @@ import { ExcelUploadModal } from '../components/health/ExcelUploadModal';
 import { CareRegimeModal } from '../components/health/CareRegimeModal';
 import { CalorieCalculatorModal } from '../components/health/CalorieCalculatorModal';
 import { WorkoutSection } from '../components/health/WorkoutSection';
-import { WaterReminderCard } from '../components/health/WaterReminderCard';
+import { NightDietSoupsSection } from '../components/health/NightDietSoupsSection';
 import { normalizeCareRegime, getFrequencyMeta, getJuiceSchedule } from '../services/careProtocolUtils';
 import { DEFAULT_JUICES } from '../services/cloudDatabase';
 import { Modal } from '../components/common/Modal';
@@ -53,6 +54,7 @@ export const HealthProtocolView = () => {
   const [notificationMsg, setNotificationMsg] = useState(null);
   const [isExcelModalOpen, setIsExcelModalOpen] = useState(false);
   const [isCalorieCalcOpen, setIsCalorieCalcOpen] = useState(false);
+  const [selectedJuiceModal, setSelectedJuiceModal] = useState(null);
 
   // Edit Modals State: 'calories' | 'micronutrients' | 'exercise' | 'sugar' | 'skincare' | 'bodycare' | 'haircare' | null
   const [activeModal, setActiveModal] = useState(null);
@@ -782,6 +784,13 @@ export const HealthProtocolView = () => {
       </div>
 
       {/* ========================================================================= */}
+      {/* 🍲 20 Oil-Free Night Diet Soups for Weight Management (Dinner Protocol) */}
+      {/* ========================================================================= */}
+      <NightDietSoupsSection 
+        onOpenCalorieCalculator={() => setIsCalorieCalcOpen(true)} 
+      />
+
+      {/* ========================================================================= */}
       {/* 2. Micronutrients Focus */}
       {/* ========================================================================= */}
       <div className="section-container">
@@ -871,9 +880,6 @@ export const HealthProtocolView = () => {
           </div>
         </div>
 
-        {/* 💧 Daily Hydration Tracker & Scheduled Water Reminder */}
-        <WaterReminderCard />
-
         {/* Live Today & Tomorrow Rotation Banner */}
         {juiceSchedule && (
           <div className={`juice-live-banner card ${juiceSchedule.isJuiceDayToday ? 'banner-active-day' : 'banner-rest-day'}`}>
@@ -929,6 +935,18 @@ export const HealthProtocolView = () => {
             </div>
 
             <div className="juice-live-actions">
+              {(juiceSchedule.todayJuice || juiceSchedule.tomorrowJuice) && (
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => setSelectedJuiceModal(juiceSchedule.isJuiceDayToday && juiceSchedule.todayJuice ? juiceSchedule.todayJuice : juiceSchedule.tomorrowJuice)}
+                  title="View Recipe & Preparation Method in Modal"
+                >
+                  <BookOpen size={13} />
+                  <span>Recipe & Method</span>
+                </button>
+              )}
+
               {juiceSchedule.isJuiceDayToday && juiceSchedule.todayJuice ? (
                 isJuiceAdded(juiceSchedule.todayJuice.name) ? (
                   <span className="badge badge-success" style={{ padding: '0.45rem 0.8rem', gap: '0.35rem' }}>
@@ -962,7 +980,7 @@ export const HealthProtocolView = () => {
           </div>
         )}
 
-        {/* Grid of all 7 Juices */}
+        {/* Grid of all 10 Juices */}
         <div className="juices-grid">
           {juices.map((j, idx) => {
             const isToday = juiceSchedule?.isJuiceDayToday && juiceSchedule?.todayJuice?.id === j.id;
@@ -999,6 +1017,16 @@ export const HealthProtocolView = () => {
                 </div>
 
                 <div className="juice-recipe-footer">
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-xs"
+                    onClick={() => setSelectedJuiceModal(j)}
+                    title="View Ingredients & Preparation Method in Modal"
+                  >
+                    <BookOpen size={12} />
+                    <span>Recipe & Method</span>
+                  </button>
+
                   {alreadyAdded ? (
                     <span className="juice-already-added">
                       <CheckCheck size={13} /> In Habits
@@ -1009,7 +1037,7 @@ export const HealthProtocolView = () => {
                       className="btn btn-ghost btn-xs text-primary juice-quick-add"
                       onClick={() => handleAddJuiceToRoutine(j)}
                     >
-                      <Plus size={12} /> Add to Today's Tasks
+                      <Plus size={12} /> Add to Habits
                     </button>
                   )}
                 </div>
@@ -1017,6 +1045,85 @@ export const HealthProtocolView = () => {
             );
           })}
         </div>
+
+        {/* Juice Recipe & Method Modal */}
+        {selectedJuiceModal && (
+          <Modal
+            isOpen={!!selectedJuiceModal}
+            onClose={() => setSelectedJuiceModal(null)}
+            maxWidth="580px"
+            title={
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <span style={{ fontSize: '2rem', lineHeight: 1 }}>{selectedJuiceModal.emoji}</span>
+                <div>
+                  <div style={{ fontSize: '1.15rem', fontWeight: 700, color: '#f8fafc' }}>{selectedJuiceModal.name}</div>
+                  <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>Fresh Morning Hydration & Nutrition</div>
+                </div>
+              </div>
+            }
+          >
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <span className="badge badge-primary">Alternate Days Cadence</span>
+                <span className="badge badge-success">🌿 100% Raw & Natural</span>
+                <span className="badge badge-warning">⏰ Morning / Empty Stomach</span>
+              </div>
+
+              <div style={{ background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '10px', padding: '0.85rem 1rem' }}>
+                <h5 style={{ fontSize: '0.82rem', fontWeight: 700, textTransform: 'uppercase', color: '#f8fafc', marginBottom: '0.4rem' }}>
+                  🥕 Measured Ingredients
+                </h5>
+                <p style={{ fontSize: '0.9rem', color: '#38bdf8', fontWeight: 600, margin: 0 }}>
+                  {selectedJuiceModal.ingredients}
+                </p>
+              </div>
+
+              <div style={{ background: `${selectedJuiceModal.color || '#f97316'}15`, border: `1px solid ${selectedJuiceModal.color || '#f97316'}35`, borderRadius: '10px', padding: '0.85rem 1rem' }}>
+                <h5 style={{ fontSize: '0.82rem', fontWeight: 700, textTransform: 'uppercase', color: selectedJuiceModal.color || '#f97316', marginBottom: '0.4rem' }}>
+                  ✨ Health Benefits & Micronutrient Support
+                </h5>
+                <p style={{ fontSize: '0.84rem', color: '#f8fafc', margin: 0, lineHeight: 1.45 }}>
+                  {selectedJuiceModal.benefits}
+                </p>
+              </div>
+
+              <div style={{ background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '10px', padding: '0.85rem 1rem' }}>
+                <h5 style={{ fontSize: '0.82rem', fontWeight: 700, textTransform: 'uppercase', color: '#f8fafc', marginBottom: '0.5rem' }}>
+                  🥣 Preparation Method
+                </h5>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', fontSize: '0.8rem', color: '#cbd5e1', lineHeight: 1.45 }}>
+                  <div>1. Thoroughly rinse the fresh vegetables/fruits under running clean drinking water.</div>
+                  <div>2. Roughly chop and deseed (especially amla, lemon, or citrus seeds).</div>
+                  <div>3. Add to a blender jar with 150–200 ml of fresh room-temperature drinking water.</div>
+                  <div>4. Blend on high speed for 45–60 seconds until smooth and velvety.</div>
+                  <div>5. Pour into a glass and drink immediately. Do not strain if you want full dietary fibre and optimal digestive satiety.</div>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem', paddingTop: '0.75rem', borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                <button type="button" className="btn btn-secondary" onClick={() => setSelectedJuiceModal(null)}>
+                  Close
+                </button>
+                {isJuiceAdded(selectedJuiceModal.name) ? (
+                  <span className="badge badge-success" style={{ padding: '0.55rem 0.9rem' }}>
+                    <CheckCheck size={14} /> Already In Habits
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={() => {
+                      handleAddJuiceToRoutine(selectedJuiceModal);
+                      setSelectedJuiceModal(null);
+                    }}
+                  >
+                    <Plus size={14} /> Add to Today's Habits
+                  </button>
+                )}
+              </div>
+            </div>
+          </Modal>
+        )}
       </div>
 
       {/* ========================================================================= */}

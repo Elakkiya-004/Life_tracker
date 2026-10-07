@@ -11,21 +11,33 @@ import {
 } from 'lucide-react';
 
 export const LoginView = () => {
-  const { login, isLoading, authError } = useAuth();
+  const { login, quickLoginAsAdmin, isLoading, authError } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
   const [localError, setLocalError] = useState(null);
+  const [quickLoading, setQuickLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLocalError(null);
 
-    const res = await login(email, password);
+    const res = await login(email, password, rememberMe);
     if (!res.success) {
       setLocalError(res.error);
     }
+  };
+
+  const handleQuickAdminLogin = async () => {
+    setLocalError(null);
+    setQuickLoading(true);
+    const res = await quickLoginAsAdmin();
+    if (!res.success) {
+      setLocalError(res.error);
+    }
+    setQuickLoading(false);
   };
 
   return (
@@ -54,6 +66,35 @@ export const LoginView = () => {
           </div>
         )}
 
+        {/* 1-Tap Quick Access for Mobile PWA */}
+        <div className="quick-access-box">
+          <div className="quick-access-header">
+            <Sparkles size={16} className="text-warning" />
+            <span className="quick-access-label">Mobile Fast Access</span>
+          </div>
+          <div className="quick-access-content">
+            <div className="quick-avatar-badge">👑</div>
+            <div className="quick-user-info">
+              <div className="quick-user-name">Elakkiya Sakthivelu</div>
+              <div className="quick-user-role">Super Admin • Permanent Session</div>
+            </div>
+            <button
+              type="button"
+              className="btn btn-quick-login"
+              onClick={handleQuickAdminLogin}
+              disabled={isLoading || quickLoading}
+            >
+              {quickLoading ? 'Signing In...' : '1-Tap Sign In'}
+              <ArrowRight size={14} />
+            </button>
+          </div>
+        </div>
+
+        {/* Divider */}
+        <div className="login-divider">
+          <span>or sign in with credentials</span>
+        </div>
+
         {/* Login Form */}
         <form onSubmit={handleSubmit} className="login-form">
           <div className="input-group">
@@ -63,7 +104,7 @@ export const LoginView = () => {
               <input
                 type="email"
                 className="input pl-9"
-                placeholder="name@lifetracker.com"
+                placeholder="elakkiya.sakthivelu3089@gmail.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -95,10 +136,26 @@ export const LoginView = () => {
             </div>
           </div>
 
+          {/* Remember Me Checkbox - Prevents Mobile PWA daily logouts */}
+          <div className="remember-me-container">
+            <label className="remember-me-label">
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="remember-checkbox"
+              />
+              <span className="remember-text">
+                <strong>Stay logged in permanently</strong>
+                <span className="remember-sub">Preserves login on Mobile PWA & iOS Safari</span>
+              </span>
+            </label>
+          </div>
+
           <button
             type="submit"
             className="btn btn-primary btn-submit-login"
-            disabled={isLoading}
+            disabled={isLoading || quickLoading}
           >
             <span>{isLoading ? 'Authenticating...' : 'Sign In to Workspace'}</span>
             <ArrowRight size={16} />
@@ -107,9 +164,10 @@ export const LoginView = () => {
 
         {/* Footer Info */}
         <div className="login-footer">
-          <span className="text-xs text-sub">
-            🔒 Protected by Super Admin Role Governance • Firebase Cloud Sync
-          </span>
+          <div className="pwa-status-badge">
+            <span className="status-dot"></span>
+            <span>4-Tier Resilient Storage • Multi-Device Cloud Sync</span>
+          </div>
         </div>
       </div>
 
@@ -288,6 +346,177 @@ export const LoginView = () => {
           align-items: center;
           justify-content: center;
           text-align: center;
+        }
+
+        /* 1-Tap Quick Access */
+        .quick-access-box {
+          background: linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(168, 85, 247, 0.12) 100%);
+          border: 1px solid rgba(168, 85, 247, 0.28);
+          border-radius: var(--radius-md);
+          padding: 1rem;
+          display: flex;
+          flex-direction: column;
+          gap: 0.75rem;
+          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+        }
+
+        .quick-access-header {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        }
+
+        .quick-access-label {
+          font-size: 0.72rem;
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+          font-weight: 700;
+          color: #f59e0b;
+        }
+
+        .quick-access-content {
+          display: flex;
+          align-items: center;
+          gap: 0.85rem;
+        }
+
+        .quick-avatar-badge {
+          width: 40px;
+          height: 40px;
+          border-radius: 12px;
+          background: rgba(245, 158, 11, 0.15);
+          border: 1px solid rgba(245, 158, 11, 0.4);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 1.25rem;
+          flex-shrink: 0;
+        }
+
+        .quick-user-info {
+          flex: 1;
+          min-width: 0;
+        }
+
+        .quick-user-name {
+          font-size: 0.9rem;
+          font-weight: 700;
+          color: var(--text-main);
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .quick-user-role {
+          font-size: 0.72rem;
+          color: var(--text-muted);
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .btn-quick-login {
+          background: #6366f1;
+          color: #ffffff;
+          border: none;
+          padding: 0.5rem 0.85rem;
+          border-radius: var(--radius-sm);
+          font-size: 0.8rem;
+          font-weight: 700;
+          display: flex;
+          align-items: center;
+          gap: 0.35rem;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          white-space: nowrap;
+          flex-shrink: 0;
+        }
+
+        .btn-quick-login:hover:not(:disabled) {
+          background: #4f46e5;
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+        }
+
+        /* Divider */
+        .login-divider {
+          display: flex;
+          align-items: center;
+          text-align: center;
+          color: var(--text-muted);
+          font-size: 0.75rem;
+          font-weight: 600;
+        }
+
+        .login-divider::before,
+        .login-divider::after {
+          content: '';
+          flex: 1;
+          border-bottom: 1px solid var(--border-color);
+        }
+
+        .login-divider span {
+          padding: 0 0.75rem;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+        }
+
+        /* Remember Me Container */
+        .remember-me-container {
+          background: rgba(255, 255, 255, 0.02);
+          border: 1px solid var(--border-color);
+          border-radius: var(--radius-sm);
+          padding: 0.75rem;
+        }
+
+        .remember-me-label {
+          display: flex;
+          align-items: flex-start;
+          gap: 0.75rem;
+          cursor: pointer;
+        }
+
+        .remember-checkbox {
+          width: 17px;
+          height: 17px;
+          margin-top: 2px;
+          accent-color: #6366f1;
+          cursor: pointer;
+        }
+
+        .remember-text {
+          display: flex;
+          flex-direction: column;
+          gap: 0.15rem;
+          font-size: 0.825rem;
+        }
+
+        .remember-sub {
+          font-size: 0.72rem;
+          color: var(--text-muted);
+          line-height: 1.3;
+        }
+
+        /* PWA Status Badge */
+        .pwa-status-badge {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          font-size: 0.75rem;
+          color: var(--text-muted);
+          background: rgba(16, 185, 129, 0.08);
+          border: 1px solid rgba(16, 185, 129, 0.2);
+          padding: 0.4rem 0.8rem;
+          border-radius: 9999px;
+        }
+
+        .status-dot {
+          width: 7px;
+          height: 7px;
+          border-radius: 50%;
+          background: #10b981;
+          box-shadow: 0 0 8px #10b981;
+          display: inline-block;
         }
       `}</style>
     </div>
