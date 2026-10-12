@@ -23,7 +23,11 @@ import {
   Calculator,
   Droplets,
   CheckCheck,
-  BookOpen
+  BookOpen,
+  ExternalLink,
+  ChevronDown,
+  ChevronUp,
+  ArrowRight
 } from 'lucide-react';
 import { 
   exportHealthProtocolToExcel, 
@@ -36,6 +40,7 @@ import { WorkoutSection } from '../components/health/WorkoutSection';
 import { NightDietSoupsSection } from '../components/health/NightDietSoupsSection';
 import { normalizeCareRegime, getFrequencyMeta, getJuiceSchedule } from '../services/careProtocolUtils';
 import { DEFAULT_JUICES } from '../services/cloudDatabase';
+import { WORKOUT_DAYS } from '../services/workoutPlanData';
 import { Modal } from '../components/common/Modal';
 
 export const HealthProtocolView = () => {
@@ -47,6 +52,7 @@ export const HealthProtocolView = () => {
     addHabit,
     habits = [],
     todayStr,
+    setActiveTab,
   } = useApp();
 
   const { currentUser, isSuperAdmin } = useAuth();
@@ -55,6 +61,15 @@ export const HealthProtocolView = () => {
   const [isExcelModalOpen, setIsExcelModalOpen] = useState(false);
   const [isCalorieCalcOpen, setIsCalorieCalcOpen] = useState(false);
   const [selectedJuiceModal, setSelectedJuiceModal] = useState(null);
+  const [isWorkoutInlineExpanded, setIsWorkoutInlineExpanded] = useState(false);
+
+  // Today's rotating workout plan
+  const todayWorkoutPlan = useMemo(() => {
+    const dayKeys = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    const todayIndex = new Date().getDay();
+    const dayKey = dayKeys[todayIndex] || 'monday';
+    return WORKOUT_DAYS[dayKey] || WORKOUT_DAYS.monday;
+  }, []);
 
   // Edit Modals State: 'calories' | 'micronutrients' | 'exercise' | 'sugar' | 'skincare' | 'bodycare' | 'haircare' | null
   const [activeModal, setActiveModal] = useState(null);
@@ -787,6 +802,7 @@ export const HealthProtocolView = () => {
       {/* 🍲 20 Oil-Free Night Diet Soups for Weight Management (Dinner Protocol) */}
       {/* ========================================================================= */}
       <NightDietSoupsSection 
+        compactMode={true}
         onOpenCalorieCalculator={() => setIsCalorieCalcOpen(true)} 
       />
 
@@ -1363,8 +1379,94 @@ export const HealthProtocolView = () => {
       {/* ========================================================================= */}
       {/* 4. 6-Day 20-Min Guided Workout Protocol & Records */}
       {/* ========================================================================= */}
-      <div className="section-container">
-        <WorkoutSection />
+      <div className="section-container workout-protocol-section-compact">
+        <div className="section-title-row">
+          <div className="title-with-icon">
+            <Dumbbell size={22} className="text-purple" />
+            <div>
+              <div className="soup-section-tag-row">
+                <span className="badge badge-primary">🏃 WORKOUT PROTOCOL</span>
+                <span className="badge badge-warning">⚡ 20 MIN / DAY</span>
+                <span className="badge badge-success">🛡️ 100% LOW-IMPACT</span>
+                <span className="badge badge-info">📅 6-DAY SPLIT</span>
+              </div>
+              <h3 className="section-title">4. 6-Day Low-Impact 20-Min Workout Protocol</h3>
+            </div>
+          </div>
+
+          <div className="title-actions">
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              onClick={() => setActiveTab('exercise')}
+              title="Open full dedicated Exercise & Workout page"
+            >
+              <ExternalLink size={14} className="text-primary" />
+              <span>Open Exercise Tab</span>
+            </button>
+
+            <button
+              type="button"
+              className={`btn btn-secondary btn-sm ${isWorkoutInlineExpanded ? 'btn-active' : ''}`}
+              onClick={() => setIsWorkoutInlineExpanded(!isWorkoutInlineExpanded)}
+              title={isWorkoutInlineExpanded ? "Collapse Workout Protocol" : "Browse Workout Routine Inline"}
+            >
+              {isWorkoutInlineExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+              <span>{isWorkoutInlineExpanded ? 'Collapse Routine' : 'Browse Routine Inline'}</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Compact Daily Spotlight & Redirect Card */}
+        <div className="card workout-compact-teaser-card">
+          <div className="wct-left">
+            <div 
+              className="wct-avatar-box" 
+              style={{ 
+                background: `${todayWorkoutPlan.accentColor}20`, 
+                borderColor: `${todayWorkoutPlan.accentColor}40`,
+                color: todayWorkoutPlan.accentColor 
+              }}
+            >
+              <span className="wct-emoji">{todayWorkoutPlan.icon}</span>
+            </div>
+            <div className="wct-info">
+              <div className="wct-tags">
+                <span className="badge badge-subtle">{todayWorkoutPlan.name.toUpperCase()} FOCUS</span>
+                <span className="badge badge-warning">{todayWorkoutPlan.badge}</span>
+                <span className="badge badge-success">⚡ 20 Min Low-Impact</span>
+              </div>
+              <h4 className="wct-title">{todayWorkoutPlan.title}</h4>
+              <p className="wct-desc">{todayWorkoutPlan.goal}</p>
+            </div>
+          </div>
+
+          <div className="wct-actions">
+            <button
+              type="button"
+              className="btn btn-primary btn-sm btn-wct-start"
+              onClick={() => setActiveTab('exercise')}
+              title="Launch full workout session in dedicated Exercise tab"
+            >
+              <span>Go to Exercise Tab</span>
+              <ArrowRight size={14} />
+            </button>
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              onClick={() => setIsWorkoutInlineExpanded(!isWorkoutInlineExpanded)}
+            >
+              {isWorkoutInlineExpanded ? 'Hide Routine ▲' : 'View Routine Here ▼'}
+            </button>
+          </div>
+        </div>
+
+        {/* Inline Workout Section (when expanded) */}
+        {isWorkoutInlineExpanded && (
+          <div className="workout-inline-expanded-wrapper">
+            <WorkoutSection />
+          </div>
+        )}
       </div>
 
       {/* ========================================================================= */}

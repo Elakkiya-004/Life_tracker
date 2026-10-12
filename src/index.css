@@ -5542,3 +5542,697 @@ body {
     grid-template-columns: 1fr;
   }
 }
+
+/* ========================================================================= */
+/* DEDICATED SOUPS PAGE VIEW & COMPACT DROPDOWN SELECTOR STYLES */
+/* ========================================================================= */
+
+.badge-soups {
+  background: rgba(249, 115, 22, 0.18) !important;
+  color: #fb923c !important;
+  border: 1px solid rgba(249, 115, 22, 0.3) !important;
+}
+
+/* Standalone Soups Page Layout */
+.soups-page-view {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding-bottom: 3rem;
+}
+
+.soups-page-header {
+  background: linear-gradient(135deg, rgba(30, 27, 75, 0.75) 0%, rgba(15, 23, 42, 0.95) 60%, rgba(17, 24, 39, 0.85) 100%);
+  border: 1px solid rgba(129, 140, 248, 0.3);
+  border-radius: 16px;
+  padding: 1.35rem 1.6rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.soups-header-nav-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.soups-header-breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+}
+
+.breadcrumb-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.2rem 0.4rem;
+  border-radius: 6px;
+  transition: all 0.18s ease;
+}
+
+.breadcrumb-link:hover {
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.breadcrumb-sep {
+  color: #64748b;
+  font-size: 0.8rem;
+}
+
+.breadcrumb-curr {
+  color: #f8fafc;
+  font-weight: 700;
+}
+
+.soups-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-back-protocol {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 600;
+}
+
+.soups-header-title-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.15rem;
+}
+
+.soups-header-icon-bubble {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(129, 140, 248, 0.1) 100%);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.2);
+}
+
+.soups-page-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #f8fafc;
+  line-height: 1.25;
+  margin: 0.25rem 0 0.4rem 0;
+}
+
+.soups-page-subtitle {
+  color: #94a3b8;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  margin: 0;
+  max-width: 950px;
+}
+
+/* Quick Recipe Dropdown Selector Card */
+.soup-dropdown-selector-card {
+  background: linear-gradient(135deg, rgba(30, 27, 75, 0.4) 0%, rgba(15, 23, 42, 0.85) 100%);
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  border-radius: 14px;
+  padding: 1.2rem 1.4rem;
+  margin-bottom: 1.25rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.soup-dropdown-selector-card:hover {
+  border-color: rgba(99, 102, 241, 0.45);
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.1);
+}
+
+.soup-dropdown-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.soup-dropdown-title-group {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  flex: 1 1 300px;
+}
+
+.soup-dropdown-icon-wrap {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  background: rgba(99, 102, 241, 0.15);
+  border: 1px solid rgba(99, 102, 241, 0.28);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.soup-dropdown-card-title {
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: #f8fafc;
+  margin: 0 0 0.15rem 0;
+}
+
+.soup-dropdown-card-desc {
+  font-size: 0.77rem;
+  color: #94a3b8;
+  margin: 0;
+  line-height: 1.35;
+}
+
+.soup-select-input-wrapper {
+  flex: 1 1 320px;
+  max-width: 460px;
+}
+
+.soup-select-control {
+  width: 100%;
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid rgba(129, 140, 248, 0.35);
+  color: #f8fafc;
+  font-size: 0.88rem;
+  font-weight: 600;
+  padding: 0.65rem 0.95rem;
+  border-radius: 10px;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.soup-select-control:focus {
+  border-color: #818cf8;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
+}
+
+.soup-select-control optgroup {
+  background: #0f172a;
+  color: #a5b4fc;
+  font-weight: 700;
+  padding: 0.35rem;
+}
+
+.soup-select-control option {
+  background: #1e293b;
+  color: #f8fafc;
+  font-weight: 500;
+  padding: 0.45rem;
+}
+
+/* Selected Soup Spotlight Box */
+.soup-dropdown-spotlight-box {
+  background: linear-gradient(135deg, rgba(30, 27, 75, 0.6) 0%, rgba(15, 23, 42, 0.95) 100%);
+  border: 1px solid rgba(99, 102, 241, 0.35);
+  border-radius: 12px;
+  padding: 1.25rem 1.35rem;
+  margin-top: 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  animation: fadeInDown 0.25s ease;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+}
+
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.spotlight-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.spotlight-header-left {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.9rem;
+}
+
+.spotlight-emoji {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.spotlight-tags-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.25rem;
+  flex-wrap: wrap;
+}
+
+.spotlight-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #f8fafc;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.spotlight-tamil {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  font-style: italic;
+}
+
+.spotlight-cal-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  padding: 0.4rem 0.75rem;
+  border-radius: 10px;
+}
+
+.spotlight-cal-badge .cal-num {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #fbbf24;
+  line-height: 1;
+}
+
+.spotlight-cal-badge .cal-lbl {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+}
+
+.spotlight-desc {
+  font-size: 0.84rem;
+  color: #cbd5e1;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.spotlight-macros {
+  margin-top: 0.15rem;
+  margin-bottom: 0.35rem;
+}
+
+.spotlight-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+  padding-top: 0.4rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* Collapsible Accordion Toggle Strip */
+.soup-accordion-strip {
+  margin-bottom: 1.25rem;
+}
+
+.soup-accordion-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 1.25rem;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px dashed rgba(129, 140, 248, 0.35);
+  border-radius: 12px;
+  color: #f8fafc;
+  cursor: pointer;
+  transition: all 0.22s ease;
+}
+
+.soup-accordion-btn:hover {
+  background: rgba(30, 27, 75, 0.5);
+  border-color: rgba(129, 140, 248, 0.6);
+  transform: translateY(-1px);
+}
+
+.soup-accordion-btn.expanded {
+  background: rgba(30, 27, 75, 0.7);
+  border-style: solid;
+  border-color: rgba(99, 102, 241, 0.5);
+}
+
+.accordion-btn-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.accordion-icon-wrap {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  background: rgba(99, 102, 241, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #a5b4fc;
+}
+
+.accordion-label {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+.accordion-action-text {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: #818cf8;
+}
+
+.compact-view-toggle {
+  margin-left: auto;
+}
+
+/* Dedicated Page Redirect Callout Card */
+.soup-dedicated-page-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  padding: 1.1rem 1.4rem;
+  background: linear-gradient(90deg, rgba(30, 27, 75, 0.6) 0%, rgba(15, 23, 42, 0.9) 100%);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  border-radius: 14px;
+  margin-top: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.dedicated-page-card-content {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  flex: 1 1 320px;
+}
+
+.dedicated-icon-wrap {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.dedicated-text-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.dedicated-title {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+.dedicated-desc {
+  font-size: 0.78rem;
+  color: #94a3b8;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.btn-dedicated-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-weight: 700;
+  padding: 0.55rem 1rem;
+}
+
+@media (max-width: 640px) {
+  .soups-header-title-box {
+    flex-direction: column;
+  }
+
+  .soup-dropdown-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .soup-select-input-wrapper {
+    max-width: 100%;
+  }
+
+  .soup-accordion-btn {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .soup-dedicated-page-card {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .btn-dedicated-action {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* ========================================================================= */
+/* DEDICATED EXERCISE & WORKOUT PAGE VIEW & COMPACT TEASER STYLES */
+/* ========================================================================= */
+
+.badge-exercise {
+  background: rgba(139, 92, 246, 0.2) !important;
+  color: #a78bfa !important;
+  border: 1px solid rgba(139, 92, 246, 0.35) !important;
+}
+
+/* Standalone Exercise Page Layout */
+.exercise-page-view {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding-bottom: 3rem;
+}
+
+.exercise-page-header {
+  background: linear-gradient(135deg, rgba(88, 28, 135, 0.5) 0%, rgba(15, 23, 42, 0.95) 60%, rgba(30, 27, 75, 0.7) 100%);
+  border: 1px solid rgba(167, 139, 250, 0.3);
+  border-radius: 16px;
+  padding: 1.35rem 1.6rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.exercise-header-nav-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.exercise-header-breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+}
+
+.exercise-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.exercise-header-title-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.15rem;
+}
+
+.exercise-header-icon-bubble {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.25) 0%, rgba(99, 102, 241, 0.15) 100%);
+  border: 1px solid rgba(139, 92, 246, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 16px rgba(139, 92, 246, 0.2);
+}
+
+.exercise-page-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #f8fafc;
+  line-height: 1.25;
+  margin: 0.25rem 0 0.4rem 0;
+}
+
+.exercise-page-subtitle {
+  color: #94a3b8;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  margin: 0;
+  max-width: 950px;
+}
+
+/* Compact Workout Teaser Card in HealthProtocolView */
+.workout-protocol-section-compact {
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.workout-compact-teaser-card {
+  background: linear-gradient(135deg, rgba(88, 28, 135, 0.3) 0%, rgba(15, 23, 42, 0.9) 100%);
+  border: 1px solid rgba(167, 139, 250, 0.3);
+  border-radius: 14px;
+  padding: 1.25rem 1.45rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.workout-compact-teaser-card:hover {
+  border-color: rgba(167, 139, 250, 0.5);
+  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.12);
+}
+
+.wct-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1 1 340px;
+}
+
+.wct-avatar-box {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  border-width: 1px;
+  border-style: solid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.wct-emoji {
+  font-size: 1.8rem;
+  line-height: 1;
+}
+
+.wct-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.wct-tags {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.wct-title {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #f8fafc;
+  margin: 0;
+}
+
+.wct-desc {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.wct-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.btn-wct-start {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+  border: none;
+}
+
+.btn-wct-start:hover {
+  background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
+  transform: translateY(-1px);
+}
+
+.workout-inline-expanded-wrapper {
+  margin-top: 1.25rem;
+  animation: fadeInDown 0.25s ease;
+}
+
+@media (max-width: 768px) {
+  .exercise-header-title-box {
+    flex-direction: column;
+  }
+
+  .workout-compact-teaser-card {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .wct-left {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .wct-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .btn-wct-start {
+    flex: 1;
+    justify-content: center;
+  }
+}
+
+

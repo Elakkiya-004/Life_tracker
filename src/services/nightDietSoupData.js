@@ -617,6 +617,331 @@ export const NIGHT_DIET_SOUPS = [
 ];
 
 /**
+ * 10 FRESH DIET & DETOX JUICES FOR METABOLIC RESET & HYDRATION
+ * Pure Vegetables & Fruits • Zero Added Refined Sugar • Zero Added Fats
+ *
+ * Designed for morning empty stomach cleansing, mid-morning hydration, 
+ * or 4:00 PM tea/snack replacement for active fat burning and vibrant skin.
+ */
+export const HEALTHY_DIET_JUICES = [
+  {
+    id: 'juice-1',
+    type: 'juice',
+    name: 'ABC Detox Juice (Apple + Beetroot + Carrot)',
+    tamilName: 'ஆப்பிள் பீட்ரூட் கேரட் டிடாக்ஸ் ஜூஸ்',
+    emoji: '🍎',
+    category: 'Fresh Juice',
+    categoryTag: 'Detox & Glow',
+    calories: 85,
+    protein: 2.1,
+    carbs: 19.0,
+    fibre: 4.2,
+    fats: 0.2,
+    servingSize: '1 tall glass (~320 ml)',
+    servingGrams: 320,
+    waterMl: 200,
+    description: 'The world-famous miracle detox drink combining apple, beetroot, and carrot for radiant skin, blood purification, and deep cellular antioxidants.',
+    ingredients: [
+      { item: 'Red Apple (fresh, deseeded)', amount: '100 g' },
+      { item: 'Beetroot (peeled, chopped)', amount: '60 g' },
+      { item: 'Carrot (washed, sliced)', amount: '80 g' },
+      { item: 'Fresh Ginger', amount: '5 g' },
+      { item: 'Lemon Juice', amount: '1/2 lemon' },
+      { item: 'Cold Water', amount: '150 ml' },
+    ],
+    method: 'Add chopped apple, beetroot, carrot, and fresh ginger to a blender. Pour 150 ml water and blend until smooth. Add fresh lemon juice. Strain lightly if preferred, or drink unstrained for maximum beneficial dietary fibre.',
+    seasoning: 'Fresh lemon juice + tiny pinch of black salt (kala namak). Zero added refined sugar.',
+    tags: ['Juice', 'Detox & Glow', 'Blood Purifier', 'Vitamin A & C', 'Under 100 kcal'],
+    isHighProtein: false,
+    isLowCalorie: true,
+    bestTimeToDrink: 'Early morning on an empty stomach or 4:00 PM evening refresher',
+  },
+  {
+    id: 'juice-2',
+    type: 'juice',
+    name: 'Ash Gourd (Venpoosani) Alkaline Detox Juice',
+    tamilName: 'வெண்பூசணி சாறு (காரத்தன்மை டிடாக்ஸ்)',
+    emoji: '🍈',
+    category: 'Fresh Juice',
+    categoryTag: 'Alkaline & Slimming',
+    calories: 42,
+    protein: 1.2,
+    carbs: 8.5,
+    fibre: 3.5,
+    fats: 0.1,
+    servingSize: '1 tall glass (~350 ml)',
+    servingGrams: 350,
+    waterMl: 250,
+    description: 'Yogic miracle alkaline drink with 96% natural hydration. Flushes excess water weight, alkalizes gut pH, and cools systemic heat instantly.',
+    ingredients: [
+      { item: 'Ash Gourd / Venpoosani (peeled & deseeded)', amount: '250 g' },
+      { item: 'Fresh Lemon Juice', amount: '1 tbsp' },
+      { item: 'Fresh Mint Leaves', amount: '8–10 leaves' },
+      { item: 'Crushed Black Pepper', amount: 'pinch' },
+    ],
+    method: 'Cut white ash gourd flesh into cubes. Blend with a splash of water and mint leaves until completely liquified. Strain through a muslin or sieve. Squeeze fresh lemon juice and sprinkle a pinch of black pepper and rock salt.',
+    seasoning: 'Fresh lemon juice + roasted cumin powder + black pepper + rock salt.',
+    tags: ['Juice', 'Alkaline & Slimming', 'Under 50 kcal', 'Zero Fat', 'Gut Reset'],
+    isHighProtein: false,
+    isLowCalorie: true,
+    bestTimeToDrink: 'Early morning empty stomach (30 mins before breakfast)',
+  },
+  {
+    id: 'juice-3',
+    type: 'juice',
+    name: 'Amla Mint Ginger Immunity Elixir',
+    tamilName: 'நெல்லிக்காய் புதினா இஞ்சி நோய் எதிர்ப்பு சாறு',
+    emoji: '🌿',
+    category: 'Fresh Juice',
+    categoryTag: 'Immunity & Vitamin C',
+    calories: 48,
+    protein: 1.0,
+    carbs: 10.5,
+    fibre: 3.8,
+    fats: 0.1,
+    servingSize: '1 glass (~250–300 ml)',
+    servingGrams: 280,
+    waterMl: 250,
+    description: 'Concentrated natural Vitamin C powerhouse (20x more than oranges). Ignites metabolism, strengthens hair follicles, and supports collagen synthesis.',
+    ingredients: [
+      { item: 'Fresh Indian Gooseberry / Nellikai (deseeded)', amount: '3 medium (~60 g)' },
+      { item: 'Fresh Mint / Pudina', amount: '12 leaves' },
+      { item: 'Ginger', amount: '5 g' },
+      { item: 'Cumin powder (roasted)', amount: '1/4 tsp' },
+      { item: 'Drinking Water', amount: '220 ml' },
+    ],
+    method: 'Deseed amla and chop. Blend with ginger, mint, and water on high speed until completely pulverized. Strain if desired. Stir in roasted jeera and black salt. Drink fresh within 15 minutes of making.',
+    seasoning: 'Roasted jeera powder + black salt + optional half teaspoon honey if needed.',
+    tags: ['Juice', 'Immunity & Vitamin C', 'Hair & Skin', 'Under 50 kcal', 'Digestive Fire'],
+    isHighProtein: false,
+    isLowCalorie: true,
+    bestTimeToDrink: 'Morning after 1 glass warm water',
+  },
+  {
+    id: 'juice-4',
+    type: 'juice',
+    name: 'Cucumber Lemon Mint Hydration Cooler',
+    tamilName: 'வெள்ளரி எலுமிச்சை புதினா நீர்ச்சத்து ஜூஸ்',
+    emoji: '🥒',
+    category: 'Fresh Juice',
+    categoryTag: 'Hydration Cooler',
+    calories: 38,
+    protein: 1.5,
+    carbs: 7.5,
+    fibre: 2.8,
+    fats: 0.1,
+    servingSize: '1 large tumbler (~350 ml)',
+    servingGrams: 350,
+    waterMl: 250,
+    description: 'Ultra-low calorie bloat-cutter drink loaded with electrolytes, caffeic acid, and potassium to prevent fluid retention.',
+    ingredients: [
+      { item: 'English or Country Cucumber (washed, sliced)', amount: '200 g' },
+      { item: 'Fresh Mint Leaves', amount: '10 leaves' },
+      { item: 'Lemon Juice', amount: '1 full lemon' },
+      { item: 'Black Salt / Himalayan Salt', amount: 'pinch' },
+    ],
+    method: 'Blend cucumber slices with skin (for silica) and mint leaves with 150 ml cold water. Strain lightly or serve pulp-in. Squeeze lemon juice, sprinkle rock salt and a dash of roasted cumin.',
+    seasoning: 'Rock salt + fresh lemon juice + dash of chaat masala or roasted cumin.',
+    tags: ['Juice', 'Hydration Cooler', 'Under 40 kcal', 'Anti-Bloat', 'Zero Fat'],
+    isHighProtein: false,
+    isLowCalorie: true,
+    bestTimeToDrink: 'Mid-morning (11:00 AM) or sunny afternoon hydration',
+  },
+  {
+    id: 'juice-5',
+    type: 'juice',
+    name: 'Bottle Gourd (Suraikai) Fat-Burn Juice',
+    tamilName: 'சுரைக்காய் சாறு (கொழுப்பு கரைக்கும் ஜூஸ்)',
+    emoji: '🥬',
+    category: 'Fresh Juice',
+    categoryTag: 'Fat Burner',
+    calories: 46,
+    protein: 1.4,
+    carbs: 9.8,
+    fibre: 3.4,
+    fats: 0.1,
+    servingSize: '1 tall glass (~320 ml)',
+    servingGrams: 330,
+    waterMl: 250,
+    description: 'Ayurvedic classic for visceral belly fat reduction. Low glycemic index, natural choline, and high soluble fibre keep hunger quiet.',
+    ingredients: [
+      { item: 'Fresh Tender Bottle Gourd / Lauki (peeled, cubed)', amount: '220 g' },
+      { item: 'Fresh Coriander Leaves', amount: '10 g' },
+      { item: 'Fresh Ginger', amount: '5 g' },
+      { item: 'Lemon Juice', amount: '1 tbsp' },
+    ],
+    method: 'Taste a small raw bite to ensure lauki is sweet (never use bitter lauki). Blend with coriander and ginger with 150 ml water. Strain, add lemon juice and black pepper. Drink right away.',
+    seasoning: 'Fresh lemon juice + crushed black pepper + roasted jeera powder.',
+    tags: ['Juice', 'Fat Burner', 'Under 50 kcal', 'Ayurvedic', 'Cholesterol Support'],
+    isHighProtein: false,
+    isLowCalorie: true,
+    bestTimeToDrink: 'Morning 45 mins before breakfast',
+  },
+  {
+    id: 'juice-6',
+    type: 'juice',
+    name: 'Tomato Celery Pepper Metabolism Booster',
+    tamilName: 'தக்காளி செலரி மிளகு மெட்டபாலிசம் ஜூஸ்',
+    emoji: '🍅',
+    category: 'Fresh Juice',
+    categoryTag: 'Metabolism Booster',
+    calories: 52,
+    protein: 2.2,
+    carbs: 10.5,
+    fibre: 3.9,
+    fats: 0.2,
+    servingSize: '1 tall glass (~300 ml)',
+    servingGrams: 310,
+    waterMl: 200,
+    description: 'Zesty savory vegetable juice loaded with lycopene, organic sodium, and piperine to fire up resting metabolic rate.',
+    ingredients: [
+      { item: 'Ripe Country Tomatoes', amount: '200 g' },
+      { item: 'Celery Stalk / Coriander stems', amount: '40 g' },
+      { item: 'Lemon Juice', amount: '1 tsp' },
+      { item: 'Freshly Crushed Black Pepper', amount: '1/3 tsp' },
+      { item: 'Rock Salt', amount: 'pinch' },
+    ],
+    method: 'Chop tomatoes and celery stalk. Blend with 100 ml cold water. Strain seeds if preferred. Stir in coarse black pepper, rock salt, and lemon juice. Serve chilled or room temperature.',
+    seasoning: 'Cracked black pepper + Himalayan pink salt + lemon juice.',
+    tags: ['Juice', 'Metabolism Booster', 'Lycopene Rich', 'Under 60 kcal', 'Savory Drink'],
+    isHighProtein: false,
+    isLowCalorie: true,
+    bestTimeToDrink: 'Mid-morning or 30 minutes before lunch',
+  },
+  {
+    id: 'juice-7',
+    type: 'juice',
+    name: 'Watermelon Mint Chia Electrolyte Cooler',
+    tamilName: 'தர்பூசணி புதினா சியா விதை கூலர்',
+    emoji: '🍉',
+    category: 'Fresh Juice',
+    categoryTag: 'Hydration Cooler',
+    calories: 88,
+    protein: 2.5,
+    carbs: 18.0,
+    fibre: 3.6,
+    fats: 1.0,
+    servingSize: '1 large tumbler (~350 ml)',
+    servingGrams: 350,
+    waterMl: 150,
+    description: 'Refreshing post-workout hydrator with natural L-citrulline for muscle recovery, plus soaked chia seeds for plant omega-3 and sustained satiety.',
+    ingredients: [
+      { item: 'Fresh Watermelon (deseeded)', amount: '220 g' },
+      { item: 'Chia Seeds (pre-soaked 10 mins)', amount: '1 tsp (5 g)' },
+      { item: 'Fresh Mint Leaves', amount: '6 leaves' },
+      { item: 'Lime Juice', amount: '1 tbsp' },
+    ],
+    method: 'Blend watermelon flesh and mint leaves without extra water (watermelon provides its own pure nectar). Pour into a glass, stir in soaked chia seeds and lime juice.',
+    seasoning: 'Squeeze of lime juice + pinch of rock salt to highlight natural melon sweetness.',
+    tags: ['Juice', 'Hydration Cooler', 'Post Workout', 'Electrolyte Rich', 'Omega-3'],
+    isHighProtein: false,
+    isLowCalorie: true,
+    bestTimeToDrink: 'Post-workout recovery or 4:00 PM tea replacement',
+  },
+  {
+    id: 'juice-8',
+    type: 'juice',
+    name: 'Pomegranate Beetroot Blood Purifier',
+    tamilName: 'மாதுளை பீட்ரூட் ரத்த சுத்தி ஜூஸ்',
+    emoji: '🥤',
+    category: 'Fresh Juice',
+    categoryTag: 'Blood Purifier',
+    calories: 92,
+    protein: 2.2,
+    carbs: 21.0,
+    fibre: 3.8,
+    fats: 0.3,
+    servingSize: '1 glass (~300 ml)',
+    servingGrams: 300,
+    waterMl: 150,
+    description: 'Deep ruby hemoglobin builder loaded with dietary nitrates, punicalagins, and bioavailable iron for boundless stamina and blood oxygenation.',
+    ingredients: [
+      { item: 'Pomegranate Arils (fresh)', amount: '90 g' },
+      { item: 'Beetroot (grated)', amount: '50 g' },
+      { item: 'Fresh Ginger', amount: '4 g' },
+      { item: 'Lemon Juice', amount: '1 tsp' },
+      { item: 'Water', amount: '120 ml' },
+    ],
+    method: 'Pulse pomegranate arils, grated beetroot, and ginger with 120 ml water. Strain through a fine strainer to catch hard seeds. Stir in lemon juice and drink immediately.',
+    seasoning: 'Lemon juice + tiny pinch of black salt.',
+    tags: ['Juice', 'Blood Purifier', 'Iron & Nitrates', 'Energy Boost', 'Zero Sugar'],
+    isHighProtein: false,
+    isLowCalorie: true,
+    bestTimeToDrink: 'Pre-workout booster or mid-morning vitality tonic',
+  },
+  {
+    id: 'juice-9',
+    type: 'juice',
+    name: 'Papaya Lemon Digestive Glow Juice',
+    tamilName: 'பப்பாளி எலுமிச்சை செரிமான ஜூஸ்',
+    emoji: '🥭',
+    category: 'Fresh Juice',
+    categoryTag: 'Digestion & Gut Health',
+    calories: 78,
+    protein: 1.6,
+    carbs: 18.0,
+    fibre: 3.5,
+    fats: 0.2,
+    servingSize: '1 tall glass (~320 ml)',
+    servingGrams: 320,
+    waterMl: 180,
+    description: 'Enzyme-dense drink with active papain and beta-carotene to optimize protein breakdown, ease bloating, and promote vibrant radiant skin.',
+    ingredients: [
+      { item: 'Ripe Papaya (peeled, deseeded, cubed)', amount: '160 g' },
+      { item: 'Fresh Lemon Juice', amount: '1 tbsp' },
+      { item: 'Fresh Mint', amount: '5 leaves' },
+      { item: 'Chilled Water', amount: '150 ml' },
+    ],
+    method: 'Blend ripe papaya chunks with mint and water until silky smooth and milkshake-thick without any dairy. Stir in freshly squeezed lemon juice and serve immediately.',
+    seasoning: 'Fresh lemon juice + pinch of rock salt.',
+    tags: ['Juice', 'Digestion & Gut Health', 'Papain Enzyme', 'Skin Glow', 'Zero Dairy'],
+    isHighProtein: false,
+    isLowCalorie: true,
+    bestTimeToDrink: 'Mid-morning or 1 hour after breakfast',
+  },
+  {
+    id: 'juice-10',
+    type: 'juice',
+    name: 'Green Keerai (Palak & Mint) Cleanser',
+    tamilName: 'பசலைக்கீரை புதினா க்ளென்சர் ஜூஸ்',
+    emoji: '🌿',
+    category: 'Fresh Juice',
+    categoryTag: 'Greens & Keerai',
+    calories: 45,
+    protein: 2.8,
+    carbs: 8.0,
+    fibre: 3.2,
+    fats: 0.2,
+    servingSize: '1 glass (~300 ml)',
+    servingGrams: 300,
+    waterMl: 220,
+    description: 'Pure living chlorophyll shot. Fresh baby palak, cucumber, mint, and ginger deliver high folate, lutein, and cellular detoxification.',
+    ingredients: [
+      { item: 'Baby Spinach / Palak (washed)', amount: '60 g' },
+      { item: 'Cucumber', amount: '80 g' },
+      { item: 'Fresh Mint & Coriander Leaves', amount: '15 g' },
+      { item: 'Fresh Ginger', amount: '5 g' },
+      { item: 'Lemon Juice', amount: '1 full lemon' },
+      { item: 'Water', amount: '180 ml' },
+    ],
+    method: 'Wash greens meticulously. Blend spinach, cucumber, mint, and ginger with 180 ml water until completely liquified. Do not strain if possible. Add fresh lemon juice (which prevents iron oxidation).',
+    seasoning: 'Abundant lemon juice + pinch of black salt + roasted cumin.',
+    tags: ['Juice', 'Greens & Keerai', 'Chlorophyll Shot', 'Under 50 kcal', 'Iron & Folate'],
+    isHighProtein: false,
+    isLowCalorie: true,
+    bestTimeToDrink: 'Early morning empty stomach detox',
+  },
+];
+
+/**
+ * Combined collection of all 30 Soups and Juices
+ */
+export const ALL_SOUPS_AND_JUICES = [
+  ...NIGHT_DIET_SOUPS.map(s => ({ ...s, type: 'soup' })),
+  ...HEALTHY_DIET_JUICES.map(j => ({ ...j, type: 'juice' }))
+];
+
+/**
  * Weekly rotation recommendation
  */
 export const WEEKLY_SOUP_ROTATION = [
@@ -656,6 +981,27 @@ export const SOUP_WEIGHT_LOSS_TIPS = [
 ];
 
 /**
+ * Practical juice and hydration guidelines
+ */
+export const JUICE_BENEFITS_TIPS = [
+  {
+    title: 'Zero Added Refined Sugar',
+    desc: 'All juices utilize natural vegetable and fruit sweetness. Never add refined white sugar or artificial syrups. Fresh lemon juice, black salt, and mint enhance taste naturally.',
+    icon: 'ShieldCheck',
+  },
+  {
+    title: 'Drink Fresh & Unstrained',
+    desc: 'Consume within 15–20 minutes of blending to preserve active Vitamin C and living enzymes. Keep the natural fibre unstrained whenever possible for glycemic stability and gut microbiota health.',
+    icon: 'Apple',
+  },
+  {
+    title: 'Optimal Timing for Absorption',
+    desc: 'Enjoy detox juices (Ash Gourd, Amla, Green Keerai) on an empty stomach in the morning. Hydration coolers (Cucumber Mint, Watermelon Chia) are best mid-morning or post-workout.',
+    icon: 'Sun',
+  },
+];
+
+/**
  * Helper to get today's recommended soup
  */
 export const getTodaySoupRotation = (date = new Date()) => {
@@ -677,28 +1023,33 @@ export const getTodaySoupRotation = (date = new Date()) => {
 };
 
 /**
- * Helper to log soup to user's daily meals in localStorage
+ * Helper to log soup or juice to user's daily meals in localStorage
  */
-export const logSoupToDailyMeals = (soup, mealType = 'dinner', dateStr = new Date().toISOString().split('T')[0], userId = 'default_user') => {
+export const logSoupToDailyMeals = (item, preferredMealType = null, dateStr = new Date().toISOString().split('T')[0], userId = 'default_user') => {
   try {
+    const isJuice = item.type === 'juice' || item.id?.startsWith('juice-');
+    const defaultMealType = isJuice ? 'snack' : 'dinner';
+    const mealType = preferredMealType || defaultMealType;
+
     const key = `life_tracker_meals_${userId}_${dateStr}`;
     const raw = localStorage.getItem(key);
     const existing = raw ? JSON.parse(raw) : [];
 
     const newEntry = {
-      id: `soup-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+      id: `${isJuice ? 'juice' : 'soup'}-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
       mealType,
-      name: soup.name,
-      icon: soup.emoji || '🍲',
-      servingGrams: soup.servingGrams || 400,
-      servingLabel: soup.servingSize || '1 bowl (~350–500ml)',
-      calories: Math.round(soup.calories),
-      protein: soup.protein,
-      carbs: soup.carbs,
-      fats: soup.fats || 0.5,
-      fibre: soup.fibre,
+      name: item.name,
+      icon: item.emoji || (isJuice ? '🥤' : '🍲'),
+      servingGrams: item.servingGrams || (isJuice ? 320 : 400),
+      servingLabel: item.servingSize || (isJuice ? '1 glass (~300ml)' : '1 bowl (~350–500ml)'),
+      calories: Math.round(item.calories),
+      protein: item.protein,
+      carbs: item.carbs,
+      fats: item.fats || (isJuice ? 0.1 : 0.5),
+      fibre: item.fibre,
       multiplier: 1,
-      isNightDietSoup: true,
+      isNightDietSoup: !isJuice,
+      isDietJuice: isJuice,
       timestamp: Date.now(),
     };
 
@@ -715,9 +1066,9 @@ export const logSoupToDailyMeals = (soup, mealType = 'dinner', dateStr = new Dat
       console.warn('Firebase cloud meal sync skipped (offline mode):', cloudErr);
     }
 
-    return { success: true, entry: newEntry, count: updated.length };
+    return { success: true, entry: newEntry, count: updated.length, isJuice };
   } catch (e) {
-    console.error('Failed to log soup meal:', e);
+    console.error('Failed to log soup/juice meal:', e);
     return { success: false, error: e };
   }
 };

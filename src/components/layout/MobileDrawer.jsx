@@ -21,7 +21,9 @@ import {
   LogOut,
   User,
   Download,
-  RefreshCw
+  RefreshCw,
+  Utensils,
+  Dumbbell
 } from 'lucide-react';
 import { usePwa } from '../../context/PwaContext';
 
@@ -64,6 +66,8 @@ export const MobileDrawer = () => {
     { id: 'dashboard', path: '/', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'habits', path: '/habits', label: 'Habits & Routines', icon: CheckCircle2, badge: `${todayCompletedHabits}/${(Array.isArray(habits) ? habits.length : 0)}` },
     { id: 'protocol', path: '/health', label: 'Health & Diet Protocol', icon: HeartPulse, highlight: true },
+    { id: 'exercise', path: '/exercise', label: 'Exercise & Workout', icon: Dumbbell, badge: '6-Day' },
+    { id: 'soups', path: '/soups', label: 'Soups & Juices', icon: Utensils, badge: '30' },
     { id: 'roadmap', path: '/roadmap', label: 'Career Roadmap', icon: Compass, badge: `${roadmapCompletionPercent}%` },
     { id: 'watchlists', path: '/mcu', label: 'MCU Watchlist', icon: Film, badge: `${marvelProgressPercent}%` },
     { id: 'finance', path: '/finance', label: 'Finance & Budget', icon: Wallet },
@@ -71,7 +75,7 @@ export const MobileDrawer = () => {
     { id: 'settings', path: '/settings', label: 'Settings & Cloud', icon: Settings },
   ];
 
-  const navItems = allNavItems.filter(item => item.id === 'admin' || isMenuVisible(item.id));
+  const navItems = allNavItems.filter(item => item.id === 'admin' || isMenuVisible(item.id === 'soups' || item.id === 'exercise' ? 'protocol' : item.id));
 
   const getInitials = (name = '') => {
     const parts = name.trim().split(' ');

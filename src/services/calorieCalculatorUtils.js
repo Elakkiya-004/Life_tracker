@@ -2,7 +2,7 @@
  * Calorie, TDEE, BMR & Macro Calculation Utilities
  * Based on gold-standard Mifflin-St Jeor formula and nutritional guidelines.
  */
-import { NIGHT_DIET_SOUPS } from './nightDietSoupData';
+import { NIGHT_DIET_SOUPS, HEALTHY_DIET_JUICES } from './nightDietSoupData';
 
 export const ACTIVITY_LEVELS = {
   sedentary: {
@@ -265,12 +265,34 @@ export const SOUP_FOOD_ITEMS = NIGHT_DIET_SOUPS.map(s => ({
 }));
 
 /**
+ * 10 Fresh Diet & Detox Juices mapped into Food Database items
+ */
+export const JUICE_FOOD_ITEMS = HEALTHY_DIET_JUICES.map(j => ({
+  id: `food_${j.id}`,
+  name: j.name,
+  category: 'Fresh Diet Juices',
+  unit: j.servingSize,
+  servingGrams: j.servingGrams,
+  calories: j.calories,
+  protein: j.protein,
+  carbs: j.carbs,
+  fats: j.fats,
+  fibre: j.fibre,
+  icon: j.emoji || '🥤',
+  isJuice: true,
+  description: j.description,
+}));
+
+/**
  * Built-in Food & Nutrition Database
  * High-utility common foods with calories and macronutrient values per 100g.
  */
 export const FOOD_DATABASE = [
   // --- 20 Oil-Free Night Diet Soups (Weight Management) ---
   ...SOUP_FOOD_ITEMS,
+
+  // --- 10 Fresh Diet & Detox Juices ---
+  ...JUICE_FOOD_ITEMS,
 
   // --- High Protein ---
   {

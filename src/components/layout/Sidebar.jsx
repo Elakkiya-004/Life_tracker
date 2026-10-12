@@ -18,7 +18,9 @@ import {
   LogOut,
   User,
   Download,
-  RefreshCw
+  RefreshCw,
+  Utensils,
+  Dumbbell
 } from 'lucide-react';
 import { usePwa } from '../../context/PwaContext';
 
@@ -47,6 +49,8 @@ export const Sidebar = () => {
     { id: 'dashboard', path: '/', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'habits', path: '/habits', label: 'Habits & Routines', icon: CheckCircle2, badge: `${todayCompletedHabits}/${(Array.isArray(habits) ? habits.length : 0)}` },
     { id: 'protocol', path: '/health', label: 'Health & Diet Protocol', icon: HeartPulse, highlight: true },
+    { id: 'exercise', path: '/exercise', label: 'Exercise & Workout', icon: Dumbbell, badge: '6-Day' },
+    { id: 'soups', path: '/soups', label: 'Soups & Juices', icon: Utensils, badge: '30' },
     { id: 'roadmap', path: '/roadmap', label: 'Career Roadmap', icon: Compass, badge: `${roadmapCompletionPercent}%` },
     { id: 'watchlists', path: '/mcu', label: 'MCU Watchlist', icon: Film, badge: `${marvelProgressPercent}%` },
     { id: 'finance', path: '/finance', label: 'Finance & Budget', icon: Wallet },
@@ -54,7 +58,7 @@ export const Sidebar = () => {
     { id: 'settings', path: '/settings', label: 'Settings & Cloud', icon: Settings },
   ];
 
-  const navItems = allNavItems.filter(item => item.id === 'admin' || isMenuVisible(item.id));
+  const navItems = allNavItems.filter(item => item.id === 'admin' || isMenuVisible(item.id === 'soups' || item.id === 'exercise' ? 'protocol' : item.id));
 
   const getInitials = (name = '') => {
     const parts = name.trim().split(' ');
@@ -108,7 +112,7 @@ export const Sidebar = () => {
               {item.highlightAdmin ? (
                 <span className="nav-badge badge-admin">Admin</span>
               ) : item.badge ? (
-                <span className={`nav-badge ${item.id === 'watchlists' ? 'badge-marvel' : item.id === 'roadmap' ? 'badge-roadmap' : item.id === 'protocol' ? 'badge-protocol' : item.id === 'finance' ? 'badge-finance' : (todayHabitProgress === 100 ? 'badge-success' : '')}`}>
+                <span className={`nav-badge ${item.id === 'exercise' ? 'badge-exercise' : item.id === 'soups' ? 'badge-soups' : item.id === 'watchlists' ? 'badge-marvel' : item.id === 'roadmap' ? 'badge-roadmap' : item.id === 'protocol' ? 'badge-protocol' : item.id === 'finance' ? 'badge-finance' : (todayHabitProgress === 100 ? 'badge-success' : '')}`}>
                   {item.badge}
                 </span>
               ) : null}
@@ -373,6 +377,18 @@ export const Sidebar = () => {
         .badge-protocol {
           background: rgba(16, 185, 129, 0.2);
           color: #10b981;
+          font-weight: 800;
+        }
+
+        .badge-exercise {
+          background: rgba(139, 92, 246, 0.2);
+          color: #a78bfa;
+          font-weight: 800;
+        }
+
+        .badge-soups {
+          background: rgba(249, 115, 22, 0.2);
+          color: #fb923c;
           font-weight: 800;
         }
 

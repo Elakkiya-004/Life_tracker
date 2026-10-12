@@ -17,6 +17,8 @@ import { HabitsView } from '../../views/HabitsView';
 import { WatchlistView } from '../../views/WatchlistView';
 import { FinanceView } from '../../views/FinanceView';
 import { HealthProtocolView } from '../../views/HealthProtocolView';
+import { SoupsView } from '../../views/SoupsView';
+import { ExerciseView } from '../../views/ExerciseView';
 import { AnalyticsView } from '../../views/AnalyticsView';
 import { SettingsView } from '../../views/SettingsView';
 
@@ -45,6 +47,12 @@ export const Layout = () => {
       habits: 'habits',
       protocol: 'protocol',
       health: 'protocol',
+      soups: 'protocol',
+      'diet-soups': 'protocol',
+      exercise: 'protocol',
+      workout: 'protocol',
+      workouts: 'protocol',
+      fitness: 'protocol',
       roadmap: 'roadmap',
       career: 'roadmap',
       watchlists: 'watchlists',
@@ -76,6 +84,16 @@ export const Layout = () => {
       case 'protocol':
       case 'health':
         return <HealthProtocolView />;
+      case 'soups':
+      case 'juices':
+      case 'soups-juices':
+      case 'diet-soups':
+        return <SoupsView />;
+      case 'exercise':
+      case 'workout':
+      case 'workouts':
+      case 'fitness':
+        return <ExerciseView />;
       case 'finance':
       case 'budget':
         return <FinanceView />;
