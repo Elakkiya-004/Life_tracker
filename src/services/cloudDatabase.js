@@ -241,7 +241,7 @@ export const sanitizeHealthProtocol = (raw) => {
   const isOldDefaultList = protocol.juiceProtocol?.juices?.length === 7 && 
     protocol.juiceProtocol.juices.some(j => j.name && (j.name.toLowerCase().includes('pear') || j.name.toLowerCase().includes('papaya + ginger')));
 
-  if (!protocol.juiceProtocol || !Array.isArray(protocol.juiceProtocol.juices) || protocol.juiceProtocol.juices.length === 0 || isOldDefaultList) {
+  if (!protocol.juiceProtocol || !Array.isArray(protocol.juiceProtocol.juices) || isOldDefaultList) {
     protocol.juiceProtocol = {
       ...DB_HEALTH_PROTOCOL_TEMPLATE.juiceProtocol,
       ...(protocol.juiceProtocol || {}),

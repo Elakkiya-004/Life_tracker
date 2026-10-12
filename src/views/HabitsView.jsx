@@ -115,6 +115,15 @@ export const HabitsView = () => {
     });
   };
 
+  const handleRemoveJuiceHabit = (juiceName) => {
+    if (!juiceName) return;
+    const clean = juiceName.toLowerCase();
+    const habit = habitsList.find(h => h.name && h.name.toLowerCase().includes(clean));
+    if (habit) {
+      deleteHabit(habit.id);
+    }
+  };
+
   const handleAddProtocolHabit = (proto) => {
     if (isProtocolAdded(proto)) return;
     const isJuice = proto.regimeKey === 'juiceProtocol';
@@ -576,10 +585,21 @@ export const HabitsView = () => {
             <div className="juice-action-col">
               {juiceSchedule.isJuiceDayToday && juiceSchedule.todayJuice ? (
                 isJuiceAdded(juiceSchedule.todayJuice.name) ? (
-                  <span className="juice-added-badge">
-                    <CheckCheck size={14} />
-                    <span>In Today's Routine</span>
-                  </span>
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <span className="juice-added-badge">
+                      <CheckCheck size={14} />
+                      <span>In Today's Routine</span>
+                    </span>
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-xs text-danger"
+                      style={{ padding: '0.2rem 0.4rem', height: '24px' }}
+                      onClick={() => handleRemoveJuiceHabit(juiceSchedule.todayJuice.name)}
+                      title="Remove juice from today's checklist"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
                 ) : (
                   <button
                     type="button"
@@ -594,14 +614,32 @@ export const HabitsView = () => {
                 )
               ) : (
                 juiceSchedule.tomorrowJuice && (
-                  <button
-                    type="button"
-                    className="btn btn-secondary btn-sm juice-preview-btn"
-                    onClick={() => handleAddJuice(juiceSchedule.tomorrowJuice)}
-                    title="Drink this juice today instead"
-                  >
-                    <span>Drink Today Anyway</span>
-                  </button>
+                  isJuiceAdded(juiceSchedule.tomorrowJuice.name) ? (
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <span className="juice-added-badge">
+                        <CheckCheck size={14} />
+                        <span>In Today's Routine</span>
+                      </span>
+                      <button
+                        type="button"
+                        className="btn btn-ghost btn-xs text-danger"
+                        style={{ padding: '0.2rem 0.4rem', height: '24px' }}
+                        onClick={() => handleRemoveJuiceHabit(juiceSchedule.tomorrowJuice.name)}
+                        title="Remove juice from today's checklist"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      className="btn btn-secondary btn-sm juice-preview-btn"
+                      onClick={() => handleAddJuice(juiceSchedule.tomorrowJuice)}
+                      title="Drink this juice today instead"
+                    >
+                      <span>Drink Today Anyway</span>
+                    </button>
+                  )
                 )
               )}
             </div>

@@ -50,6 +50,7 @@ export const HealthProtocolView = () => {
     importHealthProtocolFromExcel,
     resetHealthProtocolToDefault,
     addHabit,
+    deleteHabit,
     habits = [],
     todayStr,
     setActiveTab,
@@ -128,6 +129,47 @@ export const HealthProtocolView = () => {
     showToast(`🥤 Added "${juice.name}" to today's habits!`);
   };
 
+  const handleRemoveJuiceFromHabits = (juiceName) => {
+    if (!juiceName) return;
+    const clean = juiceName.toLowerCase();
+    const habit = habitsList.find(h => h.name && h.name.toLowerCase().includes(clean));
+    if (habit && deleteHabit) {
+      deleteHabit(habit.id);
+      showToast(`🗑️ Removed "${juiceName}" from today's habits.`);
+    }
+  };
+
+  const handleDeleteJuiceDirect = (juiceId, juiceName) => {
+    const isConfirmed = typeof window !== 'undefined' && window.confirm 
+      ? window.confirm(`Are you sure you want to delete "${juiceName}" from your Juice Routine rotation?`) 
+      : true;
+    if (!isConfirmed) return;
+
+    const currentJuices = Array.isArray(juiceProtocol.juices) && juiceProtocol.juices.length > 0
+      ? juiceProtocol.juices
+      : DEFAULT_JUICES;
+
+    const updatedJuices = currentJuices.filter(j => (j.id ? j.id !== juiceId : j.name !== juiceName));
+
+    updateHealthProtocol(prev => ({
+      ...prev,
+      juiceProtocol: {
+        ...(prev?.juiceProtocol || {}),
+        enabled: true,
+        frequency: 'two_days_once',
+        juices: updatedJuices,
+      }
+    }));
+
+    handleRemoveJuiceFromHabits(juiceName);
+
+    if (selectedJuiceModal && (selectedJuiceModal.id === juiceId || selectedJuiceModal.name === juiceName)) {
+      setSelectedJuiceModal(null);
+    }
+
+    showToast(`🗑️ Deleted "${juiceName}" from Juice Routine.`);
+  };
+
   const handleOpenEditJuices = () => {
     setFormData({
       notes: juiceProtocol.notes || 'Drink fresh on an empty stomach or mid-morning for optimal nutrient absorption.',
@@ -179,7 +221,7 @@ export const HealthProtocolView = () => {
         enabled: true,
         frequency: 'two_days_once',
         notes: formData.notes || '',
-        juices: cleanJuices.length > 0 ? cleanJuices : DEFAULT_JUICES,
+        juices: cleanJuices,
       }
     }));
     setActiveModal(null);
@@ -1017,6 +1059,18 @@ export const HealthProtocolView = () => {
                   <div className="juice-schedule-badges">
                     {isToday && <span className="badge badge-success text-xs">Today's Pick</span>}
                     {isTomorrow && <span className="badge badge-primary text-xs">Tomorrow</span>}
+                    <button
+                      type="button"
+                      className="btn-icon-sm btn-ghost text-danger delete-item-btn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteJuiceDirect(j.id, j.name);
+                      }}
+                      title={`Delete "${j.name}" from Juice Rotation`}
+                      aria-label={`Delete "${j.name}"`}
+                    >
+                      <Trash2 size={13} />
+                    </button>
                   </div>
                 </div>
 
@@ -1044,9 +1098,20 @@ export const HealthProtocolView = () => {
                   </button>
 
                   {alreadyAdded ? (
-                    <span className="juice-already-added">
-                      <CheckCheck size={13} /> In Habits
-                    </span>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                      <span className="juice-already-added">
+                        <CheckCheck size={13} /> In Habits
+                      </span>
+                      <button
+                        type="button"
+                        className="btn btn-ghost btn-xs text-danger"
+                        style={{ padding: '0.15rem 0.35rem', fontSize: '0.72rem', height: '22px' }}
+                        onClick={() => handleRemoveJuiceFromHabits(j.name)}
+                        title={`Remove "${j.name}" from today's habits`}
+                      >
+                        Remove
+                      </button>
+                    </div>
                   ) : (
                     <button
                       type="button"
@@ -1116,26 +1181,49 @@ export const HealthProtocolView = () => {
                 </div>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem', paddingTop: '0.75rem', borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}>
-                <button type="button" className="btn btn-secondary" onClick={() => setSelectedJuiceModal(null)}>
-                  Close
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', marginTop: '0.5rem', paddingTop: '0.75rem', borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                <button
+                  type="button"
+                  className="btn btn-ghost text-danger btn-sm"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
+                  onClick={() => handleDeleteJuiceDirect(selectedJuiceModal.id, selectedJuiceModal.name)}
+                  title="Delete this juice from the rotation schedule"
+                >
+                  <Trash2 size={14} />
+                  <span>Delete Recipe</span>
                 </button>
-                {isJuiceAdded(selectedJuiceModal.name) ? (
-                  <span className="badge badge-success" style={{ padding: '0.55rem 0.9rem' }}>
-                    <CheckCheck size={14} /> Already In Habits
-                  </span>
-                ) : (
-                  <button
-                    type="button"
-                    className="btn btn-primary"
-                    onClick={() => {
-                      handleAddJuiceToRoutine(selectedJuiceModal);
-                      setSelectedJuiceModal(null);
-                    }}
-                  >
-                    <Plus size={14} /> Add to Today's Habits
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                  <button type="button" className="btn btn-secondary btn-sm" onClick={() => setSelectedJuiceModal(null)}>
+                    Close
                   </button>
-                )}
+                  {isJuiceAdded(selectedJuiceModal.name) ? (
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                      <span className="badge badge-success" style={{ padding: '0.45rem 0.75rem' }}>
+                        <CheckCheck size={14} /> Already In Habits
+                      </span>
+                      <button
+                        type="button"
+                        className="btn btn-ghost btn-xs text-danger"
+                        onClick={() => handleRemoveJuiceFromHabits(selectedJuiceModal.name)}
+                        title="Remove from Today's Habits list"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      className="btn btn-primary btn-sm"
+                      onClick={() => {
+                        handleAddJuiceToRoutine(selectedJuiceModal);
+                        setSelectedJuiceModal(null);
+                      }}
+                    >
+                      <Plus size={14} /> Add to Today's Habits
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           </Modal>
