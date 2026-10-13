@@ -7,6 +7,7 @@ import { HabitHistoryModal } from '../components/habits/HabitHistoryModal';
 import { DailyHabitNoteCard } from '../components/habits/DailyHabitNoteCard';
 import { useTaskDragAndDrop } from '../hooks/useTaskDragAndDrop';
 import { getScheduledProtocolsForDay } from '../services/careProtocolUtils';
+import { HEALTHY_DIET_JUICES } from '../services/nightDietSoupData';
 import { 
   Plus, 
   Flame, 
@@ -52,7 +53,10 @@ export const HabitsView = () => {
     healthProtocol = {},
     todayStr,
     syncAllHistoryToCloud,
-    syncStatus
+    syncStatus,
+    logDietItem,
+    removeDietMeal,
+    dailyMeals = []
   } = useApp();
 
   const [isCloudSyncing, setIsCloudSyncing] = useState(false);
@@ -122,22 +126,50 @@ export const HabitsView = () => {
   const isJuiceAdded = (juiceName) => {
     if (!juiceName) return false;
     const clean = juiceName.toLowerCase();
-    return habitsList.some(h => h.name && h.name.toLowerCase().includes(clean));
+    const inHabits = habitsList.some(h => h.name && h.name.toLowerCase().includes(clean));
+    const inMeals = Array.isArray(dailyMeals) && dailyMeals.some(m => m.name && m.name.toLowerCase().includes(clean));
+    return inHabits || inMeals;
   };
 
   const handleAddJuice = (juice) => {
     if (!juice) return;
-    const habitName = `Drink ${juice.emoji} ${juice.name}`;
-    if (isJuiceAdded(juice.name)) return;
-    addHabit({
-      name: habitName,
-      category: 'Diet & Nutrition',
-      timeOfDay: 'Morning',
-      icon: 'Droplets',
+    const fullJuice = HEALTHY_DIET_JUICES.find(j => 
+      (j.id && j.id === juice.id) || 
+      (j.name && j.name.toLowerCase() === juice.name.toLowerCase()) ||
+      (juice.name && j.name.toLowerCase().includes(juice.name.toLowerCase()))
+    ) || {
+      id: juice.id || `juice-${Date.now()}`,
+      name: juice.name,
+      tamilName: juice.tamilName || '',
+      calories: juice.calories || 95,
+      protein: juice.protein || 2,
+      carbs: juice.carbs || 22,
+      fats: juice.fats || 0.4,
+      fiber: juice.fiber || 3.2,
+      emoji: juice.emoji || '🥤',
       color: juice.color || '#f97316',
-      frequency: 'two_days_once',
-      targetDays: 3,
-    });
+      benefits: juice.benefits || 'Skin brightening & gut health',
+      ingredients: juice.ingredients || 'Fresh natural ingredients',
+      type: 'juice',
+      servingSize: '1 glass (~300 ml)'
+    };
+
+    if (logDietItem) {
+      logDietItem({ item: fullJuice, mealType: 'snack' });
+    } else {
+      const habitName = `Drink ${juice.emoji || '🥤'} ${juice.name}`;
+      if (isJuiceAdded(juice.name)) return;
+      addHabit({
+        name: habitName,
+        category: 'Diet & Nutrition',
+        timeOfDay: 'Morning',
+        icon: 'Droplets',
+        color: juice.color || '#f97316',
+        frequency: 'two_days_once',
+        targetDays: 3,
+        completedDates: [todayStr],
+      });
+    }
   };
 
   const handleRemoveJuiceHabit = (juiceName) => {
@@ -146,6 +178,12 @@ export const HabitsView = () => {
     const habit = habitsList.find(h => h.name && h.name.toLowerCase().includes(clean));
     if (habit) {
       deleteHabit(habit.id);
+    }
+    if (Array.isArray(dailyMeals) && removeDietMeal) {
+      const matchingMeal = dailyMeals.find(m => m.name && m.name.toLowerCase().includes(clean));
+      if (matchingMeal) {
+        removeDietMeal(matchingMeal.id);
+      }
     }
   };
 

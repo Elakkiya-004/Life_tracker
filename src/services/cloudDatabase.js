@@ -206,6 +206,96 @@ export const DB_HEALTH_PROTOCOL_TEMPLATE = {
         color: '#e11d48',
         timeOfDay: 'Morning',
       },
+      {
+        id: 'juice-11',
+        name: 'ABC Miracle Glow (Apple + Beetroot + Carrot + Lemon)',
+        emoji: '🍎',
+        ingredients: '1 Apple + 1/2 small Beetroot + 1 Carrot + squeeze of Lemon + water',
+        benefits: 'Glutathione booster + deep blood purification + liver detox for luminous skin & gut motility',
+        color: '#be123c',
+        timeOfDay: 'Morning',
+      },
+      {
+        id: 'juice-12',
+        name: 'Pomegranate + Amla + Mint Radiance Elixir',
+        emoji: '🍷',
+        ingredients: '1 cup Pomegranate arils + 1 Amla + fresh Mint leaves + pinch of Rock Salt + water',
+        benefits: 'Ellagic acid & punicalagins inhibit melanin synthesis + prebiotic polyphenols balance gut microbiome',
+        color: '#991b1b',
+        timeOfDay: 'Morning',
+      },
+      {
+        id: 'juice-13',
+        name: 'Coconut Water + Aloe Vera + Cucumber Glass-Skin Dew',
+        emoji: '🥥',
+        ingredients: 'Fresh Tender Coconut Water + 2 tbsp pure Aloe Vera gel + 1/2 Cucumber + squeeze of Lemon',
+        benefits: 'Cools internal heat (pitta) + repairs intestinal mucosa + deep cellular electrolyte hydration for glass skin',
+        color: '#0d9488',
+        timeOfDay: 'Morning',
+      },
+      {
+        id: 'juice-14',
+        name: 'Spinach + Green Apple + Ginger + Mint (Chlorophyll Glow)',
+        emoji: '🍏',
+        ingredients: 'Handful fresh Spinach (Palak) + 1 Green Apple + 1/2 inch Ginger + fresh Mint + Lemon juice',
+        benefits: 'Chlorophyll & folate accelerate cellular renewal + apple pectin prebiotic fiber soothes digestive tract',
+        color: '#15803d',
+        timeOfDay: 'Morning',
+      },
+      {
+        id: 'juice-15',
+        name: 'Golden Turmeric + Orange + Carrot Brightening Tonic',
+        emoji: '✨',
+        ingredients: '1 Orange + 1 Carrot + 1/4 tsp organic Turmeric + tiny pinch of Black Pepper + water',
+        benefits: 'Curcumin & beta-carotene reduce hyperpigmentation + potent anti-inflammatory protection for gut lining',
+        color: '#eab308',
+        timeOfDay: 'Morning',
+      },
+      {
+        id: 'juice-16',
+        name: 'Coriander + Cucumber + Lemon Alkaline Gut Flush',
+        emoji: '🌿',
+        ingredients: 'Fresh Coriander leaves (Dhaniya) + 1 Cucumber + Lemon juice + pinch of Cumin powder + water',
+        benefits: 'Heavy metal flush + rich in Vitamin K & C to clear blemishes + eliminates gas & stomach bloating',
+        color: '#16a34a',
+        timeOfDay: 'Morning',
+      },
+      {
+        id: 'juice-17',
+        name: 'Papaya + Coconut Water + Chia Seed Digestion Elixir',
+        emoji: '🥭',
+        ingredients: '1 cup ripe Papaya chunks + Tender Coconut Water + 1 tsp soaked Chia seeds',
+        benefits: 'Papain enzyme breaks down waste + soluble mucilage fiber feeds gut flora for blemish-free skin',
+        color: '#f97316',
+        timeOfDay: 'Morning',
+      },
+      {
+        id: 'juice-18',
+        name: 'Beetroot + Amla + Ginger + Mint Micro-Circulation Flush',
+        emoji: '🧃',
+        ingredients: '1/2 Beetroot + 1 Amla + 1/2 inch Ginger + fresh Mint + Pink Salt + water',
+        benefits: 'Nitric oxide enhances facial oxygenation & natural pink glow + collagen synthesis & liver detox',
+        color: '#881337',
+        timeOfDay: 'Morning',
+      },
+      {
+        id: 'juice-19',
+        name: 'Watermelon + Cucumber + Sabja (Basil Seeds) Gut Cooler',
+        emoji: '🍉',
+        ingredients: '1 cup chilled Watermelon + 1/2 Cucumber + 1 tsp soaked Sabja seeds + squeeze of Lime',
+        benefits: 'Lycopene protects skin from photo-aging + cooling mucilage sabja seeds relieve gastric burning & acid reflux',
+        color: '#e11d48',
+        timeOfDay: 'Morning',
+      },
+      {
+        id: 'juice-20',
+        name: 'Pineapple + Fennel (Saunf) + Ginger Anti-Bloat Nectar',
+        emoji: '🍍',
+        ingredients: '1 cup fresh Pineapple + 1 tsp soaked Fennel seeds (Saunf) + 1/2 inch Ginger + water',
+        benefits: 'Bromelain enzyme banishes bloat & water retention + fennel anethole eases cramps for clear radiant skin',
+        color: '#ca8a04',
+        timeOfDay: 'Morning',
+      },
     ],
   }
 };
@@ -238,15 +328,20 @@ export const sanitizeHealthProtocol = (raw) => {
     }
   }
 
-  const isOldDefaultList = protocol.juiceProtocol?.juices?.length === 7 && 
-    protocol.juiceProtocol.juices.some(j => j.name && (j.name.toLowerCase().includes('pear') || j.name.toLowerCase().includes('papaya + ginger')));
-
-  if (!protocol.juiceProtocol || !Array.isArray(protocol.juiceProtocol.juices) || isOldDefaultList) {
+  const existingJuices = protocol.juiceProtocol?.juices;
+  if (!protocol.juiceProtocol || !Array.isArray(existingJuices) || existingJuices.length === 0) {
     protocol.juiceProtocol = {
       ...DB_HEALTH_PROTOCOL_TEMPLATE.juiceProtocol,
       ...(protocol.juiceProtocol || {}),
       juices: DEFAULT_JUICES,
     };
+  } else if (existingJuices.length < 20) {
+    // Seamlessly merge in the 10 new skin-brightening & gut-health juices without losing custom entries
+    const existingIds = new Set(existingJuices.map(j => j.id || j.name));
+    const toAppend = DEFAULT_JUICES.filter(j => !existingIds.has(j.id) && !existingIds.has(j.name));
+    if (toAppend.length > 0) {
+      protocol.juiceProtocol.juices = [...existingJuices, ...toAppend];
+    }
   }
 
   return protocol;
@@ -556,15 +651,15 @@ export const seedDatabaseIfEmpty = async () => {
   if (!initRes.success || !db) return { success: false, reason: 'offline_mode' };
 
   try {
-    // 1. Seed Health Protocol Template in Firestore
+    // 1. Seed Health Protocol Template in Firestore (and update if juices count < 20)
     const healthDocRef = doc(db, 'system_templates', 'health_protocol');
     const healthSnap = await getDoc(healthDocRef);
-    if (!healthSnap.exists()) {
+    if (!healthSnap.exists() || (healthSnap.data()?.juiceProtocol?.juices?.length || 0) < 20) {
       await setDoc(healthDocRef, {
         ...DB_HEALTH_PROTOCOL_TEMPLATE,
         seededAt: new Date().toISOString()
-      });
-      console.log('🌱 Seeded system_templates/health_protocol in Cloud Database');
+      }, { merge: true });
+      console.log('🌱 Seeded 20 Juices in system_templates/health_protocol in Cloud Database');
     }
 
     // 2. Seed Career Roadmap Template

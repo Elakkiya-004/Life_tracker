@@ -212,22 +212,48 @@ export const CalorieCalculatorModal = ({ isOpen, onClose, onApplySuccess }) => {
     }
   });
 
-  // Reload when date or user switches
+  // Reload when date, user, modal open state, or meal update events occur
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(trackerStorageKey);
-      if (saved) setLoggedMeals(JSON.parse(saved));
-      else setLoggedMeals([]);
-    } catch {
-      setLoggedMeals([]);
-    }
-  }, [trackerStorageKey]);
+    const reload = () => {
+      try {
+        const saved = localStorage.getItem(trackerStorageKey);
+        if (saved) setLoggedMeals(JSON.parse(saved));
+        else setLoggedMeals([]);
+      } catch {
+        setLoggedMeals([]);
+      }
+    };
 
-  // Save changes to storage
+    reload();
+
+    const handleEvent = (e) => {
+      if (e?.detail?.meals) {
+        setLoggedMeals(e.detail.meals);
+      } else {
+        reload();
+      }
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('life_tracker_meals_updated', handleEvent);
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('life_tracker_meals_updated', handleEvent);
+      }
+    };
+  }, [trackerStorageKey, isOpen]);
+
+  // Save changes to storage & dispatch update event
   const saveMealsToStorage = (updated) => {
     setLoggedMeals(updated);
     try {
       localStorage.setItem(trackerStorageKey, JSON.stringify(updated));
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('life_tracker_meals_updated', {
+          detail: { dateStr: todayStr, userId: currentUserId, meals: updated }
+        }));
+      }
     } catch (e) {
       console.error('Failed to save meal log:', e);
     }

@@ -37,9 +37,7 @@ import { ExcelUploadModal } from '../components/health/ExcelUploadModal';
 import { CareRegimeModal } from '../components/health/CareRegimeModal';
 import { CalorieCalculatorModal } from '../components/health/CalorieCalculatorModal';
 import { WorkoutSection } from '../components/health/WorkoutSection';
-import { NightDietSoupsSection } from '../components/health/NightDietSoupsSection';
-import { normalizeCareRegime, getFrequencyMeta, getJuiceSchedule } from '../services/careProtocolUtils';
-import { DEFAULT_JUICES } from '../services/cloudDatabase';
+import { normalizeCareRegime, getFrequencyMeta } from '../services/careProtocolUtils';
 import { WORKOUT_DAYS } from '../services/workoutPlanData';
 import { Modal } from '../components/common/Modal';
 
@@ -54,6 +52,8 @@ export const HealthProtocolView = () => {
     habits = [],
     todayStr,
     setActiveTab,
+    todayCaloriesConsumed = 0,
+    dailyMeals = [],
   } = useApp();
 
   const { currentUser, isSuperAdmin } = useAuth();
@@ -61,7 +61,6 @@ export const HealthProtocolView = () => {
   const [notificationMsg, setNotificationMsg] = useState(null);
   const [isExcelModalOpen, setIsExcelModalOpen] = useState(false);
   const [isCalorieCalcOpen, setIsCalorieCalcOpen] = useState(false);
-  const [selectedJuiceModal, setSelectedJuiceModal] = useState(null);
   const [isWorkoutInlineExpanded, setIsWorkoutInlineExpanded] = useState(false);
 
   // Today's rotating workout plan
@@ -98,135 +97,7 @@ export const HealthProtocolView = () => {
   const normalizedBodyCare = normalizeCareRegime(bodyCare, 'bodycare');
   const normalizedHairCare = normalizeCareRegime(hairCare, 'haircare');
 
-  const juiceProtocol = protocol.juiceProtocol || {};
-  const juices = Array.isArray(juiceProtocol.juices) && juiceProtocol.juices.length > 0
-    ? juiceProtocol.juices
-    : DEFAULT_JUICES;
-
-  const juiceSchedule = useMemo(() => {
-    return getJuiceSchedule(todayStr, juiceProtocol);
-  }, [todayStr, juiceProtocol]);
-
   const habitsList = Array.isArray(habits) ? habits : [];
-  const isJuiceAdded = (juiceName) => {
-    if (!juiceName) return false;
-    return habitsList.some(h => h.name && h.name.toLowerCase().includes(juiceName.toLowerCase()));
-  };
-
-  const handleAddJuiceToRoutine = (juice) => {
-    if (!juice) return;
-    const habitName = `Drink ${juice.emoji} ${juice.name}`;
-    if (isJuiceAdded(juice.name)) return;
-    addHabit({
-      name: habitName,
-      category: 'Diet & Nutrition',
-      timeOfDay: 'Morning',
-      icon: 'Droplets',
-      color: juice.color || '#f97316',
-      frequency: 'two_days_once',
-      targetDays: 3,
-    });
-    showToast(`🥤 Added "${juice.name}" to today's habits!`);
-  };
-
-  const handleRemoveJuiceFromHabits = (juiceName) => {
-    if (!juiceName) return;
-    const clean = juiceName.toLowerCase();
-    const habit = habitsList.find(h => h.name && h.name.toLowerCase().includes(clean));
-    if (habit && deleteHabit) {
-      deleteHabit(habit.id);
-      showToast(`🗑️ Removed "${juiceName}" from today's habits.`);
-    }
-  };
-
-  const handleDeleteJuiceDirect = (juiceId, juiceName) => {
-    const isConfirmed = typeof window !== 'undefined' && window.confirm 
-      ? window.confirm(`Are you sure you want to delete "${juiceName}" from your Juice Routine rotation?`) 
-      : true;
-    if (!isConfirmed) return;
-
-    const currentJuices = Array.isArray(juiceProtocol.juices) && juiceProtocol.juices.length > 0
-      ? juiceProtocol.juices
-      : DEFAULT_JUICES;
-
-    const updatedJuices = currentJuices.filter(j => (j.id ? j.id !== juiceId : j.name !== juiceName));
-
-    updateHealthProtocol(prev => ({
-      ...prev,
-      juiceProtocol: {
-        ...(prev?.juiceProtocol || {}),
-        enabled: true,
-        frequency: 'two_days_once',
-        juices: updatedJuices,
-      }
-    }));
-
-    handleRemoveJuiceFromHabits(juiceName);
-
-    if (selectedJuiceModal && (selectedJuiceModal.id === juiceId || selectedJuiceModal.name === juiceName)) {
-      setSelectedJuiceModal(null);
-    }
-
-    showToast(`🗑️ Deleted "${juiceName}" from Juice Routine.`);
-  };
-
-  const handleOpenEditJuices = () => {
-    setFormData({
-      notes: juiceProtocol.notes || 'Drink fresh on an empty stomach or mid-morning for optimal nutrient absorption.',
-      juices: juices.map(j => ({ ...j })),
-    });
-    setActiveModal('juices');
-  };
-
-  const handleAddJuiceRow = () => {
-    setFormData(prev => ({
-      ...prev,
-      juices: [
-        ...(prev.juices || []),
-        {
-          id: `juice-${Date.now()}`,
-          name: '',
-          emoji: '🥤',
-          ingredients: '',
-          benefits: '',
-          color: '#f97316',
-          timeOfDay: 'Morning',
-        }
-      ]
-    }));
-  };
-
-  const handleRemoveJuiceRow = (idx) => {
-    setFormData(prev => ({
-      ...prev,
-      juices: prev.juices.filter((_, i) => i !== idx)
-    }));
-  };
-
-  const handleUpdateJuiceRow = (idx, field, value) => {
-    setFormData(prev => {
-      const updated = [...prev.juices];
-      updated[idx] = { ...updated[idx], [field]: value };
-      return { ...prev, juices: updated };
-    });
-  };
-
-  const handleSaveJuices = (e) => {
-    e.preventDefault();
-    const cleanJuices = (formData.juices || []).filter(j => j.name && j.name.trim() !== '');
-    updateHealthProtocol(prev => ({
-      ...prev,
-      juiceProtocol: {
-        ...(prev.juiceProtocol || {}),
-        enabled: true,
-        frequency: 'two_days_once',
-        notes: formData.notes || '',
-        juices: cleanJuices,
-      }
-    }));
-    setActiveModal(null);
-    showToast('✅ Healthy Juices & Hydration regime updated!');
-  };
 
   const showToast = (msg) => {
     setNotificationMsg(msg);
@@ -786,6 +657,26 @@ export const HealthProtocolView = () => {
             <span className="cal-val text-amber">{calories.cheatDay?.target || 'Not set'}</span>
             <span className="cal-desc">{calories.cheatDay?.rules || 'Not set'}</span>
           </div>
+
+          <div 
+            className="card cal-card live-tracker-card" 
+            style={{ 
+              borderColor: 'rgba(99, 102, 241, 0.35)', 
+              background: 'linear-gradient(145deg, rgba(30, 41, 59, 0.7) 0%, rgba(99, 102, 241, 0.08) 100%)',
+              cursor: 'pointer' 
+            }}
+            onClick={() => setIsCalorieCalcOpen(true)}
+            title="Click to view today's food calorie breakdown & meal logs"
+          >
+            <div className="card-top-tag" style={{ background: '#6366f1' }}>TODAY'S INTAKE</div>
+            <span className="cal-label">Calories Consumed</span>
+            <span className="cal-val text-primary" style={{ display: 'flex', alignItems: 'baseline', gap: '0.35rem' }}>
+              {todayCaloriesConsumed} <small>kcal logged</small>
+            </span>
+            <span className="cal-desc" style={{ color: '#38bdf8' }}>
+              {dailyMeals.length} item(s) logged • Click to view tracker
+            </span>
+          </div>
         </div>
 
         {/* Macros Breakdown Cards */}
@@ -841,12 +732,57 @@ export const HealthProtocolView = () => {
       </div>
 
       {/* ========================================================================= */}
-      {/* 🍲 20 Oil-Free Night Diet Soups for Weight Management (Dinner Protocol) */}
+      {/* 🍲 20 Oil-Free Night Soups & 🥤 20 Fresh Diet Juices (Dedicated Hub Link) */}
       {/* ========================================================================= */}
-      <NightDietSoupsSection 
-        compactMode={true}
-        onOpenCalorieCalculator={() => setIsCalorieCalcOpen(true)} 
-      />
+      <div className="card soups-redirect-banner" style={{
+        background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(245, 158, 11, 0.15) 100%)',
+        border: '1px solid rgba(99, 102, 241, 0.25)',
+        borderRadius: '16px',
+        padding: '1.25rem 1.5rem',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        gap: '1rem',
+        marginBottom: '1rem'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div style={{
+            width: '50px',
+            height: '50px',
+            borderRadius: '12px',
+            background: 'rgba(99, 102, 241, 0.22)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '1.75rem'
+          }}>
+            🥣
+          </div>
+          <div>
+            <div style={{ display: 'flex', gap: '0.4rem', marginBottom: '0.25rem', flexWrap: 'wrap' }}>
+              <span className="badge badge-primary">🌙 20 NIGHT DIET SOUPS</span>
+              <span className="badge badge-warning">🥤 20 FRESH DIET JUICES</span>
+              <span className="badge badge-success">🥣 40 RECIPES</span>
+            </div>
+            <h4 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, color: '#f8fafc' }}>
+              Soups & Fresh Diet Juices Hub
+            </h4>
+            <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.82rem', color: '#94a3b8' }}>
+              All 40 recipes, alternate-day rotation schedules, live calorie calculations, and habit check-offs are on the dedicated Soups & Juices page.
+            </p>
+          </div>
+        </div>
+        <button
+          type="button"
+          className="btn btn-primary btn-sm"
+          onClick={() => setActiveTab('soups')}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', padding: '0.6rem 1.2rem', fontWeight: 600 }}
+        >
+          <span>Open Soups & Juices</span>
+          <ArrowRight size={15} />
+        </button>
+      </div>
 
       {/* ========================================================================= */}
       {/* 2. Micronutrients Focus */}
@@ -915,323 +851,7 @@ export const HealthProtocolView = () => {
       </div>
 
       {/* ========================================================================= */}
-      {/* 3. Healthy Juices & Hydration Protocol (Alternate Days Schedule) */}
-      {/* ========================================================================= */}
-      <div className="section-container">
-        <div className="section-title-row">
-          <div className="title-with-icon">
-            <Droplets size={20} className="text-orange" />
-            <h3 className="section-title">3. Healthy Juices & Hydration Protocol</h3>
-            <span className="badge badge-primary" style={{ fontSize: '0.7rem', padding: '0.2rem 0.55rem' }}>
-              ALTERNATE DAYS
-            </span>
-          </div>
-          <div className="title-actions">
-            <button 
-              type="button" 
-              className="btn btn-secondary btn-sm"
-              onClick={handleOpenEditJuices}
-            >
-              <Edit3 size={14} />
-              <span>Edit Juices</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Live Today & Tomorrow Rotation Banner */}
-        {juiceSchedule && (
-          <div className={`juice-live-banner card ${juiceSchedule.isJuiceDayToday ? 'banner-active-day' : 'banner-rest-day'}`}>
-            <div className="juice-live-left">
-              <div 
-                className="juice-live-icon-wrap" 
-                style={{ 
-                  backgroundColor: juiceSchedule.isJuiceDayToday && juiceSchedule.todayJuice 
-                    ? `${juiceSchedule.todayJuice.color}25` 
-                    : 'rgba(99, 102, 241, 0.15)' 
-                }}
-              >
-                <span style={{ fontSize: '1.75rem', lineHeight: 1 }}>
-                  {juiceSchedule.isJuiceDayToday && juiceSchedule.todayJuice ? juiceSchedule.todayJuice.emoji : '🥤'}
-                </span>
-              </div>
-              <div className="juice-live-details">
-                <div className="juice-live-tag-row">
-                  <span className={`live-pill ${juiceSchedule.isJuiceDayToday ? 'pill-green' : 'pill-purple'}`}>
-                    {juiceSchedule.isJuiceDayToday ? "✨ TODAY'S SCHEDULED JUICE" : '🌿 TODAY IS A REST DAY'}
-                  </span>
-                  <span className="live-cadence-pill">Alternate Days Cadence</span>
-                </div>
-                {juiceSchedule.isJuiceDayToday && juiceSchedule.todayJuice ? (
-                  <>
-                    <h4 className="juice-live-name">{juiceSchedule.todayJuice.name}</h4>
-                    <p className="juice-live-desc">
-                      <strong>Key Focus:</strong> {juiceSchedule.todayJuice.benefits} • <strong>Ingredients:</strong> {juiceSchedule.todayJuice.ingredients}
-                    </p>
-                  </>
-                ) : (
-                  <>
-                    <h4 className="juice-live-name">Rest & Hydrate Today</h4>
-                    <p className="juice-live-desc">
-                      Rest day from juices. Drink plenty of fresh water & herbal teas.
-                    </p>
-                  </>
-                )}
-                <div className="juice-live-tomorrow">
-                  <Calendar size={13} className="text-sub" />
-                  <span>
-                    <strong>Tomorrow:</strong>{' '}
-                    {juiceSchedule.isJuiceDayTomorrow && juiceSchedule.tomorrowJuice ? (
-                      <span className="text-primary font-bold">
-                        {juiceSchedule.tomorrowJuice.emoji} {juiceSchedule.tomorrowJuice.name} ({juiceSchedule.tomorrowJuice.benefits})
-                      </span>
-                    ) : (
-                      <span className="text-sub">Rest day (Next up: {juiceSchedule.nextJuice ? `${juiceSchedule.nextJuice.emoji} ${juiceSchedule.nextJuice.name}` : 'Next Scheduled Juice'})</span>
-                    )}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div className="juice-live-actions">
-              {(juiceSchedule.todayJuice || juiceSchedule.tomorrowJuice) && (
-                <button
-                  type="button"
-                  className="btn btn-secondary btn-sm"
-                  onClick={() => setSelectedJuiceModal(juiceSchedule.isJuiceDayToday && juiceSchedule.todayJuice ? juiceSchedule.todayJuice : juiceSchedule.tomorrowJuice)}
-                  title="View Recipe & Preparation Method in Modal"
-                >
-                  <BookOpen size={13} />
-                  <span>Recipe & Method</span>
-                </button>
-              )}
-
-              {juiceSchedule.isJuiceDayToday && juiceSchedule.todayJuice ? (
-                isJuiceAdded(juiceSchedule.todayJuice.name) ? (
-                  <span className="badge badge-success" style={{ padding: '0.45rem 0.8rem', gap: '0.35rem' }}>
-                    <CheckCheck size={14} />
-                    <span>In Today's Routine</span>
-                  </span>
-                ) : (
-                  <button
-                    type="button"
-                    className="btn btn-primary btn-sm"
-                    style={{ backgroundColor: juiceSchedule.todayJuice.color, borderColor: juiceSchedule.todayJuice.color }}
-                    onClick={() => handleAddJuiceToRoutine(juiceSchedule.todayJuice)}
-                  >
-                    <Plus size={14} />
-                    <span>Add to Today's Routine</span>
-                  </button>
-                )
-              ) : (
-                juiceSchedule.tomorrowJuice && (
-                  <button
-                    type="button"
-                    className="btn btn-secondary btn-sm"
-                    onClick={() => handleAddJuiceToRoutine(juiceSchedule.tomorrowJuice)}
-                    title="Drink this juice today instead"
-                  >
-                    <span>Drink Today Anyway</span>
-                  </button>
-                )
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Grid of all 10 Juices */}
-        <div className="juices-grid">
-          {juices.map((j, idx) => {
-            const isToday = juiceSchedule?.isJuiceDayToday && juiceSchedule?.todayJuice?.id === j.id;
-            const isTomorrow = juiceSchedule?.isJuiceDayTomorrow && juiceSchedule?.tomorrowJuice?.id === j.id;
-            const alreadyAdded = isJuiceAdded(j.name);
-
-            return (
-              <div 
-                key={j.id || idx} 
-                className={`card juice-recipe-card ${isToday ? 'is-today-active' : ''}`}
-                style={{ borderTopColor: j.color || '#f97316' }}
-              >
-                <div className="juice-recipe-header">
-                  <div className="juice-emoji-tag-wrap">
-                    <span className="juice-recipe-emoji">{j.emoji}</span>
-                    <span className="juice-index-badge">#{idx + 1}</span>
-                  </div>
-                  <div className="juice-schedule-badges">
-                    {isToday && <span className="badge badge-success text-xs">Today's Pick</span>}
-                    {isTomorrow && <span className="badge badge-primary text-xs">Tomorrow</span>}
-                    <button
-                      type="button"
-                      className="btn-icon-sm btn-ghost text-danger delete-item-btn"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteJuiceDirect(j.id, j.name);
-                      }}
-                      title={`Delete "${j.name}" from Juice Rotation`}
-                      aria-label={`Delete "${j.name}"`}
-                    >
-                      <Trash2 size={13} />
-                    </button>
-                  </div>
-                </div>
-
-                <h4 className="juice-recipe-title">{j.name}</h4>
-
-                <div className="juice-recipe-ingredients">
-                  <span className="juice-recipe-label">Ingredients:</span>
-                  <span className="juice-recipe-text">{j.ingredients}</span>
-                </div>
-
-                <div className="juice-recipe-benefits" style={{ backgroundColor: `${j.color || '#f97316'}15`, color: j.color || 'var(--text-primary)' }}>
-                  <span className="benefits-label">Benefits:</span>
-                  <span>{j.benefits}</span>
-                </div>
-
-                <div className="juice-recipe-footer">
-                  <button
-                    type="button"
-                    className="btn btn-secondary btn-xs"
-                    onClick={() => setSelectedJuiceModal(j)}
-                    title="View Ingredients & Preparation Method in Modal"
-                  >
-                    <BookOpen size={12} />
-                    <span>Recipe & Method</span>
-                  </button>
-
-                  {alreadyAdded ? (
-                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-                      <span className="juice-already-added">
-                        <CheckCheck size={13} /> In Habits
-                      </span>
-                      <button
-                        type="button"
-                        className="btn btn-ghost btn-xs text-danger"
-                        style={{ padding: '0.15rem 0.35rem', fontSize: '0.72rem', height: '22px' }}
-                        onClick={() => handleRemoveJuiceFromHabits(j.name)}
-                        title={`Remove "${j.name}" from today's habits`}
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  ) : (
-                    <button
-                      type="button"
-                      className="btn btn-ghost btn-xs text-primary juice-quick-add"
-                      onClick={() => handleAddJuiceToRoutine(j)}
-                    >
-                      <Plus size={12} /> Add to Habits
-                    </button>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Juice Recipe & Method Modal */}
-        {selectedJuiceModal && (
-          <Modal
-            isOpen={!!selectedJuiceModal}
-            onClose={() => setSelectedJuiceModal(null)}
-            maxWidth="580px"
-            title={
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <span style={{ fontSize: '2rem', lineHeight: 1 }}>{selectedJuiceModal.emoji}</span>
-                <div>
-                  <div style={{ fontSize: '1.15rem', fontWeight: 700, color: '#f8fafc' }}>{selectedJuiceModal.name}</div>
-                  <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>Fresh Morning Hydration & Nutrition</div>
-                </div>
-              </div>
-            }
-          >
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
-              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                <span className="badge badge-primary">Alternate Days Cadence</span>
-                <span className="badge badge-success">🌿 100% Raw & Natural</span>
-                <span className="badge badge-warning">⏰ Morning / Empty Stomach</span>
-              </div>
-
-              <div style={{ background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '10px', padding: '0.85rem 1rem' }}>
-                <h5 style={{ fontSize: '0.82rem', fontWeight: 700, textTransform: 'uppercase', color: '#f8fafc', marginBottom: '0.4rem' }}>
-                  🥕 Measured Ingredients
-                </h5>
-                <p style={{ fontSize: '0.9rem', color: '#38bdf8', fontWeight: 600, margin: 0 }}>
-                  {selectedJuiceModal.ingredients}
-                </p>
-              </div>
-
-              <div style={{ background: `${selectedJuiceModal.color || '#f97316'}15`, border: `1px solid ${selectedJuiceModal.color || '#f97316'}35`, borderRadius: '10px', padding: '0.85rem 1rem' }}>
-                <h5 style={{ fontSize: '0.82rem', fontWeight: 700, textTransform: 'uppercase', color: selectedJuiceModal.color || '#f97316', marginBottom: '0.4rem' }}>
-                  ✨ Health Benefits & Micronutrient Support
-                </h5>
-                <p style={{ fontSize: '0.84rem', color: '#f8fafc', margin: 0, lineHeight: 1.45 }}>
-                  {selectedJuiceModal.benefits}
-                </p>
-              </div>
-
-              <div style={{ background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '10px', padding: '0.85rem 1rem' }}>
-                <h5 style={{ fontSize: '0.82rem', fontWeight: 700, textTransform: 'uppercase', color: '#f8fafc', marginBottom: '0.5rem' }}>
-                  🥣 Preparation Method
-                </h5>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', fontSize: '0.8rem', color: '#cbd5e1', lineHeight: 1.45 }}>
-                  <div>1. Thoroughly rinse the fresh vegetables/fruits under running clean drinking water.</div>
-                  <div>2. Roughly chop and deseed (especially amla, lemon, or citrus seeds).</div>
-                  <div>3. Add to a blender jar with 150–200 ml of fresh room-temperature drinking water.</div>
-                  <div>4. Blend on high speed for 45–60 seconds until smooth and velvety.</div>
-                  <div>5. Pour into a glass and drink immediately. Do not strain if you want full dietary fibre and optimal digestive satiety.</div>
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', marginTop: '0.5rem', paddingTop: '0.75rem', borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}>
-                <button
-                  type="button"
-                  className="btn btn-ghost text-danger btn-sm"
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
-                  onClick={() => handleDeleteJuiceDirect(selectedJuiceModal.id, selectedJuiceModal.name)}
-                  title="Delete this juice from the rotation schedule"
-                >
-                  <Trash2 size={14} />
-                  <span>Delete Recipe</span>
-                </button>
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                  <button type="button" className="btn btn-secondary btn-sm" onClick={() => setSelectedJuiceModal(null)}>
-                    Close
-                  </button>
-                  {isJuiceAdded(selectedJuiceModal.name) ? (
-                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-                      <span className="badge badge-success" style={{ padding: '0.45rem 0.75rem' }}>
-                        <CheckCheck size={14} /> Already In Habits
-                      </span>
-                      <button
-                        type="button"
-                        className="btn btn-ghost btn-xs text-danger"
-                        onClick={() => handleRemoveJuiceFromHabits(selectedJuiceModal.name)}
-                        title="Remove from Today's Habits list"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  ) : (
-                    <button
-                      type="button"
-                      className="btn btn-primary btn-sm"
-                      onClick={() => {
-                        handleAddJuiceToRoutine(selectedJuiceModal);
-                        setSelectedJuiceModal(null);
-                      }}
-                    >
-                      <Plus size={14} /> Add to Today's Habits
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-          </Modal>
-        )}
-      </div>
-
-      {/* ========================================================================= */}
-      {/* 4. Skin, Body & Hair Care Regimes */}
+      {/* 3. Skin, Body & Hair Care Regimes */}
       {/* ========================================================================= */}
       <div className="section-container">
         <div className="section-title-row">
@@ -1985,106 +1605,6 @@ export const HealthProtocolView = () => {
           <div className="modal-actions">
             <button type="button" className="btn btn-secondary" onClick={() => setActiveModal(null)}>Cancel</button>
             <button type="submit" className="btn btn-primary">Save Strategy</button>
-          </div>
-        </form>
-      </Modal>
-
-      {/* Edit Juices Modal */}
-      <Modal
-        isOpen={activeModal === 'juices'}
-        onClose={() => setActiveModal(null)}
-        title="Edit Healthy Juices & Hydration Regime"
-        maxWidth="740px"
-      >
-        <form onSubmit={handleSaveJuices} className="modal-form">
-          <div className="input-group">
-            <label className="label">Juice Regime Guidelines / Notes</label>
-            <input
-              type="text"
-              className="input"
-              value={formData.notes || ''}
-              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              placeholder="e.g. Drink fresh on an empty stomach or mid-morning"
-            />
-          </div>
-
-          <div className="modal-subsection">
-            <div className="subsection-header">
-              <label className="label" style={{ marginBottom: 0 }}>
-                Juice Recipes (Alternate Days Rotation)
-              </label>
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm"
-                onClick={handleAddJuiceRow}
-              >
-                <Plus size={13} />
-                <span>Add Recipe</span>
-              </button>
-            </div>
-
-            <div className="modal-scroll-area" style={{ maxHeight: '420px', overflowY: 'auto' }}>
-              {(formData.juices || []).map((j, idx) => (
-                <div key={idx} className="edit-juice-card" style={{ marginBottom: '0.75rem', padding: '0.75rem', background: 'rgba(255,255,255,0.03)', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(255,255,255,0.08)' }}>
-                  <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem', alignItems: 'center' }}>
-                    <input
-                      type="text"
-                      className="input"
-                      style={{ width: '48px', textAlign: 'center', fontSize: '1.2rem', padding: '0.3rem' }}
-                      title="Fruit Emoji"
-                      value={j.emoji || '🥤'}
-                      onChange={(e) => handleUpdateJuiceRow(idx, 'emoji', e.target.value)}
-                    />
-                    <input
-                      type="text"
-                      className="input flex-1"
-                      placeholder="Juice Name (e.g. Carrot + amla juice)"
-                      value={j.name || ''}
-                      onChange={(e) => handleUpdateJuiceRow(idx, 'name', e.target.value)}
-                      required
-                    />
-                    <input
-                      type="color"
-                      className="input"
-                      style={{ width: '42px', padding: '0.2rem', height: '36px', cursor: 'pointer' }}
-                      title="Theme Color"
-                      value={j.color || '#f97316'}
-                      onChange={(e) => handleUpdateJuiceRow(idx, 'color', e.target.value)}
-                    />
-                    <button
-                      type="button"
-                      className="btn-icon-sm btn-ghost text-danger"
-                      onClick={() => handleRemoveJuiceRow(idx)}
-                      title="Delete recipe"
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-
-                  <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <input
-                      type="text"
-                      className="input flex-1"
-                      placeholder="Ingredients (e.g. Carrot + Amla)"
-                      value={j.ingredients || ''}
-                      onChange={(e) => handleUpdateJuiceRow(idx, 'ingredients', e.target.value)}
-                    />
-                    <input
-                      type="text"
-                      className="input flex-1"
-                      placeholder="Health Focus / Benefits (e.g. Antioxidants + Vitamin C)"
-                      value={j.benefits || ''}
-                      onChange={(e) => handleUpdateJuiceRow(idx, 'benefits', e.target.value)}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="modal-actions" style={{ marginTop: '1rem' }}>
-            <button type="button" className="btn btn-secondary" onClick={() => setActiveModal(null)}>Cancel</button>
-            <button type="submit" className="btn btn-primary">Save Juice Protocol</button>
           </div>
         </form>
       </Modal>

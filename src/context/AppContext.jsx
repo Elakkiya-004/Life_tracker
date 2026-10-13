@@ -24,6 +24,7 @@ import {
 } from '../services/storage';
 
 import { initFirebase, syncToCloud, listenToCloud } from '../services/firebase';
+import { logSoupToDailyMeals, getLoggedMealsForDate } from '../services/nightDietSoupData';
 
 const AppContext = createContext();
 
@@ -339,6 +340,38 @@ export const AppProvider = ({ children }) => {
 
   // Dynamic tracker date with 22:30 IST (10:30 PM) auto-reset cutoff for next day
   const [todayStr, setTodayStr] = useState(() => getEffectiveTrackerDate());
+
+  // Daily Logged Meals for Calorie Tracking & Habit Integration
+  const [dailyMeals, setDailyMeals] = useState(() => {
+    return getLoggedMealsForDate(todayStr, currentUserId);
+  });
+
+  // Sync dailyMeals on date change, user change, or meal update events
+  useEffect(() => {
+    setDailyMeals(getLoggedMealsForDate(todayStr, currentUserId));
+
+    const handleMealUpdate = (e) => {
+      if (e?.detail?.meals) {
+        setDailyMeals(e.detail.meals);
+      } else {
+        setDailyMeals(getLoggedMealsForDate(todayStr, currentUserId));
+      }
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('life_tracker_meals_updated', handleMealUpdate);
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('life_tracker_meals_updated', handleMealUpdate);
+      }
+    };
+  }, [todayStr, currentUserId]);
+
+  // Today's total consumed calories calculated from dailyMeals
+  const todayCaloriesConsumed = useMemo(() => {
+    return (dailyMeals || []).reduce((sum, m) => sum + Math.round((m.calories || 0) * (m.multiplier || 1)), 0);
+  }, [dailyMeals]);
 
   // Startup & Offline Rollover Check:
   // Detects if the tracking day has changed, archives previous day's snapshot into History & Cloud DB,
@@ -900,6 +933,137 @@ export const AppProvider = ({ children }) => {
       pushToCloud({ habits: updated, todos: updated, transactions, jars, roadmap, customLists, healthProtocol, dailyHistory, dailyHabitNotes, settings });
       return updated;
     });
+  };
+
+  /**
+   * Logs a diet juice or soup meal, reflecting IMMEDIATELY in both:
+   * 1. Daily Habits checklist (marked completed for today, updating streaks & daily history)
+   * 2. Calorie Calculation & Meals Tracker (added to consumed calories and macros)
+   */
+  const logDietItem = ({ item, mealType = null }) => {
+    if (!item) return { success: false };
+
+    // 1. Log to Calorie Calculator meals in storage & cloud
+    const mealResult = logSoupToDailyMeals(item, mealType, todayStr, currentUserId);
+    if (mealResult?.updatedMeals) {
+      setDailyMeals(mealResult.updatedMeals);
+    }
+
+    // 2. Reflect immediately in Daily Habits
+    const isJuice = item.type === 'juice' || item.id?.startsWith('juice-');
+    const cleanItemName = (item.name || '').trim();
+
+    setHabits(prevHabits => {
+      const currentHabits = Array.isArray(prevHabits) ? prevHabits : [];
+      // Look for existing habit matching juice/soup name
+      const existingIndex = currentHabits.findIndex(h => {
+        if (!h || !h.name) return false;
+        const hName = h.name.toLowerCase();
+        const cName = cleanItemName.toLowerCase();
+        return hName.includes(cName) || cName.includes(hName.replace(/^(drink|have)\s+/i, '').replace(/\s*\(\d+.*kcal\)$/i, '').trim());
+      });
+
+      let updated;
+
+      if (existingIndex >= 0) {
+        // Habit exists: ensure todayStr is in completedDates
+        const existing = currentHabits[existingIndex];
+        const prevDates = Array.isArray(existing.completedDates) ? existing.completedDates : [];
+        const newDates = prevDates.includes(todayStr) ? prevDates : [...prevDates, todayStr];
+
+        // Recalculate streak
+        let streak = 0;
+        let checkDate = new Date(todayStr + 'T00:00:00');
+        while (true) {
+          const y = checkDate.getFullYear();
+          const m = String(checkDate.getMonth() + 1).padStart(2, '0');
+          const d = String(checkDate.getDate()).padStart(2, '0');
+          const f = `${y}-${m}-${d}`;
+          if (newDates.includes(f)) {
+            streak++;
+            checkDate.setDate(checkDate.getDate() - 1);
+          } else {
+            break;
+          }
+        }
+
+        const updatedHabit = {
+          ...existing,
+          completedDates: newDates,
+          streak: Math.max(1, streak),
+        };
+        updated = [...currentHabits];
+        updated[existingIndex] = updatedHabit;
+      } else {
+        // Create fresh habit and mark it completed for today
+        const habitName = isJuice 
+          ? `Drink ${item.emoji || '🥤'} ${cleanItemName} (${item.calories} kcal)`
+          : `Have ${item.emoji || '🥣'} ${cleanItemName} (${item.calories} kcal)`;
+
+        const newHabit = {
+          id: `h-${item.id || Date.now()}-${Math.floor(Math.random() * 1000)}`,
+          name: habitName,
+          category: 'Diet & Nutrition',
+          timeOfDay: isJuice ? 'Morning' : 'Night',
+          icon: isJuice ? 'Droplets' : 'Moon',
+          color: item.color || (isJuice ? '#f97316' : '#6366f1'),
+          frequency: 'daily',
+          targetDays: 7,
+          completedDates: [todayStr],
+          streak: 1,
+          createdAt: new Date().toISOString(),
+        };
+        updated = [newHabit, ...currentHabits];
+      }
+
+      setLocalData(STORAGE_KEYS.HABITS, updated);
+      syncTodayIntoDailyHistory(updated, todayStr);
+      saveTodoListToDB(currentUserId, updated);
+      pushToCloud({ habits: updated, todos: updated, transactions, jars, roadmap, customLists, healthProtocol, dailyHistory, dailyHabitNotes, settings });
+      return updated;
+    });
+
+    try {
+      confetti({ particleCount: 50, spread: 60, origin: { y: 0.7 } });
+    } catch {}
+
+    return { 
+      success: true, 
+      isJuice, 
+      calories: item.calories, 
+      name: item.name,
+      entry: mealResult?.entry,
+      updatedMeals: mealResult?.updatedMeals
+    };
+  };
+
+  /**
+   * Remove a logged diet meal from today's calorie tracker
+   */
+  const removeDietMeal = (mealId) => {
+    try {
+      const key = `life_tracker_meals_${currentUserId}_${todayStr}`;
+      const raw = localStorage.getItem(key);
+      const existing = raw ? JSON.parse(raw) : [];
+      const updated = existing.filter(m => m.id !== mealId);
+      localStorage.setItem(key, JSON.stringify(updated));
+      setDailyMeals(updated);
+
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('life_tracker_meals_updated', {
+          detail: { dateStr: todayStr, userId: currentUserId, meals: updated }
+        }));
+      }
+
+      syncToCloud(currentUserId, {
+        [`dailyMeals_${todayStr}`]: updated,
+        lastMealLoggedAt: new Date().toISOString()
+      });
+      return true;
+    } catch (e) {
+      console.error('Failed to remove diet meal:', e);
+      return false;
+    }
   };
 
   // Finance & Jar Operations
@@ -1620,6 +1784,10 @@ export const AppProvider = ({ children }) => {
         updateSettings,
         pushToCloud,
         triggerCelebration,
+        dailyMeals,
+        todayCaloriesConsumed,
+        logDietItem,
+        removeDietMeal,
       }}
     >
       {children}

@@ -265,7 +265,7 @@ export const SOUP_FOOD_ITEMS = NIGHT_DIET_SOUPS.map(s => ({
 }));
 
 /**
- * 10 Fresh Diet & Detox Juices mapped into Food Database items
+ * 20 Fresh Diet & Detox Juices mapped into Food Database items
  */
 export const JUICE_FOOD_ITEMS = HEALTHY_DIET_JUICES.map(j => ({
   id: `food_${j.id}`,

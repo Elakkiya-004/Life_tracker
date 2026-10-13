@@ -36,7 +36,7 @@ import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 
 export const NightDietSoupsSection = ({ onOpenCalorieCalculator, compactMode = false }) => {
-  const { todayStr = new Date().toISOString().split('T')[0], setActiveTab } = useApp();
+  const { todayStr = new Date().toISOString().split('T')[0], setActiveTab, logDietItem, dailyMeals } = useApp();
   const { currentUser } = useAuth();
   const currentUserId = currentUser?.uid || 'default_user';
 
@@ -102,9 +102,26 @@ export const NightDietSoupsSection = ({ onOpenCalorieCalculator, compactMode = f
     });
   }, [searchQuery, selectedFilter, typeTab]);
 
-  // Quick Log Soup or Juice to Calorie Tracker
+  // Quick Log Soup or Juice: Reflects in both Calorie Calculation and Daily Habits
   const handleLogSoup = (item, e) => {
     if (e) e.stopPropagation();
+    if (!item) return;
+
+    if (logDietItem) {
+      const result = logDietItem({ item });
+      if (result?.success) {
+        setJustLoggedId(item.id);
+        const icon = item.type === 'juice' ? '🥤' : '🥣';
+        setToastMessage(`${icon} "${item.name}" (${item.calories} kcal) logged! Reflected in Daily Habits (✓ Completed) and Calorie Calculation (+${item.calories} kcal).`);
+        setTimeout(() => {
+          setJustLoggedId(null);
+          setToastMessage(null);
+        }, 4500);
+        return;
+      }
+    }
+
+    // Fallback if logDietItem is not available
     const result = logSoupToDailyMeals(item, null, todayStr, currentUserId);
     if (result.success) {
       setJustLoggedId(item.id);
@@ -142,14 +159,14 @@ export const NightDietSoupsSection = ({ onOpenCalorieCalculator, compactMode = f
           <Moon size={22} className="text-indigo" />
           <div>
             <div className="soup-section-tag-row">
-              <span className="badge badge-primary">🌙 NIGHT DIET SOUPS</span>
-              <span className="badge badge-warning">🥤 FRESH DIET JUICES</span>
+              <span className="badge badge-primary">🌙 20 NIGHT DIET SOUPS</span>
+              <span className="badge badge-warning">🥤 20 FRESH DIET JUICES</span>
               <span className="badge badge-success">🌿 100% OIL-FREE & ZERO SUGAR</span>
-              <span className="badge badge-info">🔥 38–190 KCAL</span>
-              <span className="badge badge-secondary">🥣 30 RECIPES</span>
+              <span className="badge badge-info">🔥 35–190 KCAL</span>
+              <span className="badge badge-secondary">🥣 40 RECIPES</span>
             </div>
             <h3 className="section-title">
-              {compactMode ? 'Oil-Free Soups & Healthy Juices' : '30 Oil-Free Soups & Healthy Juices for Weight Management'}
+              {compactMode ? 'Oil-Free Soups & Healthy Juices' : '40 Oil-Free Soups & Healthy Juices for Weight Management'}
             </h3>
           </div>
         </div>
@@ -370,7 +387,7 @@ export const NightDietSoupsSection = ({ onOpenCalorieCalculator, compactMode = f
                 value={selectedDropdownSoupId}
                 onChange={(e) => setSelectedDropdownSoupId(e.target.value)}
               >
-                <option value="">-- Choose a Soup or Juice (30 available) --</option>
+                <option value="">-- Choose a Soup or Juice (40 recipes available) --</option>
                 <optgroup label="🥣 20 Oil-Free Night Diet Soups">
                   {NIGHT_DIET_SOUPS.map(s => (
                     <option key={s.id} value={s.id}>
@@ -378,7 +395,7 @@ export const NightDietSoupsSection = ({ onOpenCalorieCalculator, compactMode = f
                     </option>
                   ))}
                 </optgroup>
-                <optgroup label="🥤 10 Fresh Detox & Diet Juices">
+                <optgroup label="🥤 20 Fresh Detox & Diet Juices">
                   {HEALTHY_DIET_JUICES.map(j => (
                     <option key={j.id} value={j.id}>
                       {j.emoji} {j.name} ({j.calories} kcal • {j.categoryTag})

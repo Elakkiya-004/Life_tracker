@@ -930,11 +930,330 @@ export const HEALTHY_DIET_JUICES = [
     isHighProtein: false,
     isLowCalorie: true,
     bestTimeToDrink: 'Early morning empty stomach detox',
+    color: '#059669',
+  },
+  {
+    id: 'juice-11',
+    type: 'juice',
+    name: 'ABC Miracle Glow (Apple + Beetroot + Carrot + Lemon)',
+    tamilName: 'ஆப்பிள் பீட்ரூட் கேரட் மிராக்கிள் க்ளோ ஜூஸ்',
+    emoji: '🍎',
+    category: 'Fresh Juice',
+    categoryTag: 'Detox & Brightening',
+    calories: 88,
+    protein: 2.2,
+    carbs: 19.5,
+    fibre: 4.5,
+    fats: 0.2,
+    servingSize: '1 tall glass (~320 ml)',
+    servingGrams: 320,
+    waterMl: 180,
+    description: 'Glutathione booster and deep blood purifier. Synergistic vitamins A, C, and betalains clear blemishes, promote liver detox, and stimulate gut motility.',
+    ingredients: [
+      { item: 'Red Apple (fresh, cubed)', amount: '100 g' },
+      { item: 'Beetroot (peeled & chopped)', amount: '60 g' },
+      { item: 'Carrot (sliced)', amount: '80 g' },
+      { item: 'Fresh Lemon Juice', amount: '1 tbsp' },
+      { item: 'Filtered Water', amount: '150 ml' },
+    ],
+    method: 'Blend apple, beetroot, and carrot with 150 ml fresh water until silky smooth. Stir in fresh lemon juice. Drink unstrained for maximum prebiotic dietary fibre.',
+    seasoning: 'Fresh lemon juice + pinch of pink rock salt. Zero added refined sugar.',
+    tags: ['Juice', 'Detox & Brightening', 'Gut Health', 'Under 100 kcal', 'Blood Purifier'],
+    isHighProtein: false,
+    isLowCalorie: true,
+    bestTimeToDrink: 'Early morning on an empty stomach',
+    color: '#be123c',
+  },
+  {
+    id: 'juice-12',
+    type: 'juice',
+    name: 'Pomegranate + Amla + Mint Radiance Elixir',
+    tamilName: 'மாதுளை நெல்லிக்காய் புதினா இளமை சாறு',
+    emoji: '🍷',
+    category: 'Fresh Juice',
+    categoryTag: 'Melanin Control & Prebiotic',
+    calories: 92,
+    protein: 1.8,
+    carbs: 21.0,
+    fibre: 4.0,
+    fats: 0.3,
+    servingSize: '1 glass (~300 ml)',
+    servingGrams: 300,
+    waterMl: 150,
+    description: 'Ellagic acid and punicalagins inhibit melanin synthesis, while amla vitamin C and prebiotic polyphenols nurture the gut microbiome for clear, radiant skin.',
+    ingredients: [
+      { item: 'Pomegranate arils (fresh)', amount: '120 g' },
+      { item: 'Indian Gooseberry / Amla (deseeded)', amount: '1 medium (~25 g)' },
+      { item: 'Fresh Mint Leaves', amount: '10 leaves' },
+      { item: 'Pink Rock Salt', amount: 'small pinch' },
+      { item: 'Drinking Water', amount: '120 ml' },
+    ],
+    method: 'Pulse fresh pomegranate arils, amla, and mint with water. Strain lightly to remove hard seeds. Stir in pink salt and consume fresh immediately.',
+    seasoning: 'Pink Himalayan salt + roasted cumin powder.',
+    tags: ['Juice', 'Melanin Control', 'Skin Brightening', 'Collagen Booster', 'Prebiotic'],
+    isHighProtein: false,
+    isLowCalorie: true,
+    bestTimeToDrink: 'Mid-morning (11:00 AM) or pre-workout',
+    color: '#991b1b',
+  },
+  {
+    id: 'juice-13',
+    type: 'juice',
+    name: 'Coconut Water + Aloe Vera + Cucumber Glass-Skin Dew',
+    tamilName: 'இளநீர் கற்றாழை வெள்ளரி கிளாஸ்-ஸ்கின் ஜூஸ்',
+    emoji: '🥥',
+    category: 'Fresh Juice',
+    categoryTag: 'Pitta Cooling & Hydration',
+    calories: 44,
+    protein: 1.1,
+    carbs: 9.5,
+    fibre: 2.2,
+    fats: 0.1,
+    servingSize: '1 tall glass (~350 ml)',
+    servingGrams: 350,
+    waterMl: 250,
+    description: 'Cools internal metabolic heat (pitta), repairs intestinal mucosa with pure aloe mucilage, and provides deep cellular electrolyte hydration for a translucent glass-skin dew.',
+    ingredients: [
+      { item: 'Tender Coconut Water', amount: '200 ml' },
+      { item: 'Fresh Aloe Vera Gel (rinsed thoroughly)', amount: '30 g' },
+      { item: 'Cucumber (peeled & chopped)', amount: '100 g' },
+      { item: 'Fresh Lime Juice', amount: '1 tsp' },
+    ],
+    method: 'Blend rinsed aloe vera gel and fresh cucumber with chilled coconut water for 30 seconds. Stir in lime juice and serve immediately.',
+    seasoning: 'Splash of fresh lime juice.',
+    tags: ['Juice', 'Glass Skin', 'Pitta Cooling', 'Under 50 kcal', 'Zero Fat'],
+    isHighProtein: false,
+    isLowCalorie: true,
+    bestTimeToDrink: 'Empty stomach morning or hot afternoon hydration',
+    color: '#0d9488',
+  },
+  {
+    id: 'juice-14',
+    type: 'juice',
+    name: 'Spinach + Green Apple + Ginger + Mint (Chlorophyll Glow)',
+    tamilName: 'பசலை ஆப்பிள் இஞ்சி குளோரோபில் க்ளோ ஜூஸ்',
+    emoji: '🍏',
+    category: 'Fresh Juice',
+    categoryTag: 'Cellular Renewal & Prebiotic',
+    calories: 52,
+    protein: 2.4,
+    carbs: 11.0,
+    fibre: 3.8,
+    fats: 0.2,
+    servingSize: '1 glass (~300 ml)',
+    servingGrams: 300,
+    waterMl: 180,
+    description: 'Concentrated living chlorophyll and folate accelerate cellular renewal while apple pectin prebiotic fiber soothes the digestive tract and enhances skin clarity.',
+    ingredients: [
+      { item: 'Fresh Baby Spinach / Palak', amount: '60 g' },
+      { item: 'Green Apple (cubed)', amount: '60 g' },
+      { item: 'Fresh Ginger', amount: '5 g' },
+      { item: 'Fresh Mint leaves', amount: '8 leaves' },
+      { item: 'Lemon Juice', amount: '1 tbsp' },
+      { item: 'Water', amount: '150 ml' },
+    ],
+    method: 'Blend spinach, green apple, ginger, and mint with water until velvety smooth. Add lemon juice to protect active bioavailable folate.',
+    seasoning: 'Fresh lemon juice + pinch of black salt.',
+    tags: ['Juice', 'Chlorophyll Glow', 'Cellular Renewal', 'Gut Health', 'Under 60 kcal'],
+    isHighProtein: false,
+    isLowCalorie: true,
+    bestTimeToDrink: 'Early morning post-workout',
+    color: '#15803d',
+  },
+  {
+    id: 'juice-15',
+    type: 'juice',
+    name: 'Golden Turmeric + Orange + Carrot Brightening Tonic',
+    tamilName: 'மஞ்சள் ஆரஞ்சு கேரட் பொலிவு ஜூஸ்',
+    emoji: '✨',
+    category: 'Fresh Juice',
+    categoryTag: 'Anti-Inflammatory & Pigmentation',
+    calories: 68,
+    protein: 1.7,
+    carbs: 15.2,
+    fibre: 3.2,
+    fats: 0.2,
+    servingSize: '1 glass (~300 ml)',
+    servingGrams: 300,
+    waterMl: 160,
+    description: 'Curcumin and beta-carotene team up to suppress hyperpigmentation, brighten dull complexion, and create a protective barrier against gut inflammation.',
+    ingredients: [
+      { item: 'Fresh Orange (deseeded)', amount: '100 g' },
+      { item: 'Carrot (chopped)', amount: '70 g' },
+      { item: 'Organic Turmeric Powder / Kasturi Manjal', amount: '1/4 tsp' },
+      { item: 'Black Pepper (crushed)', amount: 'micro pinch' },
+      { item: 'Water', amount: '120 ml' },
+    ],
+    method: 'Blend orange, carrot, and water. Stir in organic turmeric and a micro pinch of black pepper (piperine boosts curcumin absorption by 2000%).',
+    seasoning: 'Turmeric + pinch of pepper.',
+    tags: ['Juice', 'Anti-Inflammatory', 'Skin Brightening', 'Gut Barrier', 'Vitamin C & A'],
+    isHighProtein: false,
+    isLowCalorie: true,
+    bestTimeToDrink: 'Morning with breakfast or mid-morning',
+    color: '#eab308',
+  },
+  {
+    id: 'juice-16',
+    type: 'juice',
+    name: 'Coriander + Cucumber + Lemon Alkaline Gut Flush',
+    tamilName: 'கொத்தமல்லி வெள்ளரி எலுமிச்சை காரத்தன்மை ஜூஸ்',
+    emoji: '🌿',
+    category: 'Fresh Juice',
+    categoryTag: 'Alkaline Flush & Anti-Bloat',
+    calories: 36,
+    protein: 1.4,
+    carbs: 7.2,
+    fibre: 2.8,
+    fats: 0.1,
+    servingSize: '1 tall glass (~320 ml)',
+    servingGrams: 320,
+    waterMl: 220,
+    description: 'Heavy-metal detoxifier packed with Vitamin K and C to heal blemishes from within, neutralize excess stomach acid, and eradicate gas and bloating.',
+    ingredients: [
+      { item: 'Fresh Coriander / Kothamalli leaves', amount: '40 g' },
+      { item: 'Cucumber', amount: '120 g' },
+      { item: 'Fresh Lemon Juice', amount: '1 tbsp' },
+      { item: 'Roasted Cumin Powder', amount: '1/4 tsp' },
+      { item: 'Water', amount: '150 ml' },
+    ],
+    method: 'Blend fresh coriander and cucumber with water. Strain if desired or consume unstrained. Stir in roasted jeera powder and lemon juice.',
+    seasoning: 'Roasted cumin + black salt + lemon.',
+    tags: ['Juice', 'Alkaline Flush', 'Anti-Bloat', 'Blemish Clear', 'Under 40 kcal', 'Zero Fat'],
+    isHighProtein: false,
+    isLowCalorie: true,
+    bestTimeToDrink: 'Morning before breakfast or 30 min before lunch',
+    color: '#16a34a',
+  },
+  {
+    id: 'juice-17',
+    type: 'juice',
+    name: 'Papaya + Coconut Water + Chia Seed Digestion Elixir',
+    tamilName: 'பப்பாளி இளநீர் சியா விதைகள் செரிமான அமிர்தம்',
+    emoji: '🥭',
+    category: 'Fresh Juice',
+    categoryTag: 'Enzyme Digest & Flora Boost',
+    calories: 84,
+    protein: 2.1,
+    carbs: 17.5,
+    fibre: 4.8,
+    fats: 0.7,
+    servingSize: '1 tall glass (~350 ml)',
+    servingGrams: 350,
+    waterMl: 200,
+    description: 'Active papain enzymes break down metabolic waste while tender coconut water and soaked chia seeds provide mucilage soluble fiber to nourish beneficial bifidobacteria.',
+    ingredients: [
+      { item: 'Ripe Papaya (cubed)', amount: '120 g' },
+      { item: 'Tender Coconut Water', amount: '180 ml' },
+      { item: 'Soaked Chia Seeds (in water)', amount: '1 tsp (~15 g)' },
+      { item: 'Lime Juice', amount: '1 tsp' },
+    ],
+    method: 'Blend ripe papaya with coconut water until silky smooth. Pour into a tall glass and stir in soaked gelatinous chia seeds and lime juice.',
+    seasoning: 'Lime juice + chia seeds.',
+    tags: ['Juice', 'Digestive Enzyme', 'Chia Mucilage', 'Gut Flora', 'Clear Complexion'],
+    isHighProtein: false,
+    isLowCalorie: true,
+    bestTimeToDrink: 'Mid-morning (10:30 AM) or 4:00 PM snack replacement',
+    color: '#f97316',
+  },
+  {
+    id: 'juice-18',
+    type: 'juice',
+    name: 'Beetroot + Amla + Ginger + Mint Micro-Circulation Flush',
+    tamilName: 'பீட்ரூட் நெல்லிக்காய் இஞ்சி இரத்த ஓட்ட சாறு',
+    emoji: '🧃',
+    category: 'Fresh Juice',
+    categoryTag: 'Nitric Oxide & Natural Pink Glow',
+    calories: 62,
+    protein: 1.8,
+    carbs: 13.5,
+    fibre: 3.6,
+    fats: 0.1,
+    servingSize: '1 glass (~300 ml)',
+    servingGrams: 300,
+    waterMl: 180,
+    description: 'Nitric oxide enhances micro-capillary facial blood flow for an authentic natural rosy flush, while amla vitamin C drives collagen synthesis and liver filtration.',
+    ingredients: [
+      { item: 'Beetroot (peeled & chopped)', amount: '60 g' },
+      { item: 'Amla (deseeded)', amount: '1 medium (~25 g)' },
+      { item: 'Fresh Ginger', amount: '5 g' },
+      { item: 'Mint Leaves', amount: '8 leaves' },
+      { item: 'Pink Rock Salt', amount: 'pinch' },
+      { item: 'Water', amount: '180 ml' },
+    ],
+    method: 'Blend chopped beetroot, amla, ginger, and mint with water. Strain through a fine sieve, stir in pink salt, and drink fresh.',
+    seasoning: 'Pink rock salt + squeeze of lemon.',
+    tags: ['Juice', 'Micro-Circulation', 'Rosy Glow', 'Liver Filtration', 'Under 70 kcal'],
+    isHighProtein: false,
+    isLowCalorie: true,
+    bestTimeToDrink: 'Pre-workout or morning vitality drink',
+    color: '#881337',
+  },
+  {
+    id: 'juice-19',
+    type: 'juice',
+    name: 'Watermelon + Cucumber + Sabja (Basil Seeds) Gut Cooler',
+    tamilName: 'தர்பூசணி வெள்ளரி சப்ஜா விதை குளுமை ஜூஸ்',
+    emoji: '🍉',
+    category: 'Fresh Juice',
+    categoryTag: 'Photo-Protection & Acid Relief',
+    calories: 58,
+    protein: 1.5,
+    carbs: 12.8,
+    fibre: 3.1,
+    fats: 0.2,
+    servingSize: '1 tall glass (~350 ml)',
+    servingGrams: 350,
+    waterMl: 150,
+    description: 'Potent lycopene shields epidermal cells from photo-aging while soaked cooling sabja seeds coat the stomach lining to soothe heartburn, acid reflux, and internal warmth.',
+    ingredients: [
+      { item: 'Watermelon flesh (deseeded)', amount: '150 g' },
+      { item: 'Cucumber', amount: '80 g' },
+      { item: 'Soaked Sabja / Basil Seeds', amount: '1 tsp (~15 g)' },
+      { item: 'Fresh Mint & Lime', amount: 'small amount' },
+    ],
+    method: 'Blend watermelon and cucumber with mint until liquid. Pour over soaked plump sabja seeds and add a quick squeeze of lime.',
+    seasoning: 'Fresh lime + soaked basil seeds.',
+    tags: ['Juice', 'Anti-Reflux', 'Sun Protection', 'Sabja Cooling', 'Deep Hydration', 'Under 60 kcal'],
+    isHighProtein: false,
+    isLowCalorie: true,
+    bestTimeToDrink: 'Afternoon heat cooler or 4:00 PM refresh',
+    color: '#e11d48',
+  },
+  {
+    id: 'juice-20',
+    type: 'juice',
+    name: 'Pineapple + Fennel (Saunf) + Ginger Anti-Bloat Nectar',
+    tamilName: 'அன்னாசி சோம்பு இஞ்சி உப்புச நிவாரண ஜூஸ்',
+    emoji: '🍍',
+    category: 'Fresh Juice',
+    categoryTag: 'Bromelain & Anti-Bloat',
+    calories: 75,
+    protein: 1.2,
+    carbs: 17.5,
+    fibre: 2.8,
+    fats: 0.2,
+    servingSize: '1 glass (~300 ml)',
+    servingGrams: 300,
+    waterMl: 160,
+    description: 'Bromelain enzyme drains lymph and water retention, while soaked fennel anethole calms gut spasms and cramps, creating a flat abdomen and luminous, calm skin.',
+    ingredients: [
+      { item: 'Fresh Pineapple chunks', amount: '120 g' },
+      { item: 'Fennel Seeds / Saunf (soaked in 50ml water)', amount: '1 tsp' },
+      { item: 'Fresh Ginger', amount: '5 g' },
+      { item: 'Drinking Water', amount: '120 ml' },
+    ],
+    method: 'Blend fresh pineapple chunks with ginger, soaked fennel seeds along with their soak water. Strain lightly or drink with natural pulp.',
+    seasoning: 'Pinch of rock salt.',
+    tags: ['Juice', 'Bromelain Enzyme', 'Anti-Bloat', 'Lymphatic Drainage', 'Flat Belly'],
+    isHighProtein: false,
+    isLowCalorie: true,
+    bestTimeToDrink: 'Mid-morning or 1 hour post-lunch',
+    color: '#ca8a04',
   },
 ];
 
 /**
- * Combined collection of all 30 Soups and Juices
+ * Combined collection of all 40 Soups and Juices (20 Soups + 20 Juices)
  */
 export const ALL_SOUPS_AND_JUICES = [
   ...NIGHT_DIET_SOUPS.map(s => ({ ...s, type: 'soup' })),
@@ -1023,7 +1342,29 @@ export const getTodaySoupRotation = (date = new Date()) => {
 };
 
 /**
- * Helper to log soup or juice to user's daily meals in localStorage
+ * Helper to get logged meals for a specific date
+ */
+export const getLoggedMealsForDate = (dateStr = new Date().toISOString().split('T')[0], userId = 'default_user') => {
+  try {
+    const key = `life_tracker_meals_${userId}_${dateStr}`;
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+};
+
+/**
+ * Helper to calculate total consumed calories for a date
+ */
+export const getConsumedCaloriesForDate = (dateStr = new Date().toISOString().split('T')[0], userId = 'default_user') => {
+  const meals = getLoggedMealsForDate(dateStr, userId);
+  return meals.reduce((sum, m) => sum + Math.round((m.calories || 0) * (m.multiplier || 1)), 0);
+};
+
+/**
+ * Helper to log soup or juice to user's daily meals in localStorage,
+ * and dispatch global sync event so all UI components update in real-time.
  */
 export const logSoupToDailyMeals = (item, preferredMealType = null, dateStr = new Date().toISOString().split('T')[0], userId = 'default_user') => {
   try {
@@ -1037,16 +1378,17 @@ export const logSoupToDailyMeals = (item, preferredMealType = null, dateStr = ne
 
     const newEntry = {
       id: `${isJuice ? 'juice' : 'soup'}-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+      itemId: item.id,
       mealType,
       name: item.name,
       icon: item.emoji || (isJuice ? '🥤' : '🍲'),
       servingGrams: item.servingGrams || (isJuice ? 320 : 400),
       servingLabel: item.servingSize || (isJuice ? '1 glass (~300ml)' : '1 bowl (~350–500ml)'),
-      calories: Math.round(item.calories),
-      protein: item.protein,
-      carbs: item.carbs,
+      calories: Math.round(item.calories || 0),
+      protein: item.protein || 0,
+      carbs: item.carbs || 0,
       fats: item.fats || (isJuice ? 0.1 : 0.5),
-      fibre: item.fibre,
+      fibre: item.fibre || 0,
       multiplier: 1,
       isNightDietSoup: !isJuice,
       isDietJuice: isJuice,
@@ -1055,6 +1397,13 @@ export const logSoupToDailyMeals = (item, preferredMealType = null, dateStr = ne
 
     const updated = [...existing, newEntry];
     localStorage.setItem(key, JSON.stringify(updated));
+
+    // Dispatch global event so CalorieCalculatorModal & all views update immediately
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('life_tracker_meals_updated', {
+        detail: { dateStr, userId, meals: updated, newEntry }
+      }));
+    }
 
     // Real-time Cloud Sync: Push logged meal directly to user's Firebase Firestore document
     try {
@@ -1066,7 +1415,7 @@ export const logSoupToDailyMeals = (item, preferredMealType = null, dateStr = ne
       console.warn('Firebase cloud meal sync skipped (offline mode):', cloudErr);
     }
 
-    return { success: true, entry: newEntry, count: updated.length, isJuice };
+    return { success: true, entry: newEntry, count: updated.length, isJuice, updatedMeals: updated };
   } catch (e) {
     console.error('Failed to log soup/juice meal:', e);
     return { success: false, error: e };
