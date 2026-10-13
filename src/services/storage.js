@@ -7,7 +7,12 @@ import {
   seedDatabaseIfEmpty,
   saveHealthProtocolToDB,
   getHealthProtocolFromDB,
-  listenToHealthProtocolDB
+  listenToHealthProtocolDB,
+  saveTodoListToDB,
+  getTodoListFromDB,
+  saveDailyHistoryToDB,
+  archiveDailyRecordToCloud,
+  getAllDailyHistoryFromDB
 } from './cloudDatabase';
 
 const STORAGE_KEYS = {
@@ -235,8 +240,8 @@ export const getEffectiveTrackerDate = (dateObj = new Date()) => {
   return `${y}-${m}-${dt}`;
 };
 
-// Archive habits of a specified date into 30-Day History and wipe active habits
-export const archiveAndResetHabits = (habitsToArchive, archiveDate, existingHistory = {}) => {
+// Archive habits of a specified date into Daily Progress History and preserve active to-dos
+export const archiveAndResetHabits = (habitsToArchive, archiveDate, existingHistory = {}, rolloverMode = 'fresh_checks') => {
   const currentHabits = Array.isArray(habitsToArchive) ? habitsToArchive : [];
   const completedTasks = currentHabits.filter(h => h && Array.isArray(h.completedDates) && h.completedDates.includes(archiveDate));
   const totalCount = currentHabits.length;
@@ -269,17 +274,28 @@ export const archiveAndResetHabits = (habitsToArchive, archiveDate, existingHist
     };
   }
 
-  const { prunedHistory } = pruneOldHistoryData(updatedHistory, [], 30);
-  return { updatedHistory: prunedHistory, clearedHabits: [] };
+  // Preserve history for long-term analytics (keep at least 365 days)
+  const { prunedHistory } = pruneOldHistoryData(updatedHistory, [], 365);
+  
+  // Preserve active to-dos/habits across days so the user does NOT have to re-enter them
+  const preservedHabits = currentHabits.map(h => ({
+    ...h,
+    completedDates: Array.isArray(h.completedDates) ? h.completedDates : []
+  }));
+
+  return { updatedHistory: prunedHistory, clearedHabits: preservedHabits };
 };
 
-// Clean up daily history and habit completed dates older than 30 days
-export const pruneOldHistoryData = (historyObj = {}, habitsList = [], retentionDays = 30) => {
+// Clean up daily history and habit completed dates older than retentionDays (default 365 days for long-term analytics)
+export const pruneOldHistoryData = (historyObj = {}, habitsList = [], retentionDays = 365) => {
+  if (!retentionDays || retentionDays <= 0) {
+    return { prunedHistory: historyObj || {}, prunedHabits: habitsList || [] };
+  }
   const cutoffDate = new Date();
   cutoffDate.setDate(cutoffDate.getDate() - retentionDays);
   const cutoffStr = cutoffDate.toISOString().split('T')[0];
 
-  // Prune daily history object
+  // Prune daily history object (keeping within retention window)
   const prunedHistory = {};
   if (historyObj && typeof historyObj === 'object') {
     Object.keys(historyObj).forEach(dateStr => {
@@ -354,5 +370,10 @@ export {
   seedDatabaseIfEmpty,
   saveHealthProtocolToDB,
   getHealthProtocolFromDB,
-  listenToHealthProtocolDB
+  listenToHealthProtocolDB,
+  saveTodoListToDB,
+  getTodoListFromDB,
+  saveDailyHistoryToDB,
+  archiveDailyRecordToCloud,
+  getAllDailyHistoryFromDB
 };

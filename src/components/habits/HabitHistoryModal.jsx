@@ -23,7 +23,8 @@ export const HabitHistoryModal = ({ isOpen, onClose }) => {
     toggleHabit 
   } = useApp();
 
-  const historyList = getPast30DaysHistory();
+  const [viewDays, setViewDays] = useState(30);
+  const historyList = getPast30DaysHistory ? getPast30DaysHistory(viewDays) : [];
   const [selectedDateStr, setSelectedDateStr] = useState(todayStr);
 
   if (!isOpen) return null;
@@ -60,9 +61,9 @@ export const HabitHistoryModal = ({ isOpen, onClose }) => {
               <Calendar size={22} className="text-primary" />
             </div>
             <div>
-              <h3 className="modal-title">30-Day Daily Progress History</h3>
+              <h3 className="modal-title">Daily Progress History & Cloud Archive</h3>
               <p className="history-modal-sub">
-                Look back at any past day to see your completed routines & task counts.
+                Look back at any past day to see your completed routines & task counts saved in Firebase Cloud DB.
               </p>
             </div>
           </div>
@@ -70,10 +71,10 @@ export const HabitHistoryModal = ({ isOpen, onClose }) => {
         </div>
 
         <div className="history-modal-body modal-body">
-          {/* 30-Day Summary Stat Banner */}
+          {/* Summary Stat Banner */}
           <div className="history-stats-banner">
           <div className="history-stat-box">
-            <span className="stat-label">30-Day Adherence</span>
+            <span className="stat-label">{viewDays}-Day Adherence</span>
             <span className="stat-val text-primary">{average30DayRate}%</span>
           </div>
           <div className="history-stat-box">
@@ -86,10 +87,22 @@ export const HabitHistoryModal = ({ isOpen, onClose }) => {
           </div>
         </div>
 
-        {/* 30-Day Date Scroller Strip */}
-        <div className="history-section-title">
-          <span>Select Any Day in the Past 30 Days:</span>
-          <span className="badge badge-primary">30 Days Log</span>
+        {/* Date Scroller Strip & Range Filter */}
+        <div className="history-section-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+          <span>Select Any Day in the Past {viewDays} Days:</span>
+          <div style={{ display: 'flex', gap: '0.25rem' }}>
+            {[30, 60, 90, 365].map((d) => (
+              <button
+                key={d}
+                type="button"
+                className={`btn-xs ${viewDays === d ? 'btn-primary' : 'btn-ghost'}`}
+                style={{ borderRadius: '6px', padding: '0.2rem 0.5rem', fontSize: '0.72rem' }}
+                onClick={() => setViewDays(d)}
+              >
+                {d === 365 ? '1 Year' : `${d}D`}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="history-days-scroller">

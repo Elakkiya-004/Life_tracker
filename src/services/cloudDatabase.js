@@ -729,3 +729,139 @@ export const saveNightDietSoupsToDB = async (soupsData) => {
     return { success: false, error: err };
   }
 };
+
+// ============================================================================
+// 4. TO-DO LIST & DAILY HISTORY CLOUD DATABASE CRUD (FOR FUTURE ANALYTICS)
+// ============================================================================
+
+/**
+ * Save user To-Do List / Habits directly to Cloud Firestore
+ */
+export const saveTodoListToDB = async (userId = 'default_user', todosList = []) => {
+  if (!db || !isInitialized) {
+    initFirebase();
+  }
+  if (!db) return { success: false, reason: 'offline_mode' };
+  try {
+    const cleanTodos = JSON.parse(JSON.stringify(todosList || []));
+    const userDocRef = doc(db, 'users', userId);
+    await setDoc(userDocRef, {
+      habits: cleanTodos,
+      todos: cleanTodos,
+      todoCount: cleanTodos.length,
+      lastUpdated: new Date().toISOString(),
+    }, { merge: true });
+    return { success: true };
+  } catch (err) {
+    console.error('Error saving To-Do list to Cloud DB:', err);
+    return { success: false, error: err };
+  }
+};
+
+/**
+ * Fetch To-Do List from Cloud Firestore
+ */
+export const getTodoListFromDB = async (userId = 'default_user') => {
+  if (!db || !isInitialized) {
+    initFirebase();
+  }
+  if (!db) return null;
+  try {
+    const userDocRef = doc(db, 'users', userId);
+    const snap = await getDoc(userDocRef);
+    if (snap.exists()) {
+      const data = snap.data();
+      return Array.isArray(data.todos) ? data.todos : (Array.isArray(data.habits) ? data.habits : null);
+    }
+    return null;
+  } catch (err) {
+    console.error('Error fetching To-Do list from Cloud DB:', err);
+    return null;
+  }
+};
+
+/**
+ * Save historical daily progress & reflections to Cloud DB for future analytics
+ */
+export const saveDailyHistoryToDB = async (userId = 'default_user', dailyHistory = {}, dailyHabitNotes = {}) => {
+  if (!db || !isInitialized) {
+    initFirebase();
+  }
+  if (!db) return { success: false, reason: 'offline_mode' };
+  try {
+    const cleanHistory = JSON.parse(JSON.stringify(dailyHistory || {}));
+    const cleanNotes = JSON.parse(JSON.stringify(dailyHabitNotes || {}));
+    const userDocRef = doc(db, 'users', userId);
+    await setDoc(userDocRef, {
+      dailyHistory: cleanHistory,
+      dailyHabitNotes: cleanNotes,
+      historyCount: Object.keys(cleanHistory).length,
+      lastHistorySync: new Date().toISOString(),
+    }, { merge: true });
+    return { success: true };
+  } catch (err) {
+    console.error('Error saving Daily History to Cloud DB:', err);
+    return { success: false, error: err };
+  }
+};
+
+/**
+ * Archive a specific day's completed record into Cloud Firestore subcollection for permanent storage & analytics
+ */
+export const archiveDailyRecordToCloud = async (userId = 'default_user', dateStr, daySummary) => {
+  if (!db || !isInitialized) {
+    initFirebase();
+  }
+  if (!db || !dateStr) return { success: false };
+  try {
+    const cleanSummary = JSON.parse(JSON.stringify(daySummary || {}));
+    const dayDocRef = doc(db, 'users', userId, 'daily_history', dateStr);
+    await setDoc(dayDocRef, {
+      ...cleanSummary,
+      date: dateStr,
+      archivedAt: new Date().toISOString(),
+    }, { merge: true });
+    return { success: true };
+  } catch (err) {
+    console.error(`Error archiving day ${dateStr} to Cloud DB:`, err);
+    return { success: false, error: err };
+  }
+};
+
+/**
+ * Fetch all historical daily records from Cloud DB for future deep-dive analytics
+ */
+export const getAllDailyHistoryFromDB = async (userId = 'default_user') => {
+  if (!db || !isInitialized) {
+    initFirebase();
+  }
+  if (!db) return {};
+  try {
+    const historyMap = {};
+    // 1. Fetch from user document first
+    const userDocRef = doc(db, 'users', userId);
+    const snap = await getDoc(userDocRef);
+    if (snap.exists() && snap.data()?.dailyHistory) {
+      Object.assign(historyMap, snap.data().dailyHistory);
+    }
+
+    // 2. Query individual subcollection records if available
+    try {
+      const subColRef = collection(db, 'users', userId, 'daily_history');
+      const subSnap = await getDocs(subColRef);
+      subSnap.forEach(docSnap => {
+        if (docSnap.id) {
+          historyMap[docSnap.id] = { id: docSnap.id, ...docSnap.data() };
+        }
+      });
+    } catch {
+      // Ignore subcollection error if permissions don't allow listing
+    }
+
+    return historyMap;
+  } catch (err) {
+    console.error('Error fetching all daily history from Cloud DB:', err);
+    return {};
+  }
+};
+

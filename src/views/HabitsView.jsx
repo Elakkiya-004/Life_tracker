@@ -28,7 +28,8 @@ import {
   X,
   RefreshCw,
   Sliders,
-  Droplets
+  Droplets,
+  Cloud
 } from 'lucide-react';
 
 export const HabitsView = () => {
@@ -49,8 +50,32 @@ export const HabitsView = () => {
     settings = {},
     updateSettings,
     healthProtocol = {},
-    todayStr 
+    todayStr,
+    syncAllHistoryToCloud,
+    syncStatus
   } = useApp();
+
+  const [isCloudSyncing, setIsCloudSyncing] = useState(false);
+  const [syncFeedback, setSyncFeedback] = useState('');
+
+  const handleManualSync = async () => {
+    setIsCloudSyncing(true);
+    setSyncFeedback('Syncing...');
+    try {
+      const res = await syncAllHistoryToCloud();
+      if (res?.success) {
+        setSyncFeedback('✅ Cloud Synced!');
+      } else {
+        setSyncFeedback('⚠️ Offline Mode');
+      }
+    } catch {
+      setSyncFeedback('⚠️ Sync Error');
+    }
+    setTimeout(() => {
+      setIsCloudSyncing(false);
+      setSyncFeedback('');
+    }, 2500);
+  };
 
   const [quickInput, setQuickInput] = useState('');
   const [quickTimeOfDay, setQuickTimeOfDay] = useState('Morning');
@@ -303,6 +328,22 @@ export const HabitsView = () => {
                 <Moon size={12} className="text-purple" />
                 <span>
                   22:30 IST: 🧹 Auto-Clear & Save Progress
+                </span>
+              </button>
+              <button 
+                type="button" 
+                className="reset-pill-badge clickable"
+                style={{ 
+                  background: syncStatus === 'synced' ? 'rgba(16, 185, 129, 0.12)' : 'rgba(99, 102, 241, 0.12)',
+                  borderColor: syncStatus === 'synced' ? 'rgba(16, 185, 129, 0.35)' : 'rgba(99, 102, 241, 0.35)',
+                  cursor: 'pointer' 
+                }}
+                onClick={handleManualSync}
+                title="Your To-Do list & daily history are actively saved in Google Firebase Cloud DB. Click to sync now."
+              >
+                <Cloud size={12} className={syncStatus === 'synced' ? 'text-emerald-400' : 'text-primary'} />
+                <span>
+                  {syncFeedback || (isCloudSyncing ? 'Syncing...' : syncStatus === 'synced' ? '☁️ Cloud DB Synced' : '☁️ Sync to Cloud DB')}
                 </span>
               </button>
             </div>

@@ -17,6 +17,10 @@ import {
   getEffectiveTrackerDate,
   pruneOldHistoryData,
   archiveAndResetHabits,
+  saveTodoListToDB,
+  saveDailyHistoryToDB,
+  archiveDailyRecordToCloud,
+  getAllDailyHistoryFromDB,
 } from '../services/storage';
 
 import { initFirebase, syncToCloud, listenToCloud } from '../services/firebase';
@@ -315,12 +319,14 @@ export const AppProvider = ({ children }) => {
     setSyncStatus('syncing');
     const payload = customPayload || {
       habits: habits || [],
+      todos: habits || [],
       transactions: transactions || [],
       jars: jars || DEFAULT_JARS,
       roadmap: roadmap || DEFAULT_ROADMAP,
       customLists: customLists || DEFAULT_CUSTOM_LISTS,
       healthProtocol: healthProtocol || DEFAULT_HEALTH_PROTOCOL,
       dailyHistory: dailyHistory || {},
+      dailyHabitNotes: dailyHabitNotes || {},
       settings: settings || DEFAULT_SETTINGS,
     };
     const res = await syncToCloud(currentUserId, payload);
@@ -329,15 +335,14 @@ export const AppProvider = ({ children }) => {
     } else {
       setSyncStatus(res.reason === 'offline_mode' ? 'local' : 'error');
     }
-  }, [currentUserId, habits, transactions, jars, roadmap, customLists, healthProtocol, dailyHistory, settings]);
+  }, [currentUserId, habits, transactions, jars, roadmap, customLists, healthProtocol, dailyHistory, dailyHabitNotes, settings]);
 
   // Dynamic tracker date with 22:30 IST (10:30 PM) auto-reset cutoff for next day
   const [todayStr, setTodayStr] = useState(() => getEffectiveTrackerDate());
 
   // Startup & Offline Rollover Check:
-  // If the user closed the app before 22:30 IST and reopens after 22:30 IST or the next day,
-  // we immediately detect that LAST_TRACKER_DATE !== currentEffectiveDate,
-  // archive the previous day's habits with full details into 30-Day History, and wipe active habits!
+  // Detects if the tracking day has changed, archives previous day's snapshot into History & Cloud DB,
+  // and preserves the active To-Do list so tasks are never lost!
   useEffect(() => {
     const currentEffectiveDate = getEffectiveTrackerDate();
     const lastTrackerDate = getLocalData(STORAGE_KEYS.LAST_TRACKER_DATE, null);
@@ -349,16 +354,24 @@ export const AppProvider = ({ children }) => {
       const rawHabits = getLocalData(STORAGE_KEYS.HABITS, []);
       const rawHistory = getLocalData(STORAGE_KEYS.DAILY_HISTORY, {});
 
-      // Archive previous tasks into daily progress history and completely clear active habits
+      // Archive previous tasks into daily progress history while preserving active to-dos
       const { updatedHistory, clearedHabits } = archiveAndResetHabits(rawHabits, lastTrackerDate, rawHistory);
       setDailyHistory(updatedHistory);
       setLocalData(STORAGE_KEYS.DAILY_HISTORY, updatedHistory);
       setHabits(clearedHabits);
       setLocalData(STORAGE_KEYS.HABITS, clearedHabits);
 
+      // Permanently archive previous day to Cloud DB subcollection
+      if (updatedHistory[lastTrackerDate]) {
+        archiveDailyRecordToCloud(currentUserId, lastTrackerDate, updatedHistory[lastTrackerDate]);
+      }
+      saveTodoListToDB(currentUserId, clearedHabits);
+
       pushToCloud({
         habits: clearedHabits,
+        todos: clearedHabits,
         dailyHistory: updatedHistory,
+        dailyHabitNotes,
         lastTrackerDate: currentEffectiveDate,
         transactions, jars, roadmap, customLists, healthProtocol, settings
       });
@@ -368,7 +381,7 @@ export const AppProvider = ({ children }) => {
     }
   }, []); // Run once on startup
 
-  // Live timer: auto-advance, archive previous tasks into history, and wipe active habits at 22:30 IST
+  // Live timer: auto-advance, archive previous tasks into history & Cloud DB at 22:30 IST
   useEffect(() => {
     const checkTimer = setInterval(() => {
       const currentEffectiveDate = getEffectiveTrackerDate();
@@ -382,9 +395,17 @@ export const AppProvider = ({ children }) => {
         setHabits(clearedHabits);
         setLocalData(STORAGE_KEYS.HABITS, clearedHabits);
 
+        // Permanently archive transitioned day to Cloud DB subcollection
+        if (updatedHistory[todayStr]) {
+          archiveDailyRecordToCloud(currentUserId, todayStr, updatedHistory[todayStr]);
+        }
+        saveTodoListToDB(currentUserId, clearedHabits);
+
         pushToCloud({
           habits: clearedHabits,
+          todos: clearedHabits,
           dailyHistory: updatedHistory,
+          dailyHabitNotes,
           lastTrackerDate: currentEffectiveDate,
           transactions, jars, roadmap, customLists, healthProtocol, settings
         });
@@ -395,7 +416,7 @@ export const AppProvider = ({ children }) => {
     }, 5000);
 
     return () => clearInterval(checkTimer);
-  }, [todayStr, habits, dailyHistory, transactions, jars, roadmap, customLists, healthProtocol, settings, pushToCloud]);
+  }, [todayStr, habits, dailyHistory, dailyHabitNotes, transactions, jars, roadmap, customLists, healthProtocol, settings, currentUserId, pushToCloud]);
 
   // Apply Theme class to document root
   useEffect(() => {
@@ -450,7 +471,7 @@ export const AppProvider = ({ children }) => {
         if (!cloudData) return;
         const currentEffectiveDate = getEffectiveTrackerDate();
 
-        // 1. Sync dailyHistory (merge local + cloud)
+        // 1. Sync dailyHistory (merge local + cloud for permanent analytics)
         let mergedHist = { ...(getLocalData(STORAGE_KEYS.DAILY_HISTORY, {}) || {}) };
         if (cloudData.dailyHistory && typeof cloudData.dailyHistory === 'object') {
           mergedHist = { ...mergedHist, ...cloudData.dailyHistory };
@@ -458,36 +479,52 @@ export const AppProvider = ({ children }) => {
           setLocalData(STORAGE_KEYS.DAILY_HISTORY, mergedHist);
         }
 
-        // 2. Check if cloud habits are from an older day that should have been rolled over
-        const cloudTrackerDate = cloudData.lastTrackerDate;
-        const cloudHabits = Array.isArray(cloudData.habits) ? cloudData.habits : [];
+        // 2. Sync dailyHabitNotes (merge local + cloud reflections)
+        if (cloudData.dailyHabitNotes && typeof cloudData.dailyHabitNotes === 'object') {
+          setDailyHabitNotes(prev => {
+            const mergedNotes = { ...(prev || {}), ...cloudData.dailyHabitNotes };
+            setLocalData(STORAGE_KEYS.HABIT_DAILY_NOTES, mergedNotes);
+            return mergedNotes;
+          });
+        }
 
-        if (cloudTrackerDate && cloudTrackerDate !== currentEffectiveDate) {
+        // 3. To-Do List & Habits: Intelligently merge without losing data
+        const cloudHabits = Array.isArray(cloudData.todos)
+          ? cloudData.todos
+          : (Array.isArray(cloudData.habits) ? cloudData.habits : []);
+        const localHabits = getLocalData(STORAGE_KEYS.HABITS, []);
+
+        if (cloudTrackerDate && cloudTrackerDate !== currentEffectiveDate && cloudHabits.length > 0) {
           const { updatedHistory, clearedHabits } = archiveAndResetHabits(cloudHabits, cloudTrackerDate, mergedHist);
           setDailyHistory(updatedHistory);
           setLocalData(STORAGE_KEYS.DAILY_HISTORY, updatedHistory);
           setHabits(clearedHabits);
           setLocalData(STORAGE_KEYS.HABITS, clearedHabits);
           setLocalData(STORAGE_KEYS.LAST_TRACKER_DATE, currentEffectiveDate);
-          syncToCloud(currentUserId, { habits: clearedHabits, dailyHistory: updatedHistory, lastTrackerDate: currentEffectiveDate });
-        } else if (!cloudTrackerDate && cloudHabits.length > 0) {
-          const hasPastDates = cloudHabits.some(h => 
-            Array.isArray(h?.completedDates) && h.completedDates.some(d => d < currentEffectiveDate)
-          );
-          if (hasPastDates) {
-            const olderDate = cloudHabits[0]?.completedDates?.[0] || 'older_date';
-            const { updatedHistory, clearedHabits } = archiveAndResetHabits(cloudHabits, olderDate, mergedHist);
-            setDailyHistory(updatedHistory);
-            setLocalData(STORAGE_KEYS.DAILY_HISTORY, updatedHistory);
-            setHabits(clearedHabits);
-            setLocalData(STORAGE_KEYS.HABITS, clearedHabits);
-            setLocalData(STORAGE_KEYS.LAST_TRACKER_DATE, currentEffectiveDate);
-            syncToCloud(currentUserId, { habits: clearedHabits, dailyHistory: updatedHistory, lastTrackerDate: currentEffectiveDate });
-          } else {
-            setHabits(cloudHabits);
+          if (updatedHistory[cloudTrackerDate]) {
+            archiveDailyRecordToCloud(currentUserId, cloudTrackerDate, updatedHistory[cloudTrackerDate]);
           }
-        } else if (Array.isArray(cloudData.habits)) {
-          setHabits(cloudHabits);
+          saveTodoListToDB(currentUserId, clearedHabits);
+          syncToCloud(currentUserId, { habits: clearedHabits, todos: clearedHabits, dailyHistory: updatedHistory, lastTrackerDate: currentEffectiveDate });
+        } else if (cloudHabits.length > 0) {
+          // Merge local and cloud to ensure no items added locally or on another device are lost
+          const mergedMap = new Map();
+          cloudHabits.forEach(h => h && h.id && mergedMap.set(h.id, h));
+          if (Array.isArray(localHabits)) {
+            localHabits.forEach(h => {
+              if (h && h.id && !mergedMap.has(h.id)) {
+                mergedMap.set(h.id, h);
+              }
+            });
+          }
+          const finalHabits = Array.from(mergedMap.values());
+          setHabits(finalHabits);
+          setLocalData(STORAGE_KEYS.HABITS, finalHabits);
+        } else if (Array.isArray(localHabits) && localHabits.length > 0) {
+          // Cloud empty: upload local to-dos to Cloud DB
+          setHabits(localHabits);
+          saveTodoListToDB(currentUserId, localHabits);
+          syncToCloud(currentUserId, { habits: localHabits, todos: localHabits });
         }
         if (Array.isArray(cloudData.transactions)) setTransactions(cloudData.transactions);
         if (Array.isArray(cloudData.jars)) {
@@ -532,7 +569,7 @@ export const AppProvider = ({ children }) => {
     }
   }, [currentUserId]);
 
-  // Real-time synchronization of today's habits into Daily Progress History
+  // Real-time synchronization of today's habits into Daily Progress History & Cloud DB
   const syncTodayIntoDailyHistory = useCallback((habitsList, dateStr = todayStr) => {
     const list = Array.isArray(habitsList) ? habitsList : [];
     const completedTasks = list.filter(h => h && Array.isArray(h.completedDates) && h.completedDates.includes(dateStr));
@@ -554,23 +591,26 @@ export const AppProvider = ({ children }) => {
     }));
 
     if (total > 0) {
+      const daySummary = {
+        date: dateStr,
+        total,
+        completed,
+        percent,
+        tasks: archivedTasks,
+        updatedAt: new Date().toISOString()
+      };
       setDailyHistory(prev => {
         const updated = {
           ...(prev || {}),
-          [dateStr]: {
-            date: dateStr,
-            total,
-            completed,
-            percent,
-            tasks: archivedTasks,
-            updatedAt: new Date().toISOString()
-          }
+          [dateStr]: daySummary
         };
         setLocalData(STORAGE_KEYS.DAILY_HISTORY, updated);
         return updated;
       });
+      // Archive permanently to Cloud Firestore subcollection for future analytics
+      archiveDailyRecordToCloud(currentUserId, dateStr, daySummary);
     }
-  }, [todayStr]);
+  }, [todayStr, currentUserId]);
 
   // Habit Operations
   const toggleHabit = (habitId, dateStr = todayStr) => {
@@ -661,7 +701,8 @@ export const AppProvider = ({ children }) => {
 
       setLocalData(STORAGE_KEYS.HABITS, updated);
       syncTodayIntoDailyHistory(updated, todayStr);
-      pushToCloud({ habits: updated, transactions, jars, roadmap, customLists, healthProtocol, dailyHistory, settings });
+      saveTodoListToDB(currentUserId, updated);
+      pushToCloud({ habits: updated, todos: updated, transactions, jars, roadmap, customLists, healthProtocol, dailyHistory, dailyHabitNotes, settings });
       return updated;
     });
   };
@@ -686,7 +727,8 @@ export const AppProvider = ({ children }) => {
       const updated = [newHabit, ...currentHabits];
       setLocalData(STORAGE_KEYS.HABITS, updated);
       syncTodayIntoDailyHistory(updated, todayStr);
-      pushToCloud({ habits: updated, transactions, jars, roadmap, customLists, healthProtocol, dailyHistory, settings });
+      saveTodoListToDB(currentUserId, updated);
+      pushToCloud({ habits: updated, todos: updated, transactions, jars, roadmap, customLists, healthProtocol, dailyHistory, dailyHabitNotes, settings });
       return updated;
     });
   };
@@ -697,7 +739,8 @@ export const AppProvider = ({ children }) => {
       const updated = currentHabits.map(h => h.id === id ? { ...h, ...habitData } : h);
       setLocalData(STORAGE_KEYS.HABITS, updated);
       syncTodayIntoDailyHistory(updated, todayStr);
-      pushToCloud({ habits: updated, transactions, jars, roadmap, customLists, healthProtocol, dailyHistory, settings });
+      saveTodoListToDB(currentUserId, updated);
+      pushToCloud({ habits: updated, todos: updated, transactions, jars, roadmap, customLists, healthProtocol, dailyHistory, dailyHabitNotes, settings });
       return updated;
     });
   };
@@ -708,7 +751,8 @@ export const AppProvider = ({ children }) => {
       const updated = currentHabits.filter(h => h.id !== id);
       setLocalData(STORAGE_KEYS.HABITS, updated);
       syncTodayIntoDailyHistory(updated, todayStr);
-      pushToCloud({ habits: updated, transactions, jars, roadmap, customLists, healthProtocol, dailyHistory, settings });
+      saveTodoListToDB(currentUserId, updated);
+      pushToCloud({ habits: updated, todos: updated, transactions, jars, roadmap, customLists, healthProtocol, dailyHistory, dailyHabitNotes, settings });
       return updated;
     });
   };
@@ -718,7 +762,8 @@ export const AppProvider = ({ children }) => {
     setHabits(newOrderedHabits);
     setLocalData(STORAGE_KEYS.HABITS, newOrderedHabits);
     syncTodayIntoDailyHistory(newOrderedHabits, todayStr);
-    pushToCloud({ habits: newOrderedHabits, transactions, jars, roadmap, customLists, healthProtocol, dailyHistory, settings });
+    saveTodoListToDB(currentUserId, newOrderedHabits);
+    pushToCloud({ habits: newOrderedHabits, todos: newOrderedHabits, transactions, jars, roadmap, customLists, healthProtocol, dailyHistory, dailyHabitNotes, settings });
   };
 
   const moveHabit = (draggedId, targetId, position = 'before') => {
@@ -736,7 +781,8 @@ export const AppProvider = ({ children }) => {
 
       setLocalData(STORAGE_KEYS.HABITS, newHabits);
       syncTodayIntoDailyHistory(newHabits, todayStr);
-      pushToCloud({ habits: newHabits, transactions, jars, roadmap, customLists, healthProtocol, dailyHistory, settings });
+      saveTodoListToDB(currentUserId, newHabits);
+      pushToCloud({ habits: newHabits, todos: newHabits, transactions, jars, roadmap, customLists, healthProtocol, dailyHistory, dailyHabitNotes, settings });
       return newHabits;
     });
   };
@@ -749,7 +795,8 @@ export const AppProvider = ({ children }) => {
       const updated = currentHabits.filter(h => !idSet.has(h.id));
       setLocalData(STORAGE_KEYS.HABITS, updated);
       syncTodayIntoDailyHistory(updated, todayStr);
-      pushToCloud({ habits: updated, transactions, jars, roadmap, customLists, healthProtocol, dailyHistory, settings });
+      saveTodoListToDB(currentUserId, updated);
+      pushToCloud({ habits: updated, todos: updated, transactions, jars, roadmap, customLists, healthProtocol, dailyHistory, dailyHabitNotes, settings });
       return updated;
     });
   };
@@ -757,13 +804,15 @@ export const AppProvider = ({ children }) => {
   const clearAllHabits = () => {
     setHabits([]);
     setLocalData(STORAGE_KEYS.HABITS, []);
-    pushToCloud({ habits: [], transactions, jars, roadmap, customLists, healthProtocol, dailyHistory, settings });
+    saveTodoListToDB(currentUserId, []);
+    pushToCloud({ habits: [], todos: [], transactions, jars, roadmap, customLists, healthProtocol, dailyHistory, dailyHabitNotes, settings });
   };
 
   const resetHabitsToDefault = () => {
     setHabits(DEFAULT_HABITS);
     setLocalData(STORAGE_KEYS.HABITS, DEFAULT_HABITS);
-    pushToCloud({ habits: DEFAULT_HABITS, transactions, jars, roadmap, customLists, healthProtocol, dailyHistory, settings });
+    saveTodoListToDB(currentUserId, DEFAULT_HABITS);
+    pushToCloud({ habits: DEFAULT_HABITS, todos: DEFAULT_HABITS, transactions, jars, roadmap, customLists, healthProtocol, dailyHistory, dailyHabitNotes, settings });
   };
 
   const markAllHabitsToday = (targetDate = todayStr) => {
@@ -802,8 +851,9 @@ export const AppProvider = ({ children }) => {
 
       setLocalData(STORAGE_KEYS.HABITS, updated);
       syncTodayIntoDailyHistory(updated, effectiveDate);
+      saveTodoListToDB(currentUserId, updated);
       triggerCelebration();
-      pushToCloud({ habits: updated, transactions, jars, roadmap, customLists, healthProtocol, dailyHistory, settings });
+      pushToCloud({ habits: updated, todos: updated, transactions, jars, roadmap, customLists, healthProtocol, dailyHistory, dailyHabitNotes, settings });
       return updated;
     });
   };
@@ -823,7 +873,6 @@ export const AppProvider = ({ children }) => {
         // Re-calculate streak from newDates backwards from effectiveDate
         let streak = 0;
         let checkDate = new Date(effectiveDate + 'T00:00:00');
-        // Since today is reset, check yesterday
         checkDate.setDate(checkDate.getDate() - 1);
         while (true) {
           const y = checkDate.getFullYear();
@@ -847,7 +896,8 @@ export const AppProvider = ({ children }) => {
 
       setLocalData(STORAGE_KEYS.HABITS, updated);
       syncTodayIntoDailyHistory(updated, effectiveDate);
-      pushToCloud({ habits: updated, transactions, jars, roadmap, customLists, healthProtocol, dailyHistory, settings });
+      saveTodoListToDB(currentUserId, updated);
+      pushToCloud({ habits: updated, todos: updated, transactions, jars, roadmap, customLists, healthProtocol, dailyHistory, dailyHabitNotes, settings });
       return updated;
     });
   };
@@ -1298,12 +1348,13 @@ export const AppProvider = ({ children }) => {
     return { date: targetDateStr, total, completed, percent, completedTasks, uncompletedTasks };
   };
 
-  const getPast30DaysHistory = () => {
+  const getPast30DaysHistory = (daysCount = 30) => {
     const list = [];
     const safeHabitsList = Array.isArray(habits) ? habits : [];
     const baseDate = new Date(todayStr + 'T00:00:00');
+    const totalDays = Math.max(1, parseInt(daysCount, 10) || 30);
 
-    for (let i = 0; i < 30; i++) {
+    for (let i = 0; i < totalDays; i++) {
       const d = new Date(baseDate);
       d.setDate(d.getDate() - i);
       const year = d.getFullYear();
@@ -1358,6 +1409,34 @@ export const AppProvider = ({ children }) => {
 
     return list;
   };
+
+  // Manual one-tap sync to upload all To-Dos and full Daily History to Cloud DB
+  const syncAllHistoryToCloud = useCallback(async () => {
+    setSyncStatus('syncing');
+    try {
+      const todoRes = await saveTodoListToDB(currentUserId, habits);
+      const histRes = await saveDailyHistoryToDB(currentUserId, dailyHistory, dailyHabitNotes);
+      const cloudRes = await syncToCloud(currentUserId, {
+        habits: habits || [],
+        todos: habits || [],
+        dailyHistory: dailyHistory || {},
+        dailyHabitNotes: dailyHabitNotes || {},
+        transactions: transactions || [],
+        jars: jars || DEFAULT_JARS,
+        roadmap: roadmap || DEFAULT_ROADMAP,
+        customLists: customLists || DEFAULT_CUSTOM_LISTS,
+        healthProtocol: healthProtocol || DEFAULT_HEALTH_PROTOCOL,
+        settings: settings || DEFAULT_SETTINGS,
+      });
+      const ok = todoRes.success || histRes.success || cloudRes.success;
+      setSyncStatus(ok ? 'synced' : 'error');
+      return { success: ok };
+    } catch (e) {
+      console.error('syncAllHistoryToCloud error:', e);
+      setSyncStatus('error');
+      return { success: false, error: e };
+    }
+  }, [currentUserId, habits, dailyHistory, dailyHabitNotes, transactions, jars, roadmap, customLists, healthProtocol, settings]);
 
   // Calculated Metrics (Guaranteed Safe)
   const safeHabits = Array.isArray(habits) ? habits.filter(Boolean) : [];
@@ -1489,11 +1568,14 @@ export const AppProvider = ({ children }) => {
         yesterdayProgress,
         dailyHistory,
         dailyHabitNotes,
+        todos: habits,
+        syncAllHistoryToCloud,
         saveHabitDailyNote,
         getHabitDailyNote,
         deleteHabitDailyNote,
         getPastDayProgress,
         getPast30DaysHistory,
+        getAllDailyHistoryFromDB,
         currentMonthIncome,
         currentMonthExpense,
         netSavings,

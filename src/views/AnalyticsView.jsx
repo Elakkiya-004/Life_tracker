@@ -9,7 +9,10 @@ import {
   Flame, 
   PieChart,
   Calendar,
-  ChevronRight
+  ChevronRight,
+  Cloud,
+  RefreshCw,
+  CheckCheck
 } from 'lucide-react';
 
 export const AnalyticsView = () => {
@@ -21,11 +24,37 @@ export const AnalyticsView = () => {
     currentMonthIncome, 
     currentMonthExpense, 
     netSavings,
-    getPast30DaysHistory 
+    getPast30DaysHistory,
+    dailyHistory = {},
+    syncAllHistoryToCloud,
+    syncStatus = 'local'
   } = useApp();
 
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
-  const historyList = getPast30DaysHistory ? getPast30DaysHistory() : [];
+  const [historyRange, setHistoryRange] = useState(30); // 7 | 30 | 90 | 365
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncFeedback, setSyncFeedback] = useState('');
+
+  const historyList = getPast30DaysHistory ? getPast30DaysHistory(historyRange) : [];
+
+  const handleCloudSync = async () => {
+    setIsSyncing(true);
+    setSyncFeedback('Syncing...');
+    try {
+      const res = await syncAllHistoryToCloud();
+      if (res?.success) {
+        setSyncFeedback('✅ Cloud DB Synced!');
+      } else {
+        setSyncFeedback('⚠️ Offline Mode');
+      }
+    } catch {
+      setSyncFeedback('⚠️ Sync Error');
+    }
+    setTimeout(() => {
+      setIsSyncing(false);
+      setSyncFeedback('');
+    }, 2500);
+  };
 
   const safeHabits = Array.isArray(habits) ? habits.filter(Boolean) : [];
   const safeTransactions = Array.isArray(transactions) ? transactions.filter(Boolean) : [];
@@ -221,30 +250,95 @@ export const AnalyticsView = () => {
         </div>
       </div>
 
-      {/* 30-Day Progress History Card */}
+      {/* Historical To-Do & Daily Progress Analytics Card */}
       <div className="card analytics-panel">
-        <div className="panel-header">
+        <div className="panel-header" style={{ flexWrap: 'wrap', gap: '0.75rem' }}>
           <div className="panel-title-area">
             <Calendar size={18} className="text-primary" />
             <div>
-              <h3 className="title-sm">30-Day Daily Habit Progress History</h3>
+              <h3 className="title-sm">Historical To-Do & Progress Analytics</h3>
               <p className="text-sub" style={{ fontSize: '0.75rem', marginTop: '0.15rem' }}>
-                View completed tasks and execution scores across the past 30 days. Auto-prunes after 30 days.
+                Analyze past days, completion percentages, and routines archived in Firebase Cloud DB.
               </p>
             </div>
           </div>
-          <button 
-            type="button" 
-            className="btn btn-secondary btn-sm"
-            onClick={() => setIsHistoryModalOpen(true)}
-          >
-            <span>Open Full Log</span>
-            <ChevronRight size={14} />
-          </button>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+            {/* Time Range Filter Pills */}
+            <div className="analytics-range-selector" style={{ display: 'flex', background: 'var(--bg-tertiary, rgba(255,255,255,0.05))', borderRadius: '8px', padding: '2px' }}>
+              {[
+                { label: '7D', value: 7 },
+                { label: '30D', value: 30 },
+                { label: '90D', value: 90 },
+                { label: '1 Year', value: 365 },
+              ].map(opt => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  className={`btn-xs ${historyRange === opt.value ? 'btn-primary' : 'btn-ghost'}`}
+                  style={{ borderRadius: '6px', padding: '0.25rem 0.6rem', fontSize: '0.75rem' }}
+                  onClick={() => setHistoryRange(opt.value)}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Cloud DB Manual Sync Button */}
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              onClick={handleCloudSync}
+              disabled={isSyncing}
+              title="Sync all To-Dos and full Daily History to Google Firebase Cloud DB"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
+            >
+              <Cloud size={14} className={syncStatus === 'synced' ? 'text-emerald-400' : 'text-primary'} />
+              <span>{syncFeedback || (isSyncing ? 'Syncing...' : 'Sync Cloud DB')}</span>
+            </button>
+
+            <button 
+              type="button" 
+              className="btn btn-secondary btn-sm"
+              onClick={() => setIsHistoryModalOpen(true)}
+            >
+              <span>Open Detailed Log</span>
+              <ChevronRight size={14} />
+            </button>
+          </div>
+        </div>
+
+        {/* Cloud Archive Summary Strip */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+          gap: '0.75rem',
+          margin: '0.5rem 0 1rem 0',
+          padding: '0.75rem 1rem',
+          background: 'rgba(99, 102, 241, 0.08)',
+          borderRadius: '10px',
+          border: '1px solid rgba(99, 102, 241, 0.2)'
+        }}>
+          <div>
+            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>SELECTED RANGE</div>
+            <div style={{ fontSize: '1rem', fontWeight: '700', color: 'var(--text-primary)' }}>Past {historyRange} Days</div>
+          </div>
+          <div>
+            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>CLOUD DAYS LOGGED</div>
+            <div style={{ fontSize: '1rem', fontWeight: '700', color: '#10b981' }}>{Object.keys(dailyHistory || {}).length} Days</div>
+          </div>
+          <div>
+            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>COMPLETED IN WINDOW</div>
+            <div style={{ fontSize: '1rem', fontWeight: '700', color: '#6366f1' }}>{totalCompletedAcrossHistory} Tasks</div>
+          </div>
+          <div>
+            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>AVERAGE ADHERENCE</div>
+            <div style={{ fontSize: '1rem', fontWeight: '700', color: '#f59e0b' }}>{habitConsistencyScore}%</div>
+          </div>
         </div>
 
         <div className="analytics-history-preview-grid">
-          {historyList.slice(0, 14).map((day) => (
+          {historyList.slice(0, Math.min(28, historyRange)).map((day) => (
             <button
               key={day.date}
               type="button"
