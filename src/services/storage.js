@@ -277,13 +277,16 @@ export const archiveAndResetHabits = (habitsToArchive, archiveDate, existingHist
   // Preserve history for long-term analytics (keep at least 365 days)
   const { prunedHistory } = pruneOldHistoryData(updatedHistory, [], 365);
   
-  // Preserve active to-dos/habits across days so the user does NOT have to re-enter them
-  const preservedHabits = currentHabits.map(h => ({
-    ...h,
-    completedDates: Array.isArray(h.completedDates) ? h.completedDates : []
-  }));
+  // If auto_clear mode (default), clears habits to an empty fresh slate so user can add fresh tasks for tomorrow.
+  // If fresh_checks mode, preserves active habits with today's checkmarks cleared.
+  const clearedHabits = rolloverMode === 'auto_clear'
+    ? []
+    : currentHabits.map(h => ({
+        ...h,
+        completedDates: Array.isArray(h.completedDates) ? h.completedDates.filter(d => d !== archiveDate) : []
+      }));
 
-  return { updatedHistory: prunedHistory, clearedHabits: preservedHabits };
+  return { updatedHistory: prunedHistory, clearedHabits };
 };
 
 // Clean up daily history and habit completed dates older than retentionDays (default 365 days for long-term analytics)

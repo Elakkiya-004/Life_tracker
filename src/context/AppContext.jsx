@@ -144,26 +144,40 @@ export const AppProvider = ({ children }) => {
     if (!Array.isArray(existingList) || existingList.length === 0) return DEFAULT_ROADMAP;
     
     // Map through existingList to preserve all custom fields, user-completed tasks, and notes
-    const mergedList = existingList.map(week => {
+    const seenPeriods = new Set();
+    const mergedList = [];
+
+    existingList.forEach(week => {
+      if (!week) return;
       const defaultWeek = DEFAULT_ROADMAP.find(d => d.id === week.id || d.period === week.period);
-      if (!defaultWeek) return week;
-      return {
-        ...defaultWeek,
-        ...week,
-        period: defaultWeek.period,
-        month: defaultWeek.month,
-        dateRange: defaultWeek.dateRange,
-        status: week.status || defaultWeek.status,
-        completedTasks: Array.isArray(week.completedTasks) ? week.completedTasks : (defaultWeek.completedTasks || []),
-        isLightWeek: typeof week.isLightWeek === 'boolean' ? week.isLightWeek : defaultWeek.isLightWeek,
-        notes: week.notes !== undefined ? week.notes : (defaultWeek.notes || ''),
-      };
+      if (!defaultWeek) {
+        if (!seenPeriods.has(week.period || week.id)) {
+          seenPeriods.add(week.period || week.id);
+          mergedList.push(week);
+        }
+        return;
+      }
+      if (!seenPeriods.has(defaultWeek.period)) {
+        seenPeriods.add(defaultWeek.period);
+        mergedList.push({
+          ...defaultWeek,
+          ...week,
+          id: defaultWeek.id,
+          period: defaultWeek.period,
+          month: defaultWeek.month,
+          dateRange: defaultWeek.dateRange,
+          status: week.status || defaultWeek.status,
+          completedTasks: Array.isArray(week.completedTasks) ? week.completedTasks : (defaultWeek.completedTasks || []),
+          isLightWeek: typeof week.isLightWeek === 'boolean' ? week.isLightWeek : defaultWeek.isLightWeek,
+          notes: week.notes !== undefined ? week.notes : (defaultWeek.notes || ''),
+        });
+      }
     });
 
-    // Ensure any default week that wasn't in existingList is preserved
+    // Ensure any default week that wasn't in existingList is added
     DEFAULT_ROADMAP.forEach(defaultWeek => {
-      const exists = mergedList.some(w => w && (w.id === defaultWeek.id || w.period === defaultWeek.period));
-      if (!exists) {
+      if (!seenPeriods.has(defaultWeek.period)) {
+        seenPeriods.add(defaultWeek.period);
         mergedList.push(defaultWeek);
       }
     });
@@ -387,8 +401,10 @@ export const AppProvider = ({ children }) => {
       const rawHabits = getLocalData(STORAGE_KEYS.HABITS, []);
       const rawHistory = getLocalData(STORAGE_KEYS.DAILY_HISTORY, {});
 
-      // Archive previous tasks into daily progress history while preserving active to-dos
-      const { updatedHistory, clearedHabits } = archiveAndResetHabits(rawHabits, lastTrackerDate, rawHistory);
+      // Archive previous tasks into daily progress history while clearing or preserving active to-dos
+      const rawSettings = getLocalData(STORAGE_KEYS.SETTINGS, DEFAULT_SETTINGS);
+      const mode = rawSettings?.habitRolloverMode || 'auto_clear';
+      const { updatedHistory, clearedHabits } = archiveAndResetHabits(rawHabits, lastTrackerDate, rawHistory, mode);
       setDailyHistory(updatedHistory);
       setLocalData(STORAGE_KEYS.DAILY_HISTORY, updatedHistory);
       setHabits(clearedHabits);
@@ -421,7 +437,8 @@ export const AppProvider = ({ children }) => {
       if (todayStr !== currentEffectiveDate) {
         console.log(`🌙 22:30 IST Transition: ${todayStr} -> ${currentEffectiveDate}`);
         const currentHabits = Array.isArray(habits) ? habits : [];
-        const { updatedHistory, clearedHabits } = archiveAndResetHabits(currentHabits, todayStr, dailyHistory);
+        const mode = settings?.habitRolloverMode || 'auto_clear';
+        const { updatedHistory, clearedHabits } = archiveAndResetHabits(currentHabits, todayStr, dailyHistory, mode);
 
         setDailyHistory(updatedHistory);
         setLocalData(STORAGE_KEYS.DAILY_HISTORY, updatedHistory);
@@ -522,13 +539,15 @@ export const AppProvider = ({ children }) => {
         }
 
         // 3. To-Do List & Habits: Intelligently merge without losing data
+        const cloudTrackerDate = cloudData.lastTrackerDate;
         const cloudHabits = Array.isArray(cloudData.todos)
           ? cloudData.todos
           : (Array.isArray(cloudData.habits) ? cloudData.habits : []);
         const localHabits = getLocalData(STORAGE_KEYS.HABITS, []);
 
         if (cloudTrackerDate && cloudTrackerDate !== currentEffectiveDate && cloudHabits.length > 0) {
-          const { updatedHistory, clearedHabits } = archiveAndResetHabits(cloudHabits, cloudTrackerDate, mergedHist);
+          const mode = cloudData.settings?.habitRolloverMode || settings?.habitRolloverMode || 'auto_clear';
+          const { updatedHistory, clearedHabits } = archiveAndResetHabits(cloudHabits, cloudTrackerDate, mergedHist, mode);
           setDailyHistory(updatedHistory);
           setLocalData(STORAGE_KEYS.DAILY_HISTORY, updatedHistory);
           setHabits(clearedHabits);
@@ -539,22 +558,36 @@ export const AppProvider = ({ children }) => {
           }
           saveTodoListToDB(currentUserId, clearedHabits);
           syncToCloud(currentUserId, { habits: clearedHabits, todos: clearedHabits, dailyHistory: updatedHistory, lastTrackerDate: currentEffectiveDate });
+        } else if (cloudData.habitsClearedAt && Array.isArray(cloudData.habits) && cloudData.habits.length === 0) {
+          // Cloud has an explicit fresh clear signal: respect it!
+          setHabits([]);
+          setLocalData(STORAGE_KEYS.HABITS, []);
         } else if (cloudHabits.length > 0) {
-          // Merge local and cloud to ensure no items added locally or on another device are lost
-          const mergedMap = new Map();
-          cloudHabits.forEach(h => h && h.id && mergedMap.set(h.id, h));
-          if (Array.isArray(localHabits)) {
-            localHabits.forEach(h => {
-              if (h && h.id && !mergedMap.has(h.id)) {
-                mergedMap.set(h.id, h);
-              }
-            });
+          // If local is explicitly empty because user just cleared, don't resurrect old tasks
+          if (Array.isArray(localHabits) && localHabits.length === 0 && cloudData.habitsClearedAt) {
+            setHabits([]);
+            setLocalData(STORAGE_KEYS.HABITS, []);
+          } else {
+            // Merge local and cloud to ensure no items added locally or on another device are lost
+            const mergedMap = new Map();
+            cloudHabits.forEach(h => h && h.id && mergedMap.set(h.id, h));
+            if (Array.isArray(localHabits)) {
+              localHabits.forEach(h => {
+                if (h && h.id && !mergedMap.has(h.id)) {
+                  mergedMap.set(h.id, h);
+                }
+              });
+            }
+            const finalHabits = Array.from(mergedMap.values());
+            setHabits(finalHabits);
+            setLocalData(STORAGE_KEYS.HABITS, finalHabits);
           }
-          const finalHabits = Array.from(mergedMap.values());
-          setHabits(finalHabits);
-          setLocalData(STORAGE_KEYS.HABITS, finalHabits);
+        } else if (Array.isArray(cloudData.habits) && cloudData.habits.length === 0) {
+          // Cloud has explicit empty list, sync local to empty
+          setHabits([]);
+          setLocalData(STORAGE_KEYS.HABITS, []);
         } else if (Array.isArray(localHabits) && localHabits.length > 0) {
-          // Cloud empty: upload local to-dos to Cloud DB
+          // Cloud empty / initial state: upload local to-dos to Cloud DB
           setHabits(localHabits);
           saveTodoListToDB(currentUserId, localHabits);
           syncToCloud(currentUserId, { habits: localHabits, todos: localHabits });
@@ -781,7 +814,39 @@ export const AppProvider = ({ children }) => {
   const deleteHabit = (id) => {
     setHabits(prevHabits => {
       const currentHabits = Array.isArray(prevHabits) ? prevHabits : [];
+      const habitToDelete = currentHabits.find(h => h.id === id);
       const updated = currentHabits.filter(h => h.id !== id);
+
+      // If deleting a habit that was a logged diet item (soup or juice), also remove from today's meals & calories!
+      if (habitToDelete && habitToDelete.name) {
+        try {
+          const habitClean = habitToDelete.name.toLowerCase().replace(/^(have|drink)\s+/i, '').replace(/\s*\(\d+\s*kcal\)/i, '').trim();
+          const key = `life_tracker_meals_${currentUserId}_${todayStr}`;
+          const raw = localStorage.getItem(key);
+          const existingMeals = raw ? JSON.parse(raw) : [];
+          const updatedMeals = existingMeals.filter(m => {
+            if (!m || !m.name) return true;
+            const mealClean = m.name.toLowerCase().trim();
+            return !habitClean.includes(mealClean) && !mealClean.includes(habitClean);
+          });
+          if (updatedMeals.length !== existingMeals.length) {
+            localStorage.setItem(key, JSON.stringify(updatedMeals));
+            setDailyMeals(updatedMeals);
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(new CustomEvent('life_tracker_meals_updated', {
+                detail: { dateStr: todayStr, userId: currentUserId, meals: updatedMeals }
+              }));
+            }
+            syncToCloud(currentUserId, {
+              [`dailyMeals_${todayStr}`]: updatedMeals,
+              lastMealLoggedAt: new Date().toISOString()
+            });
+          }
+        } catch (e) {
+          console.error('Failed to sync meal removal on deleteHabit:', e);
+        }
+      }
+
       setLocalData(STORAGE_KEYS.HABITS, updated);
       syncTodayIntoDailyHistory(updated, todayStr);
       saveTodoListToDB(currentUserId, updated);
@@ -834,11 +899,42 @@ export const AppProvider = ({ children }) => {
     });
   };
 
-  const clearAllHabits = () => {
+  const clearAllHabits = async () => {
+    // 1. Archive current habits into daily progress history if any were completed
+    if (Array.isArray(habits) && habits.length > 0) {
+      syncTodayIntoDailyHistory(habits, todayStr);
+    }
+
+    // 2. Clear state and local storage immediately
     setHabits([]);
     setLocalData(STORAGE_KEYS.HABITS, []);
-    saveTodoListToDB(currentUserId, []);
-    pushToCloud({ habits: [], todos: [], transactions, jars, roadmap, customLists, healthProtocol, dailyHistory, dailyHabitNotes, settings });
+
+    // 3. Clear today's meals & calories so app is truly fresh
+    try {
+      const key = `life_tracker_meals_${currentUserId}_${todayStr}`;
+      localStorage.removeItem(key);
+      setDailyMeals([]);
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('life_tracker_meals_updated', {
+          detail: { dateStr: todayStr, userId: currentUserId, meals: [] }
+        }));
+      }
+    } catch (e) {
+      console.warn('Error clearing daily meals:', e);
+    }
+
+    // 4. Force update Cloud Firestore so cloud never resurrects them
+    await saveTodoListToDB(currentUserId, []);
+    await syncToCloud(currentUserId, {
+      habits: [],
+      todos: [],
+      todoCount: 0,
+      [`dailyMeals_${todayStr}`]: [],
+      lastTrackerDate: todayStr,
+      habitsClearedAt: new Date().toISOString(),
+    });
+
+    return true;
   };
 
   const resetHabitsToDefault = () => {
@@ -1045,6 +1141,7 @@ export const AppProvider = ({ children }) => {
       const key = `life_tracker_meals_${currentUserId}_${todayStr}`;
       const raw = localStorage.getItem(key);
       const existing = raw ? JSON.parse(raw) : [];
+      const mealToRemove = existing.find(m => m.id === mealId);
       const updated = existing.filter(m => m.id !== mealId);
       localStorage.setItem(key, JSON.stringify(updated));
       setDailyMeals(updated);
@@ -1059,11 +1156,83 @@ export const AppProvider = ({ children }) => {
         [`dailyMeals_${todayStr}`]: updated,
         lastMealLoggedAt: new Date().toISOString()
       });
+
+      // Also clean corresponding habit from habits list if present
+      if (mealToRemove && mealToRemove.name) {
+        const mealClean = mealToRemove.name.toLowerCase().trim();
+        setHabits(prevHabits => {
+          const currentHabits = Array.isArray(prevHabits) ? prevHabits : [];
+          const updatedHabits = currentHabits.filter(h => {
+            if (!h || !h.name) return true;
+            const hClean = h.name.toLowerCase().replace(/^(have|drink)\s+/i, '').replace(/\s*\(\d+\s*kcal\)/i, '').trim();
+            return !hClean.includes(mealClean) && !mealClean.includes(hClean);
+          });
+          if (updatedHabits.length !== currentHabits.length) {
+            setLocalData(STORAGE_KEYS.HABITS, updatedHabits);
+            syncTodayIntoDailyHistory(updatedHabits, todayStr);
+            saveTodoListToDB(currentUserId, updatedHabits);
+            pushToCloud({ habits: updatedHabits, todos: updatedHabits, transactions, jars, roadmap, customLists, healthProtocol, dailyHistory, dailyHabitNotes, settings });
+            return updatedHabits;
+          }
+          return currentHabits;
+        });
+      }
+
       return true;
     } catch (e) {
       console.error('Failed to remove diet meal:', e);
       return false;
     }
+  };
+
+  /**
+   * Seamlessly remove a diet item by name from both today's meals and habits checklist
+   */
+  const removeDietItem = (itemName) => {
+    if (!itemName) return false;
+    const clean = itemName.toLowerCase().replace(/^(have|drink)\s+/i, '').replace(/\s*\(\d+\s*kcal\)/i, '').trim();
+
+    // 1. Remove from meals
+    try {
+      const key = `life_tracker_meals_${currentUserId}_${todayStr}`;
+      const raw = localStorage.getItem(key);
+      const existingMeals = raw ? JSON.parse(raw) : [];
+      const updatedMeals = existingMeals.filter(m => {
+        if (!m || !m.name) return true;
+        const mClean = m.name.toLowerCase().trim();
+        return !mClean.includes(clean) && !clean.includes(mClean);
+      });
+      localStorage.setItem(key, JSON.stringify(updatedMeals));
+      setDailyMeals(updatedMeals);
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('life_tracker_meals_updated', {
+          detail: { dateStr: todayStr, userId: currentUserId, meals: updatedMeals }
+        }));
+      }
+      syncToCloud(currentUserId, {
+        [`dailyMeals_${todayStr}`]: updatedMeals,
+        lastMealLoggedAt: new Date().toISOString()
+      });
+    } catch (e) {
+      console.error('Error removing diet meal in removeDietItem:', e);
+    }
+
+    // 2. Remove from habits
+    setHabits(prevHabits => {
+      const currentHabits = Array.isArray(prevHabits) ? prevHabits : [];
+      const updatedHabits = currentHabits.filter(h => {
+        if (!h || !h.name) return true;
+        const hClean = h.name.toLowerCase().replace(/^(have|drink)\s+/i, '').replace(/\s*\(\d+\s*kcal\)/i, '').trim();
+        return !hClean.includes(clean) && !clean.includes(hClean);
+      });
+      setLocalData(STORAGE_KEYS.HABITS, updatedHabits);
+      syncTodayIntoDailyHistory(updatedHabits, todayStr);
+      saveTodoListToDB(currentUserId, updatedHabits);
+      pushToCloud({ habits: updatedHabits, todos: updatedHabits, transactions, jars, roadmap, customLists, healthProtocol, dailyHistory, dailyHabitNotes, settings });
+      return updatedHabits;
+    });
+
+    return true;
   };
 
   // Finance & Jar Operations
@@ -1788,6 +1957,7 @@ export const AppProvider = ({ children }) => {
         todayCaloriesConsumed,
         logDietItem,
         removeDietMeal,
+        removeDietItem,
       }}
     >
       {children}

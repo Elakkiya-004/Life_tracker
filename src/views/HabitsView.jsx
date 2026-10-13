@@ -5,6 +5,7 @@ import { HabitCard } from '../components/habits/HabitCard';
 import { HabitModal } from '../components/habits/HabitModal';
 import { HabitHistoryModal } from '../components/habits/HabitHistoryModal';
 import { DailyHabitNoteCard } from '../components/habits/DailyHabitNoteCard';
+import { DailyTaskSuggestions } from '../components/habits/DailyTaskSuggestions';
 import { useTaskDragAndDrop } from '../hooks/useTaskDragAndDrop';
 import { getScheduledProtocolsForDay } from '../services/careProtocolUtils';
 import { HEALTHY_DIET_JUICES } from '../services/nightDietSoupData';
@@ -455,6 +456,18 @@ export const HabitsView = () => {
               <RotateCcw size={15} />
               <span>Reset Today</span>
             </button>
+
+            {habitsList.length > 0 && (
+              <button 
+                type="button" 
+                className="btn btn-ghost text-danger btn-sm"
+                onClick={handleClearAll}
+                title="Delete all active tasks and start fresh"
+              >
+                <Trash2 size={15} />
+                <span>Clear All (Fresh Start)</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -764,28 +777,8 @@ export const HabitsView = () => {
           </button>
         </div>
 
-        {daySchedule.hasProtocols && (
-          <div className="quick-suggestions-row">
-            <span className="quick-sugg-label">💡 {daySchedule.dayName} Suggestions:</span>
-            <div className="quick-sugg-chips-list">
-              {daySchedule.protocols.map(proto => (
-                <button
-                  type="button"
-                  key={proto.id}
-                  className="quick-sugg-chip"
-                  onClick={() => {
-                    setQuickInput(proto.suggestedHabitName);
-                    setQuickTimeOfDay(proto.suggestedHabitName.toLowerCase().includes('pm') ? 'Evening' : 'Morning');
-                  }}
-                  title={`Click to fill "${proto.suggestedHabitName}"`}
-                >
-                  <span className="sugg-dot" style={{ backgroundColor: proto.color }} />
-                  <span>{proto.suggestedHabitName}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
+        {/* 💡 Daily Suggestions (Soup, Juice, Career Milestones, Protocols) */}
+        <DailyTaskSuggestions isInline={true} />
       </form>
 
       {/* Controls: Filters, Search & View Switcher */}
@@ -1003,6 +996,13 @@ export const HabitsView = () => {
               </button>
             )}
           </div>
+
+          {/* Suggestions embedded inside empty state */}
+          {habitsList.length === 0 && (
+            <div style={{ width: '100%', maxWidth: '640px', marginTop: '1rem' }}>
+              <DailyTaskSuggestions isInline={false} />
+            </div>
+          )}
         </div>
       ) : viewMode === 'checklist' ? (
         <div className="checklist-container">

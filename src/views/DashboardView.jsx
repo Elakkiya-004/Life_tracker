@@ -3,6 +3,7 @@ import { useApp } from '../context/AppContext';
 import { HabitTodoItem } from '../components/habits/HabitTodoItem';
 import { HabitModal } from '../components/habits/HabitModal';
 import { HabitHistoryModal } from '../components/habits/HabitHistoryModal';
+import { DailyTaskSuggestions } from '../components/habits/DailyTaskSuggestions';
 import { TransactionModal } from '../components/finance/TransactionModal';
 import { useTaskDragAndDrop } from '../hooks/useTaskDragAndDrop';
 import { 
@@ -22,7 +23,8 @@ import {
   Briefcase,
   Award,
   Table,
-  Check
+  Check,
+  Trash2
 } from 'lucide-react';
 
 const MOTIVATIONAL_QUOTES = [
@@ -49,6 +51,7 @@ export const DashboardView = () => {
     settings = {},
     setActiveTab,
     addHabit,
+    clearAllHabits,
     todayStr
   } = useApp();
 
@@ -446,6 +449,22 @@ export const DashboardView = () => {
               <Plus size={16} />
               <span>New Routine</span>
             </button>
+
+            {habits.length > 0 && (
+              <button 
+                type="button"
+                className="btn btn-ghost text-danger btn-sm"
+                onClick={() => {
+                  if (window.confirm('⚠️ Delete all active tasks and start fresh for today?\n\n(Previous routines remain safely preserved in your 30-Day History)')) {
+                    clearAllHabits();
+                  }
+                }}
+                title="Delete all active tasks and start fresh"
+              >
+                <Trash2 size={15} />
+                <span>Clear All (Fresh Start)</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -478,6 +497,9 @@ export const DashboardView = () => {
           </button>
         </form>
 
+        {/* 💡 Soup, Juice, Career & Protocol Quick Suggestions */}
+        <DailyTaskSuggestions isInline={true} />
+
         {habitsList.length === 0 ? (
           <div className="card empty-habits">
             <Sparkles size={32} className="text-amber-400" />
@@ -494,11 +516,16 @@ export const DashboardView = () => {
             </div>
             <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', justifyContent: 'center' }}>
               <button className="btn btn-primary btn-sm" onClick={() => setIsHabitModalOpen(true)}>
-                <Plus size={15} /> + Add Today's First Task
+                <Plus size={15} /> + Add Custom Task
               </button>
               <button className="btn btn-secondary btn-sm" onClick={() => setIsHistoryModalOpen(true)}>
                 <Calendar size={15} className="text-primary" /> 30-Day Progress History
               </button>
+            </div>
+
+            {/* Suggestions embedded inside empty state */}
+            <div style={{ width: '100%', maxWidth: '620px', marginTop: '0.75rem' }}>
+              <DailyTaskSuggestions isInline={false} />
             </div>
           </div>
         ) : (
