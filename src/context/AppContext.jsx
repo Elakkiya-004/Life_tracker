@@ -332,7 +332,8 @@ export const AppProvider = ({ children }) => {
   // Sync to Firebase helper (Defined before any useEffect hook)
   const pushToCloud = useCallback(async (customPayload = null) => {
     setSyncStatus('syncing');
-    const payload = customPayload || {
+    const effectiveDate = getEffectiveTrackerDate();
+    const payload = {
       habits: habits || [],
       todos: habits || [],
       transactions: transactions || [],
@@ -343,7 +344,12 @@ export const AppProvider = ({ children }) => {
       dailyHistory: dailyHistory || {},
       dailyHabitNotes: dailyHabitNotes || {},
       settings: settings || DEFAULT_SETTINGS,
+      lastTrackerDate: effectiveDate,
+      ...(customPayload || {}),
     };
+    if (!payload.lastTrackerDate) {
+      payload.lastTrackerDate = effectiveDate;
+    }
     const res = await syncToCloud(currentUserId, payload);
     if (res.success) {
       setSyncStatus('synced');
@@ -582,15 +588,15 @@ export const AppProvider = ({ children }) => {
             setHabits(finalHabits);
             setLocalData(STORAGE_KEYS.HABITS, finalHabits);
           }
+        } else if (Array.isArray(localHabits) && localHabits.length > 0) {
+          // Cloud is empty / initial state: preserve local to-dos and upload to Cloud DB!
+          setHabits(localHabits);
+          saveTodoListToDB(currentUserId, localHabits, currentEffectiveDate);
+          syncToCloud(currentUserId, { habits: localHabits, todos: localHabits, lastTrackerDate: currentEffectiveDate });
         } else if (Array.isArray(cloudData.habits) && cloudData.habits.length === 0) {
-          // Cloud has explicit empty list, sync local to empty
+          // Cloud has explicit empty list and local is empty, keep clean slate
           setHabits([]);
           setLocalData(STORAGE_KEYS.HABITS, []);
-        } else if (Array.isArray(localHabits) && localHabits.length > 0) {
-          // Cloud empty / initial state: upload local to-dos to Cloud DB
-          setHabits(localHabits);
-          saveTodoListToDB(currentUserId, localHabits);
-          syncToCloud(currentUserId, { habits: localHabits, todos: localHabits });
         }
         if (Array.isArray(cloudData.transactions)) setTransactions(cloudData.transactions);
         if (Array.isArray(cloudData.jars)) {

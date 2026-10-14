@@ -832,7 +832,7 @@ export const saveNightDietSoupsToDB = async (soupsData) => {
 /**
  * Save user To-Do List / Habits directly to Cloud Firestore
  */
-export const saveTodoListToDB = async (userId = 'default_user', todosList = []) => {
+export const saveTodoListToDB = async (userId = 'default_user', todosList = [], trackerDate = null) => {
   if (!db || !isInitialized) {
     initFirebase();
   }
@@ -840,12 +840,16 @@ export const saveTodoListToDB = async (userId = 'default_user', todosList = []) 
   try {
     const cleanTodos = JSON.parse(JSON.stringify(todosList || []));
     const userDocRef = doc(db, 'users', userId);
-    await setDoc(userDocRef, {
+    const updatePayload = {
       habits: cleanTodos,
       todos: cleanTodos,
       todoCount: cleanTodos.length,
       lastUpdated: new Date().toISOString(),
-    }, { merge: true });
+    };
+    if (trackerDate) {
+      updatePayload.lastTrackerDate = trackerDate;
+    }
+    await setDoc(userDocRef, updatePayload, { merge: true });
     return { success: true };
   } catch (err) {
     console.error('Error saving To-Do list to Cloud DB:', err);
