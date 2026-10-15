@@ -358,7 +358,7 @@ export const AppProvider = ({ children }) => {
     }
   }, [currentUserId, habits, transactions, jars, roadmap, customLists, healthProtocol, dailyHistory, dailyHabitNotes, settings]);
 
-  // Dynamic tracker date with 22:30 IST (10:30 PM) auto-reset cutoff for next day
+  // Dynamic tracker date with 22:15 IST (10:15 PM) auto-reset cutoff for next day
   const [todayStr, setTodayStr] = useState(() => getEffectiveTrackerDate());
 
   // Daily Logged Meals for Calorie Tracking & Habit Integration
@@ -403,7 +403,7 @@ export const AppProvider = ({ children }) => {
     if (!lastTrackerDate) {
       setLocalData(STORAGE_KEYS.LAST_TRACKER_DATE, currentEffectiveDate);
     } else if (lastTrackerDate !== currentEffectiveDate) {
-      console.log(`🌙 22:30 IST Rollover detected on startup: ${lastTrackerDate} -> ${currentEffectiveDate}`);
+      console.log(`🌙 22:15 IST Rollover detected on startup: ${lastTrackerDate} -> ${currentEffectiveDate}`);
       const rawHabits = getLocalData(STORAGE_KEYS.HABITS, []);
       const rawHistory = getLocalData(STORAGE_KEYS.DAILY_HISTORY, {});
 
@@ -436,12 +436,12 @@ export const AppProvider = ({ children }) => {
     }
   }, []); // Run once on startup
 
-  // Live timer: auto-advance, archive previous tasks into history & Cloud DB at 22:30 IST
+  // Live timer: auto-advance, archive previous tasks into history & Cloud DB at 22:15 IST
   useEffect(() => {
     const checkTimer = setInterval(() => {
       const currentEffectiveDate = getEffectiveTrackerDate();
       if (todayStr !== currentEffectiveDate) {
-        console.log(`🌙 22:30 IST Transition: ${todayStr} -> ${currentEffectiveDate}`);
+        console.log(`🌙 22:15 IST Transition: ${todayStr} -> ${currentEffectiveDate}`);
         const currentHabits = Array.isArray(habits) ? habits : [];
         const mode = settings?.habitRolloverMode || 'auto_clear';
         const { updatedHistory, clearedHabits } = archiveAndResetHabits(currentHabits, todayStr, dailyHistory, mode);
@@ -632,7 +632,13 @@ export const AppProvider = ({ children }) => {
           setHealthProtocol(clean);
           setLocalData(`${STORAGE_KEYS.HEALTH_PROTOCOL}_${currentUserId}`, clean);
         }
-        if (cloudData.settings) setSettings(prev => ({ ...prev, ...cloudData.settings }));
+        if (cloudData.settings) {
+          setSettings(prev => {
+            const merged = { ...(prev || DEFAULT_SETTINGS), ...cloudData.settings };
+            setLocalData(STORAGE_KEYS.SETTINGS, merged);
+            return merged;
+          });
+        }
       });
 
       return () => unsubscribe && unsubscribe();
@@ -1039,10 +1045,10 @@ export const AppProvider = ({ children }) => {
 
   /**
    * Logs a diet juice or soup meal, reflecting IMMEDIATELY in both:
-   * 1. Daily Habits checklist (marked completed for today, updating streaks & daily history)
+   * 1. Daily Habits checklist (listed in today's tasks, optionally marked completed)
    * 2. Calorie Calculation & Meals Tracker (added to consumed calories and macros)
    */
-  const logDietItem = ({ item, mealType = null }) => {
+  const logDietItem = ({ item, mealType = null, isCompleted = true }) => {
     if (!item) return { success: false };
 
     // 1. Log to Calorie Calculator meals in storage & cloud
@@ -1068,38 +1074,44 @@ export const AppProvider = ({ children }) => {
       let updated;
 
       if (existingIndex >= 0) {
-        // Habit exists: ensure todayStr is in completedDates
+        // Habit exists: ensure todayStr is in completedDates if isCompleted
         const existing = currentHabits[existingIndex];
         const prevDates = Array.isArray(existing.completedDates) ? existing.completedDates : [];
-        const newDates = prevDates.includes(todayStr) ? prevDates : [...prevDates, todayStr];
+        let newDates = prevDates;
+        if (isCompleted && !prevDates.includes(todayStr)) {
+          newDates = [...prevDates, todayStr];
+        }
 
         // Recalculate streak
-        let streak = 0;
-        let checkDate = new Date(todayStr + 'T00:00:00');
-        while (true) {
-          const y = checkDate.getFullYear();
-          const m = String(checkDate.getMonth() + 1).padStart(2, '0');
-          const d = String(checkDate.getDate()).padStart(2, '0');
-          const f = `${y}-${m}-${d}`;
-          if (newDates.includes(f)) {
-            streak++;
-            checkDate.setDate(checkDate.getDate() - 1);
-          } else {
-            break;
+        let streak = existing.streak || 0;
+        if (isCompleted) {
+          streak = 0;
+          let checkDate = new Date(todayStr + 'T00:00:00');
+          while (true) {
+            const y = checkDate.getFullYear();
+            const m = String(checkDate.getMonth() + 1).padStart(2, '0');
+            const d = String(checkDate.getDate()).padStart(2, '0');
+            const f = `${y}-${m}-${d}`;
+            if (newDates.includes(f)) {
+              streak++;
+              checkDate.setDate(checkDate.getDate() - 1);
+            } else {
+              break;
+            }
           }
         }
 
         const updatedHabit = {
           ...existing,
           completedDates: newDates,
-          streak: Math.max(1, streak),
+          streak: Math.max(isCompleted ? 1 : 0, streak),
         };
         updated = [...currentHabits];
         updated[existingIndex] = updatedHabit;
       } else {
-        // Create fresh habit and mark it completed for today
+        // Create fresh habit and list in tasks
         const habitName = isJuice 
-          ? `Drink ${item.emoji || '🥤'} ${cleanItemName} (${item.calories} kcal)`
+          ? `Drink ${item.emoji || '🥤'} ${cleanItemName} (${item.calories || 80} kcal)`
           : `Have ${item.emoji || '🥣'} ${cleanItemName} (${item.calories} kcal)`;
 
         const newHabit = {
@@ -1109,10 +1121,10 @@ export const AppProvider = ({ children }) => {
           timeOfDay: isJuice ? 'Morning' : 'Night',
           icon: isJuice ? 'Droplets' : 'Moon',
           color: item.color || (isJuice ? '#f97316' : '#6366f1'),
-          frequency: 'daily',
-          targetDays: 7,
-          completedDates: [todayStr],
-          streak: 1,
+          frequency: isJuice ? 'two_days_once' : 'daily',
+          targetDays: isJuice ? 3 : 7,
+          completedDates: isCompleted ? [todayStr] : [],
+          streak: isCompleted ? 1 : 0,
           createdAt: new Date().toISOString(),
         };
         updated = [newHabit, ...currentHabits];
@@ -1540,6 +1552,7 @@ export const AppProvider = ({ children }) => {
   const updateSettings = (newSettings) => {
     const updated = { ...(settings || DEFAULT_SETTINGS), ...newSettings };
     setSettings(updated);
+    setLocalData(STORAGE_KEYS.SETTINGS, updated);
     pushToCloud({ habits, transactions, jars, roadmap, customLists, healthProtocol, settings: updated });
   };
 

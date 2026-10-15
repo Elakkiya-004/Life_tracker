@@ -60,9 +60,9 @@ export const AnalyticsView = () => {
   const safeTransactions = Array.isArray(transactions) ? transactions.filter(Boolean) : [];
 
   const currency = settings?.currency || '₹';
-  const monthlyBudget = settings?.monthlyBudget || 0;
+  const monthlyBudget = settings?.monthlyBudget || settings?.monthlySalary || 16000;
 
-  // 1. Habit Consistency Score (60% weight) - calculate using 30-day history so wiping habits at 22:30 IST doesn't drop score
+  // 1. Habit Consistency Score (60% weight) - calculate using 30-day history so wiping habits at 22:15 IST doesn't drop score
   const pastDaysWithData = historyList.filter(d => d && d.total > 0);
   const totalTasksAcrossHistory = pastDaysWithData.reduce((sum, d) => sum + d.total, 0);
   const totalCompletedAcrossHistory = pastDaysWithData.reduce((sum, d) => sum + d.completed, 0);
@@ -144,7 +144,7 @@ export const AnalyticsView = () => {
           <div className="habits-progress-list">
             {habits.length === 0 ? (
               <div style={{ padding: '1.5rem 1rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.82rem' }}>
-                ✨ Clean slate! Today's checklist reset at 22:30 IST. Add new tasks in Habits or review your past progress in <button type="button" className="btn btn-ghost btn-xs text-primary" style={{ display: 'inline-flex', verticalAlign: 'middle', textDecoration: 'underline' }} onClick={() => setIsHistoryModalOpen(true)}>30-Day History</button>.
+                ✨ Clean slate! Today's checklist reset at 22:15 IST. Add new tasks in Habits or review your past progress in <button type="button" className="btn btn-ghost btn-xs text-primary" style={{ display: 'inline-flex', verticalAlign: 'middle', textDecoration: 'underline' }} onClick={() => setIsHistoryModalOpen(true)}>30-Day History</button>.
               </div>
             ) : (
               habits.map((habit) => {

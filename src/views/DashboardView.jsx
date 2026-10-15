@@ -65,7 +65,7 @@ export const DashboardView = () => {
   const dailyQuote = MOTIVATIONAL_QUOTES[dayIndex];
 
   const currency = settings?.currency || '₹';
-  const monthlySalary = settings?.monthlySalary || 18000;
+  const monthlySalary = settings?.monthlySalary !== undefined ? settings.monthlySalary : 18000;
   const budgetLeft = Math.max(0, monthlySalary - currentMonthExpense);
 
   // Drag and Drop Task Reordering
@@ -409,7 +409,7 @@ export const DashboardView = () => {
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
               <h3 className="title-md">Today's To-Do & Routines</h3>
-              <span className="badge badge-primary" style={{ fontSize: '0.65rem' }}>🌙 22:30 IST Reset</span>
+              <span className="badge badge-primary" style={{ fontSize: '0.65rem' }}>🌙 22:15 IST Reset</span>
             </div>
             <p className="text-sub">Tick checkboxes to mark complete • {todayCompletedHabits}/{habitsList.length} done</p>
           </div>
@@ -497,8 +497,10 @@ export const DashboardView = () => {
           </button>
         </form>
 
-        {/* 💡 Soup, Juice, Career & Protocol Quick Suggestions */}
-        <DailyTaskSuggestions isInline={true} />
+        {/* 💡 Soup, Juice, Exercise & Protocol Quick Suggestions */}
+        {habitsList.length > 0 && (
+          <DailyTaskSuggestions isInline={true} />
+        )}
 
         {habitsList.length === 0 ? (
           <div className="card empty-habits">
@@ -508,7 +510,7 @@ export const DashboardView = () => {
                 ✨ Fresh Slate for Today!
               </h4>
               <p style={{ color: 'var(--text-sub)', fontSize: '0.85rem', maxWidth: '440px', margin: '0 auto 0.85rem' }}>
-                At 22:30 IST, previous habits cleared to make room for today's goals.
+                At 22:15 IST, previous habits cleared to make room for today's goals.
                 {yesterdayProgress && (
                   <span> Yesterday's progress (<strong>{yesterdayProgress.completed}/{yesterdayProgress.total}</strong> tasks, <strong>{yesterdayProgress.percent}%</strong>) was safely preserved in <strong>30-Day History</strong>.</span>
                 )}

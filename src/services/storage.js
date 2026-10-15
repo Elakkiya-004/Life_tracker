@@ -35,11 +35,11 @@ const STORAGE_KEYS = {
 // Available Menus for Super Admin Control
 export const AVAILABLE_MENUS = [
   { id: 'dashboard', label: 'Dashboard', path: '/', icon: 'LayoutDashboard', desc: 'Main home overview, habits progress ring, streak tracker' },
-  { id: 'habits', label: 'Habits & Routines', path: '/habits', icon: 'CheckCircle2', desc: 'Daily to-do checklist, routine streaks, 22:30 IST auto-reset' },
+  { id: 'habits', label: 'Habits & Routines', path: '/habits', icon: 'CheckCircle2', desc: 'Daily to-do checklist, routine streaks, 22:15 IST auto-reset' },
   { id: 'protocol', label: 'Health & Diet Protocol', path: '/health', icon: 'HeartPulse', desc: 'Intermittent fasting 16:8, water counter, meal schedule' },
   { id: 'roadmap', label: 'Career Roadmap', path: '/roadmap', icon: 'Compass', desc: '16-Week DSA, Full-Stack, React Native Excel curriculum' },
   { id: 'watchlists', label: 'MCU Watchlist', path: '/mcu', icon: 'Film', desc: 'Marvel Cinematic Universe Phase 1–6 release tracker' },
-  { id: 'finance', label: 'Finance & Budget', path: '/finance', icon: 'Wallet', desc: '₹18,000 monthly take-home 7-jar budget manager' },
+  { id: 'finance', label: 'Finance & Budget', path: '/finance', icon: 'Wallet', desc: 'Monthly take-home salary & 7-jar budget manager' },
   { id: 'analytics', label: 'Analytics & Score', path: '/analytics', icon: 'BarChart3', desc: 'Discipline score, completion trends & monthly graphs' },
   { id: 'settings', label: 'Settings & Cloud', path: '/settings', icon: 'Settings', desc: 'Theme switcher, profile customization, cloud backup' },
 ];
@@ -224,13 +224,13 @@ export const getISTDateParts = (dateObj = new Date()) => {
   return { year, month, day, hour, minute, second };
 };
 
-// Calculate effective tracker date with 22:30 IST (10:30 PM) reset cutoff
+// Calculate effective tracker date with 22:15 IST (10:15 PM) reset cutoff
 export const getEffectiveTrackerDate = (dateObj = new Date()) => {
   const { year, month, day, hour, minute } = getISTDateParts(dateObj);
   const d = new Date(Date.UTC(year, month - 1, day));
 
-  // If Indian Standard Time is >= 22:30 (10:30 PM), advance the tracking date by 1 day
-  if (hour > 22 || (hour === 22 && minute >= 30)) {
+  // If Indian Standard Time is >= 22:15 (10:15 PM), advance the tracking date by 1 day
+  if (hour > 22 || (hour === 22 && minute >= 15)) {
     d.setUTCDate(d.getUTCDate() + 1);
   }
 

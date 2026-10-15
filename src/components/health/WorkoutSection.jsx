@@ -29,7 +29,7 @@ import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 
 export const WorkoutSection = () => {
-  const { todayStr } = useApp();
+  const { todayStr, habits = [], addHabit, toggleHabit } = useApp();
   const { currentUser } = useAuth();
 
   // Determine current day of week (0 = Sunday, 1 = Monday, ...)
@@ -67,10 +67,50 @@ export const WorkoutSection = () => {
     }
   };
 
+  // Sync logged workout into active daily tasks (Habits)
+  const syncWorkoutToHabits = (record) => {
+    try {
+      const currentList = Array.isArray(habits) ? habits : [];
+      const workoutTitle = (record.dayTitle || currentDayPlan.title || 'Workout').toLowerCase();
+      const dayName = (currentDayPlan.name || '').toLowerCase();
+      
+      const existing = currentList.find(h => {
+        if (!h || !h.name) return false;
+        const hClean = h.name.toLowerCase();
+        return (
+          hClean.includes(workoutTitle) || 
+          hClean.includes(dayName) || 
+          (h.category === 'Workout' && (hClean.includes('workout') || hClean.includes('exercise')))
+        );
+      });
+
+      if (existing) {
+        if (!existing.completedDates?.includes(todayStr) && toggleHabit) {
+          toggleHabit(existing.id, todayStr);
+        }
+      } else if (addHabit) {
+        addHabit({
+          name: `${currentDayPlan.icon || '💪'} ${currentDayPlan.name} Workout: ${record.dayTitle || currentDayPlan.title} (20 min)`,
+          category: 'Workout',
+          timeOfDay: 'Evening',
+          icon: 'Dumbbell',
+          color: currentDayPlan.accentColor || '#3b82f6',
+          frequency: 'daily',
+          targetDays: 6,
+          completedDates: [todayStr],
+          streak: 1,
+        });
+      }
+    } catch (err) {
+      console.warn('Could not sync workout to habits:', err);
+    }
+  };
+
   // Workout completed in player callback
   const handleWorkoutCompleted = (record) => {
     const updated = [record, ...workoutHistory];
     saveHistoryToStorage(updated);
+    syncWorkoutToHabits(record);
     try {
       confetti({ particleCount: 70, spread: 60, origin: { y: 0.6 } });
     } catch {}

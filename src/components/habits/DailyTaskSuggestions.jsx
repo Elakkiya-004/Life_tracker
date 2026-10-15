@@ -44,14 +44,14 @@ export const DailyTaskSuggestions = ({ isInline = true }) => {
       .trim();
   };
 
-  // 1. Soup Suggestion for Today
+  // 1. Daily Soup Suggestion
   const todaySoupData = useMemo(() => {
     return getTodaySoupRotation(todayStr);
   }, [todayStr]);
 
   const primarySoup = todaySoupData?.primarySoup;
 
-  // Soup is considered added only if present in today's active habits list
+  // Soup is considered added if present in today's active habits list
   const matchingSoupHabit = useMemo(() => {
     if (!primarySoup) return null;
     const cleanSoupName = getCleanName(primarySoup.name);
@@ -64,29 +64,26 @@ export const DailyTaskSuggestions = ({ isInline = true }) => {
 
   const isSoupAdded = Boolean(matchingSoupHabit);
 
-  // 2. Alternate-Day Juice Suggestion for Today
+  // 2. Alternate-Day Juice Suggestion
   const juiceSchedule = useMemo(() => {
     return getJuiceSchedule(todayStr, healthProtocol?.juiceProtocol);
   }, [todayStr, healthProtocol]);
 
   const activeJuice = juiceSchedule.isJuiceDayToday ? juiceSchedule.todayJuice : null;
-  const tomorrowJuice = juiceSchedule.tomorrowJuice;
-
-  const targetJuice = activeJuice || tomorrowJuice;
 
   const matchingJuiceHabit = useMemo(() => {
-    if (!targetJuice) return null;
-    const cleanJuiceName = getCleanName(targetJuice.name);
+    if (!activeJuice) return null;
+    const cleanJuiceName = getCleanName(activeJuice.name);
     return habitsList.find(h => {
       if (!h || !h.name) return false;
       const hClean = getCleanName(h.name);
       return hClean.includes(cleanJuiceName) || cleanJuiceName.includes(hClean);
     }) || null;
-  }, [targetJuice, habitsList]);
+  }, [activeJuice, habitsList]);
 
   const isJuiceAdded = Boolean(matchingJuiceHabit);
 
-  // 3. Exercise / Workout of the Day
+  // 3. Exercise of the Day (Workout + Cardio)
   const todayWorkout = useMemo(() => {
     const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
     try {
@@ -115,62 +112,18 @@ export const DailyTaskSuggestions = ({ isInline = true }) => {
 
   const isWorkoutAdded = Boolean(matchingWorkoutHabit);
 
-  // Morning Cardio check
+  // Daily Morning Cardio check
   const matchingCardioHabit = useMemo(() => {
     return habitsList.find(h => {
       if (!h || !h.name) return false;
       const hClean = getCleanName(h.name);
-      return hClean.includes('morning cardio') || hClean.includes('brisk walk');
+      return hClean.includes('morning cardio') || hClean.includes('brisk walk') || hClean.includes('cardio');
     }) || null;
   }, [habitsList]);
 
   const isCardioAdded = Boolean(matchingCardioHabit);
 
-  // 4. Career Roadmap Suggestions (From Active Week)
-  const activeRoadmapWeek = useMemo(() => {
-    const list = Array.isArray(roadmap) && roadmap.length > 0 ? roadmap : [];
-    return list.find(w => w && w.status === 'In Progress') || list[0] || null;
-  }, [roadmap]);
-
-  const careerSuggestions = useMemo(() => {
-    if (!activeRoadmapWeek) return [];
-    const items = [];
-    if (activeRoadmapWeek.dsa && activeRoadmapWeek.dsa !== '—') {
-      items.push({
-        id: 'c-dsa',
-        category: 'DSA',
-        title: `DSA: ${activeRoadmapWeek.dsa}`,
-        color: '#6366f1',
-      });
-    }
-    if (activeRoadmapWeek.fullstack && activeRoadmapWeek.fullstack !== '—') {
-      items.push({
-        id: 'c-fs',
-        category: 'Full Stack',
-        title: `Fullstack: ${activeRoadmapWeek.fullstack}`,
-        color: '#0ea5e9',
-      });
-    }
-    if (activeRoadmapWeek.project && activeRoadmapWeek.project !== '—') {
-      items.push({
-        id: 'c-proj',
-        category: 'Project',
-        title: `Project: ${activeRoadmapWeek.project}`,
-        color: '#10b981',
-      });
-    }
-    if (activeRoadmapWeek.career && activeRoadmapWeek.career !== '—') {
-      items.push({
-        id: 'c-car',
-        category: 'Career',
-        title: `Career: ${activeRoadmapWeek.career}`,
-        color: '#ec4899',
-      });
-    }
-    return items;
-  }, [activeRoadmapWeek]);
-
-  // 5. Care Protocols for Today
+  // 4. Scheduled Care Protocols & Health Routine for Today
   const daySchedule = useMemo(() => {
     return getScheduledProtocolsForDay(healthProtocol, todayStr || 'Sunday');
   }, [healthProtocol, todayStr]);
@@ -180,26 +133,26 @@ export const DailyTaskSuggestions = ({ isInline = true }) => {
   const handleToggleSoup = () => {
     if (!primarySoup) return;
     if (isSoupAdded) {
-      // Remove soup from both habits and meals
+      // Remove soup from both habits and calorie calculator
       if (removeDietItem) {
         removeDietItem(primarySoup.name);
       } else if (matchingSoupHabit) {
         deleteHabit(matchingSoupHabit.id);
       }
     } else {
-      // Log soup to habits and calorie meals
+      // Add soup to habits checklist and calorie calculator
       if (logDietItem) {
-        logDietItem({ item: primarySoup, mealType: 'dinner' });
+        logDietItem({ item: primarySoup, mealType: 'dinner', isCompleted: false });
       } else {
         addHabit({
           name: `Have ${primarySoup.emoji || '🥣'} ${primarySoup.name} (${primarySoup.calories} kcal)`,
           category: 'Diet & Nutrition',
-          timeOfDay: 'Evening',
+          timeOfDay: 'Night',
           icon: 'Moon',
           color: '#6366f1',
           frequency: 'daily',
           targetDays: 7,
-          completedDates: [todayStr],
+          completedDates: [],
         });
       }
     }
@@ -208,16 +161,16 @@ export const DailyTaskSuggestions = ({ isInline = true }) => {
   const handleToggleJuice = (juiceItem) => {
     if (!juiceItem) return;
     if (isJuiceAdded) {
-      // Remove juice from both habits and meals
+      // Remove juice from both habits and calorie calculator
       if (removeDietItem) {
         removeDietItem(juiceItem.name);
       } else if (matchingJuiceHabit) {
         deleteHabit(matchingJuiceHabit.id);
       }
     } else {
-      // Log juice to habits and calorie meals
+      // Add juice to habits checklist and calorie calculator
       if (logDietItem) {
-        logDietItem({ item: juiceItem, mealType: 'snack' });
+        logDietItem({ item: juiceItem, mealType: 'snack', isCompleted: false });
       } else {
         addHabit({
           name: `Drink ${juiceItem.emoji || '🥤'} ${juiceItem.name} (${juiceItem.calories || 80} kcal)`,
@@ -227,7 +180,7 @@ export const DailyTaskSuggestions = ({ isInline = true }) => {
           color: juiceItem.color || '#f97316',
           frequency: 'two_days_once',
           targetDays: 3,
-          completedDates: [todayStr],
+          completedDates: [],
         });
       }
     }
@@ -246,6 +199,7 @@ export const DailyTaskSuggestions = ({ isInline = true }) => {
         color: todayWorkout.accentColor || '#3b82f6',
         frequency: 'daily',
         targetDays: 6,
+        completedDates: [],
       });
     }
   };
@@ -262,33 +216,9 @@ export const DailyTaskSuggestions = ({ isInline = true }) => {
         color: '#f59e0b',
         frequency: 'daily',
         targetDays: 7,
+        completedDates: [],
       });
     }
-  };
-
-  const handleToggleCareerTask = (item) => {
-    if (!item) return;
-    const cleanTitle = getCleanName(item.title);
-    const existing = habitsList.find(h => h && h.name && getCleanName(h.name).includes(cleanTitle));
-    if (existing) {
-      deleteHabit(existing.id);
-    } else {
-      addHabit({
-        name: item.title,
-        category: 'Career',
-        timeOfDay: 'Daytime',
-        icon: 'Briefcase',
-        color: item.color || '#6366f1',
-        frequency: 'daily',
-        targetDays: 5,
-      });
-    }
-  };
-
-  const isCareerTaskAdded = (item) => {
-    if (!item) return false;
-    const cleanTitle = getCleanName(item.title);
-    return habitsList.some(h => h && h.name && getCleanName(h.name).includes(cleanTitle));
   };
 
   const handleToggleProtocol = (proto) => {
@@ -306,6 +236,7 @@ export const DailyTaskSuggestions = ({ isInline = true }) => {
         color: proto.color || '#ec4899',
         frequency: proto.frequency || 'weekly',
         targetDays: 1,
+        completedDates: [],
       });
     }
   };
@@ -317,21 +248,16 @@ export const DailyTaskSuggestions = ({ isInline = true }) => {
           <Sparkles size={14} className="text-amber-400" />
           <span className="sugg-main-label">Quick Suggestions for Today:</span>
         </div>
-        {activeRoadmapWeek && (
-          <span className="sugg-roadmap-pill">
-            💼 {activeRoadmapWeek.period} ({activeRoadmapWeek.dateRange})
-          </span>
-        )}
       </div>
 
       <div className="suggestions-chips-wrap">
-        {/* 🥣 Today's Night Diet Soup Suggestion */}
+        {/* 🥣 Daily Night Diet Soup Suggestion */}
         {primarySoup && (
           <button
             type="button"
             className={`sugg-chip soup-chip ${isSoupAdded ? 'is-added' : ''}`}
             onClick={handleToggleSoup}
-            title={isSoupAdded ? 'Currently in routine & calories. Click to remove.' : `Add "${primarySoup.name}" (${primarySoup.calories} kcal) to today's tasks & calories`}
+            title={isSoupAdded ? 'Currently in routine & calorie calculator. Click to remove.' : `Add "${primarySoup.name}" (${primarySoup.calories} kcal) to today's tasks & calories`}
           >
             <span className="sugg-chip-icon">{primarySoup.emoji || '🥣'}</span>
             <span className="sugg-chip-text">
@@ -339,7 +265,7 @@ export const DailyTaskSuggestions = ({ isInline = true }) => {
             </span>
             {isSoupAdded ? (
               <span className="sugg-done-badge" title="Click to remove">
-                <Check size={12} /> Logged <X size={10} className="remove-cross" />
+                <Check size={12} /> Added <X size={10} className="remove-cross" />
               </span>
             ) : (
               <span className="sugg-add-action"><Plus size={12} /> Add</span>
@@ -347,13 +273,13 @@ export const DailyTaskSuggestions = ({ isInline = true }) => {
           </button>
         )}
 
-        {/* 🥤 Alternate-Day Juice Suggestion */}
-        {activeJuice ? (
+        {/* 🥤 Alternate-Day Juice Suggestion (or Rest Day Badge) */}
+        {juiceSchedule.isJuiceDayToday && activeJuice ? (
           <button
             type="button"
             className={`sugg-chip juice-chip ${isJuiceAdded ? 'is-added' : ''}`}
             onClick={() => handleToggleJuice(activeJuice)}
-            title={isJuiceAdded ? 'Currently in routine & calories. Click to remove.' : `Add "${activeJuice.name}" (${activeJuice.calories} kcal) to today's tasks & calories`}
+            title={isJuiceAdded ? 'Currently in routine & calorie calculator. Click to remove.' : `Add "${activeJuice.name}" (${activeJuice.calories} kcal) to today's tasks & calories`}
           >
             <span className="sugg-chip-icon">{activeJuice.emoji || '🥤'}</span>
             <span className="sugg-chip-text">
@@ -361,34 +287,19 @@ export const DailyTaskSuggestions = ({ isInline = true }) => {
             </span>
             {isJuiceAdded ? (
               <span className="sugg-done-badge" title="Click to remove">
-                <Check size={12} /> Logged <X size={10} className="remove-cross" />
+                <Check size={12} /> Added <X size={10} className="remove-cross" />
               </span>
             ) : (
               <span className="sugg-add-action"><Plus size={12} /> Add</span>
             )}
           </button>
         ) : (
-          tomorrowJuice && (
-            <div className="sugg-rest-day-pill">
-              <span className="rest-tag">🌿 Juice Rest Day</span>
-              <button
-                type="button"
-                className={`sugg-chip juice-tomorrow-chip ${isJuiceAdded ? 'is-added' : ''}`}
-                onClick={() => handleToggleJuice(tomorrowJuice)}
-                title={isJuiceAdded ? 'Tomorrow\'s juice logged for today. Click to remove.' : `Drink "${tomorrowJuice.name}" today (+${tomorrowJuice.calories || 80} kcal)`}
-              >
-                <span>{tomorrowJuice.emoji || '🥤'} Tomorrow: {tomorrowJuice.name}</span>
-                {isJuiceAdded ? (
-                  <span className="sugg-done-badge"><Check size={11} /> Logged <X size={9} className="remove-cross" /></span>
-                ) : (
-                  <span className="sugg-add-action"><Plus size={11} /> Drink Today</span>
-                )}
-              </button>
-            </div>
-          )
+          <div className="sugg-rest-day-pill" title="Today is a scheduled juice rest day. Focus on clean water & healthy hydration.">
+            <span className="rest-tag">🌿 Today is Juice Rest Day</span>
+          </div>
         )}
 
-        {/* 🏋️ Exercise of the Day (Low-Impact Daily Routine) */}
+        {/* 🏋️ Exercise of the Day (Workout of the Day) */}
         {todayWorkout && (
           <button
             type="button"
@@ -396,7 +307,7 @@ export const DailyTaskSuggestions = ({ isInline = true }) => {
             onClick={handleToggleWorkout}
             title={isWorkoutAdded ? 'Workout is on today\'s checklist. Click to remove.' : `Add ${todayWorkout.name} Workout: ${todayWorkout.title} to today's checklist`}
           >
-            <span className="sugg-chip-icon">{todayWorkout.icon || '💪'}</span>
+            <span className="sugg-chip-icon">{todayWorkout.icon || '🍑'}</span>
             <span className="sugg-chip-text">
               <strong>Workout:</strong> {todayWorkout.name} ({todayWorkout.title})
             </span>
@@ -430,33 +341,7 @@ export const DailyTaskSuggestions = ({ isInline = true }) => {
           )}
         </button>
 
-        {/* 💼 Career Roadmap Milestones */}
-        {careerSuggestions.map(item => {
-          const added = isCareerTaskAdded(item);
-          return (
-            <button
-              type="button"
-              key={item.id}
-              className={`sugg-chip career-chip ${added ? 'is-added' : ''}`}
-              onClick={() => handleToggleCareerTask(item)}
-              title={added ? 'Task is on today\'s checklist. Click to remove.' : `Add "${item.title}" to today's To-Do list`}
-            >
-              <span className="sugg-dot" style={{ backgroundColor: item.color }} />
-              <span className="sugg-chip-text">
-                <strong>{item.category}:</strong> {item.title.replace(/^[^:]+:\s*/, '')}
-              </span>
-              {added ? (
-                <span className="sugg-done-badge" title="Click to remove">
-                  <Check size={12} /> Added <X size={10} className="remove-cross" />
-                </span>
-              ) : (
-                <span className="sugg-add-action"><Plus size={12} /> Add</span>
-              )}
-            </button>
-          );
-        })}
-
-        {/* ✨ Scheduled Care Protocols */}
+        {/* ✨ Scheduled Health Routine Protocols for Today */}
         {daySchedule.protocols.map(proto => {
           const cleanName = getCleanName(proto.suggestedHabitName);
           const added = habitsList.some(h => h && h.name && getCleanName(h.name).includes(cleanName));
@@ -686,16 +571,17 @@ export const DailyTaskSuggestions = ({ isInline = true }) => {
           display: inline-flex;
           align-items: center;
           gap: 0.35rem;
-          background: rgba(255, 255, 255, 0.03);
-          border: 1px solid rgba(255, 255, 255, 0.07);
+          background: rgba(34, 197, 94, 0.08);
+          border: 1px dashed rgba(34, 197, 94, 0.28);
           border-radius: 999px;
-          padding: 0.1rem 0.25rem 0.1rem 0.5rem;
+          padding: 0.28rem 0.65rem;
         }
 
         .rest-tag {
-          font-size: 0.72rem;
-          color: var(--text-sub, #94a3b8);
-          font-weight: 500;
+          font-size: 0.76rem;
+          color: #4ade80;
+          font-weight: 600;
+          letter-spacing: 0.01em;
         }
 
         .juice-tomorrow-chip {

@@ -5,8 +5,8 @@ import { ArrowDownLeft, ArrowUpRight, Wallet, Target } from 'lucide-react';
 export const FinanceSummary = () => {
   const { currentMonthIncome, currentMonthExpense, netSavings, settings } = useApp();
 
-  const currency = settings.currency || '$';
-  const monthlyBudget = settings.monthlyBudget || 1500;
+  const currency = settings.currency || '₹';
+  const monthlyBudget = settings.monthlyBudget || settings.monthlySalary || 16000;
   const budgetUsedPercent = Math.min(100, Math.round((currentMonthExpense / monthlyBudget) * 100));
 
   const isOverBudget = currentMonthExpense > monthlyBudget;

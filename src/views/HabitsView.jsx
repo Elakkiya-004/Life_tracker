@@ -371,11 +371,11 @@ export const HabitsView = () => {
                 type="button" 
                 className="reset-pill-badge clickable badge-auto-clear"
                 onClick={() => setShowRolloverConfig(!showRolloverConfig)}
-                title="Click to view 22:30 IST daily auto-reset behavior"
+                title="Click to view 22:15 IST daily auto-reset behavior"
               >
                 <Moon size={12} className="text-purple" />
                 <span>
-                  22:30 IST: 🧹 Auto-Clear & Save Progress
+                  22:15 IST: 🧹 Auto-Clear & Save Progress
                 </span>
               </button>
               <button 
@@ -471,13 +471,13 @@ export const HabitsView = () => {
           </div>
         </div>
 
-        {/* 22:30 IST Auto-Rollover Mode Settings Drawer */}
+        {/* 22:15 IST Auto-Rollover Mode Settings Drawer */}
         {showRolloverConfig && (
           <div className="rollover-config-box">
             <div className="rollover-config-header">
               <div className="flex-center gap-2">
                 <Moon size={16} className="text-purple" />
-                <span className="font-bold text-xs">22:30 IST (10:30 PM) Daily Rollover Behavior</span>
+                <span className="font-bold text-xs">22:15 IST (10:15 PM) Daily Rollover Behavior</span>
               </div>
               <button 
                 type="button" 
@@ -488,7 +488,7 @@ export const HabitsView = () => {
               </button>
             </div>
             <p className="text-xs text-sub">
-              Every night at 22:30 IST (10:30 PM Indian Standard Time), the app rolls over to the next day and archives today's full task routine into your 30-Day History, then clears active habits so you can add fresh daily goals:
+              Every night at 22:15 IST (10:15 PM Indian Standard Time), the app rolls over to the next day and archives today's full task routine into your 30-Day History, then clears active habits so you can add fresh daily goals:
             </p>
             <div className="rollover-options-grid">
               <label 
@@ -503,7 +503,7 @@ export const HabitsView = () => {
                 />
                 <div>
                   <div className="option-title">🧹 Auto-Delete & Fresh Slate (Active)</div>
-                  <div className="option-desc">Automatically clears daily habits at 22:30 IST to make room for fresh tasks. All previous tasks, checkmarks, and completion progress are safely preserved in 30-Day History.</div>
+                  <div className="option-desc">Automatically clears daily habits at 22:15 IST to make room for fresh tasks. All previous tasks, checkmarks, and completion progress are safely preserved in 30-Day History.</div>
                 </div>
               </label>
             </div>
@@ -777,8 +777,10 @@ export const HabitsView = () => {
           </button>
         </div>
 
-        {/* 💡 Daily Suggestions (Soup, Juice, Career Milestones, Protocols) */}
-        <DailyTaskSuggestions isInline={true} />
+        {/* 💡 Daily Suggestions (Soup, Juice, Exercise, Protocols) */}
+        {habitsList.length > 0 && (
+          <DailyTaskSuggestions isInline={true} />
+        )}
       </form>
 
       {/* Controls: Filters, Search & View Switcher */}
@@ -953,9 +955,9 @@ export const HabitsView = () => {
           <p className="text-sub">
             {habitsList.length === 0 ? (
               yesterdayProgress ? (
-                <span>Yesterday's routine (<strong>{yesterdayProgress.completed}/{yesterdayProgress.total}</strong> tasks, <strong>{yesterdayProgress.percent}%</strong>) was preserved in <strong>30-Day History</strong>. Board cleared at 22:30 IST for fresh tasks!</span>
+                <span>Yesterday's routine (<strong>{yesterdayProgress.completed}/{yesterdayProgress.total}</strong> tasks, <strong>{yesterdayProgress.percent}%</strong>) was preserved in <strong>30-Day History</strong>. Board cleared at 22:15 IST for fresh tasks!</span>
               ) : (
-                'All active habits auto-reset at 22:30 IST so you can add new goals for today. Add your first routine task above!'
+                'All active habits auto-reset at 22:15 IST so you can add new goals for today. Add your first routine task above!'
               )
             ) : selectedStatusFilter === 'completed'
               ? 'Check off tasks above to build your daily streak.'

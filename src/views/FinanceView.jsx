@@ -22,7 +22,8 @@ import {
   CheckCircle2,
   FileText,
   Heart,
-  Coffee
+  Coffee,
+  Edit3
 } from 'lucide-react';
 
 const JAR_ICON_MAP = {
@@ -222,9 +223,21 @@ export const FinanceView = () => {
             <Wallet size={16} />
             <span>MONTHLY SALARY & JAR BUDGETING SYSTEM</span>
           </div>
-          <h2 className="hero-title">
-            Take-Home: <span className="text-emerald">{currency}{salary.toLocaleString()}</span>
-          </h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '0.35rem' }}>
+            <h2 className="hero-title" style={{ margin: 0 }}>
+              Take-Home: <span className="text-emerald">{currency}{salary.toLocaleString()}</span>
+            </h2>
+            <button 
+              type="button" 
+              className="btn btn-secondary btn-xs"
+              onClick={() => setIsJarModalOpen(true)}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', padding: '0.2rem 0.55rem' }}
+              title="Click to change your monthly salary or budget"
+            >
+              <Edit3 size={12} />
+              <span>Change Salary</span>
+            </button>
+          </div>
           <p className="hero-desc text-sub">
             Salary spilled across <strong>{safeJars.length} smart budget jars</strong> (Loan, Travel, Bills, Shopping, Grandma, Snacks, Savings).
           </p>
@@ -244,7 +257,7 @@ export const FinanceView = () => {
         <div className="hero-actions-cluster">
           <button className="btn btn-secondary btn-sm" onClick={() => setIsJarModalOpen(true)}>
             <SlidersHorizontal size={15} />
-            <span>Spill / Adjust Jars</span>
+            <span>Spill / Adjust Jars & Salary</span>
           </button>
 
           <button className="btn btn-primary btn-sm" onClick={() => setIsTxModalOpen(true)}>
@@ -264,7 +277,7 @@ export const FinanceView = () => {
         <div className="section-header">
           <div className="section-title-wrap">
             <h3 className="title-md">🏺 Salary Budget Jars</h3>
-            <span className="badge badge-primary">₹18k Distribution</span>
+            <span className="badge badge-primary">{currency}{salary >= 1000 ? `${(salary / 1000).toFixed(salary % 1000 === 0 ? 0 : 1)}k` : salary} Distribution</span>
           </div>
           <button className="btn-ghost btn-sm text-sub" onClick={() => setIsJarModalOpen(true)}>
             Configure Allocations

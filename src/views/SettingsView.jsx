@@ -44,16 +44,30 @@ export const SettingsView = () => {
 
   const [currency, setCurrency] = useState(settings.currency || '₹');
   const [habitRolloverMode, setHabitRolloverMode] = useState(settings.habitRolloverMode || 'auto_clear');
+  const [monthlySalary, setMonthlySalary] = useState(settings.monthlySalary !== undefined ? settings.monthlySalary : 18000);
+  const [monthlyBudget, setMonthlyBudget] = useState(settings.monthlyBudget !== undefined ? settings.monthlyBudget : 16000);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [newListTitle, setNewListTitle] = useState('');
   const [isAddingList, setIsAddingList] = useState(false);
   const [isFirebaseModalOpen, setIsFirebaseModalOpen] = useState(false);
 
+  // Sync settings when changed from cloud or another view
+  React.useEffect(() => {
+    if (settings.currency) setCurrency(settings.currency);
+    if (settings.habitRolloverMode) setHabitRolloverMode(settings.habitRolloverMode);
+    if (settings.monthlySalary !== undefined) setMonthlySalary(settings.monthlySalary);
+    if (settings.monthlyBudget !== undefined) setMonthlyBudget(settings.monthlyBudget);
+  }, [settings.currency, settings.habitRolloverMode, settings.monthlySalary, settings.monthlyBudget]);
+
   const handleSavePreferences = (e) => {
     e.preventDefault();
+    const numSalary = parseFloat(monthlySalary) || 0;
+    const numBudget = parseFloat(monthlyBudget) || 0;
     updateSettings({
       currency,
       habitRolloverMode,
+      monthlySalary: numSalary,
+      monthlyBudget: numBudget > 0 ? numBudget : numSalary,
     });
     setSaveSuccess(true);
     setTimeout(() => setSaveSuccess(false), 2500);
@@ -248,15 +262,41 @@ export const SettingsView = () => {
             </div>
 
             <div className="input-group flex-1">
-              <label className="label">22:30 IST Daily Rollover Behavior</label>
+              <label className="label">22:15 IST Daily Rollover Behavior</label>
               <select
                 className="select"
                 value={habitRolloverMode}
                 onChange={(e) => setHabitRolloverMode(e.target.value)}
               >
-                <option value="auto_clear">🧹 Auto-Delete Habits (Wipe daily at 22:30 IST, saved in 30-Day History)</option>
+                <option value="auto_clear">🧹 Auto-Delete Habits (Wipe daily at 22:15 IST, saved in 30-Day History)</option>
                 <option value="fresh_checks">🔄 Fresh Checklist (Keep routines, reset checkmarks for tomorrow)</option>
               </select>
+            </div>
+          </div>
+
+          <div className="form-row" style={{ marginTop: '0.85rem' }}>
+            <div className="input-group flex-1">
+              <label className="label">Monthly Take-Home Salary ({currency})</label>
+              <input
+                type="number"
+                className="input"
+                placeholder="e.g. 18000 or 17000"
+                value={monthlySalary}
+                onChange={(e) => setMonthlySalary(e.target.value)}
+              />
+              <span className="text-sub text-xs" style={{ marginTop: '0.25rem' }}>Your monthly base income used for cash flow and budgeting</span>
+            </div>
+
+            <div className="input-group flex-1">
+              <label className="label">Monthly Spending Budget Target ({currency})</label>
+              <input
+                type="number"
+                className="input"
+                placeholder="e.g. 16000 or 15000"
+                value={monthlyBudget}
+                onChange={(e) => setMonthlyBudget(e.target.value)}
+              />
+              <span className="text-sub text-xs" style={{ marginTop: '0.25rem' }}>Target spending limit used in Finance & Analytics scores</span>
             </div>
           </div>
 
