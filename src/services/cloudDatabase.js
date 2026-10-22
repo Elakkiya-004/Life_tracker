@@ -1032,3 +1032,47 @@ export const getAllDailyHistoryFromDB = async (userId = 'default_user') => {
   }
 };
 
+/**
+ * Save user workout history directly to Cloud Firestore
+ */
+export const saveWorkoutHistoryToDB = async (userId = 'default_user', workoutHistory = []) => {
+  if (!db || !isInitialized) {
+    initFirebase();
+  }
+  if (!db) return { success: false, reason: 'offline_mode' };
+  try {
+    const cleanHistory = JSON.parse(JSON.stringify(workoutHistory || []));
+    const userDocRef = doc(db, 'users', userId);
+    await setDoc(userDocRef, {
+      workoutHistory: cleanHistory,
+      workoutCount: cleanHistory.length,
+      lastWorkoutSync: new Date().toISOString(),
+    }, { merge: true });
+    return { success: true };
+  } catch (err) {
+    console.error('Error saving Workout History to Cloud DB:', err);
+    return { success: false, error: err };
+  }
+};
+
+/**
+ * Fetch Workout History from Cloud Firestore
+ */
+export const getWorkoutHistoryFromDB = async (userId = 'default_user') => {
+  if (!db || !isInitialized) {
+    initFirebase();
+  }
+  if (!db) return [];
+  try {
+    const userDocRef = doc(db, 'users', userId);
+    const snap = await getDoc(userDocRef);
+    if (snap.exists() && Array.isArray(snap.data()?.workoutHistory)) {
+      return snap.data().workoutHistory;
+    }
+    return [];
+  } catch (err) {
+    console.error('Error fetching Workout History from Cloud DB:', err);
+    return [];
+  }
+};
+

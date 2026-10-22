@@ -375,12 +375,12 @@ export const WorkoutPlayerModal = ({
             <div className="complete-stats-grid">
               <div className="comp-stat card">
                 <Clock size={18} className="text-primary" />
-                <span className="cs-val">{Math.round(totalTimeElapsed / 60)} <small>min</small></span>
+                <span className="cs-val">{Math.max(1, Math.round(totalTimeElapsed / 60))} <small>min</small></span>
                 <span className="cs-lbl">Total Time</span>
               </div>
               <div className="comp-stat card">
                 <Flame size={18} className="text-amber" />
-                <span className="cs-val">~{Math.round(totalTimeElapsed / 60 * 6.5)} <small>kcal</small></span>
+                <span className="cs-val">~{Math.max(15, Math.round(Math.max(1, Math.round(totalTimeElapsed / 60)) * 6.5))} <small>kcal</small></span>
                 <span className="cs-lbl">Est. Calorie Burn</span>
               </div>
               <div className="comp-stat card">

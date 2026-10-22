@@ -21,6 +21,8 @@ import {
   saveDailyHistoryToDB,
   archiveDailyRecordToCloud,
   getAllDailyHistoryFromDB,
+  saveWorkoutHistoryToDB,
+  getWorkoutHistoryFromDB,
 } from '../services/storage';
 
 import { initFirebase, syncToCloud, listenToCloud } from '../services/firebase';
@@ -301,6 +303,10 @@ export const AppProvider = ({ children }) => {
     });
   }, []);
 
+  const [workoutHistory, setWorkoutHistory] = useState(() => {
+    return getLocalData(STORAGE_KEYS.WORKOUT_HISTORY, []);
+  });
+
   const [settings, setSettings] = useState(() => {
     const data = getLocalData(STORAGE_KEYS.SETTINGS, DEFAULT_SETTINGS);
     const resolved = data && typeof data === 'object' ? { ...DEFAULT_SETTINGS, ...data } : DEFAULT_SETTINGS;
@@ -379,6 +385,7 @@ export const AppProvider = ({ children }) => {
       healthProtocol: healthProtocol || DEFAULT_HEALTH_PROTOCOL,
       dailyHistory: dailyHistory || {},
       dailyHabitNotes: dailyHabitNotes || {},
+      workoutHistory: workoutHistory || [],
       settings: settingsRef.current || settings || DEFAULT_SETTINGS,
       lastTrackerDate: effectiveDate,
       ...(customPayload || {}),
@@ -392,7 +399,7 @@ export const AppProvider = ({ children }) => {
     } else {
       setSyncStatus(res.reason === 'offline_mode' ? 'local' : 'error');
     }
-  }, [currentUserId, habits, transactions, jars, roadmap, customLists, healthProtocol, dailyHistory, dailyHabitNotes, settings]);
+  }, [currentUserId, habits, transactions, jars, roadmap, customLists, healthProtocol, dailyHistory, dailyHabitNotes, workoutHistory, settings]);
 
   // Dynamic tracker date with 22:15 IST (10:15 PM) auto-reset cutoff for next day
   const [todayStr, setTodayStr] = useState(() => getEffectiveTrackerDate());
@@ -552,6 +559,12 @@ export const AppProvider = ({ children }) => {
     if (settings) setLocalData(STORAGE_KEYS.SETTINGS, settings);
   }, [settings]);
 
+  useEffect(() => {
+    if (Array.isArray(workoutHistory)) {
+      setLocalData(STORAGE_KEYS.WORKOUT_HISTORY, workoutHistory);
+    }
+  }, [workoutHistory]);
+
   // Initialize Firebase and real-time cloud sync
   useEffect(() => {
     const fbResult = initFirebase();
@@ -694,6 +707,10 @@ export const AppProvider = ({ children }) => {
           const clean = sanitizeHealthProtocol(cloudData.healthProtocol);
           setHealthProtocol(clean);
           setLocalData(`${STORAGE_KEYS.HEALTH_PROTOCOL}_${currentUserId}`, clean);
+        }
+        if (Array.isArray(cloudData.workoutHistory)) {
+          setWorkoutHistory(cloudData.workoutHistory);
+          setLocalData(STORAGE_KEYS.WORKOUT_HISTORY, cloudData.workoutHistory);
         }
         if (cloudData.settings) {
           setSettings(prev => {
@@ -1316,6 +1333,31 @@ export const AppProvider = ({ children }) => {
 
     return true;
   };
+
+  // Workout History Operations (Direct Cloud Firestore & PWA Multi-Device Sync)
+  const addWorkoutRecord = useCallback((record) => {
+    if (!record) return;
+    setWorkoutHistory(prev => {
+      const current = Array.isArray(prev) ? prev : [];
+      const updated = [record, ...current];
+      setLocalData(STORAGE_KEYS.WORKOUT_HISTORY, updated);
+      saveWorkoutHistoryToDB(currentUserId, updated);
+      pushToCloud({ workoutHistory: updated });
+      return updated;
+    });
+  }, [currentUserId, pushToCloud]);
+
+  const deleteWorkoutRecord = useCallback((id) => {
+    if (!id) return;
+    setWorkoutHistory(prev => {
+      const current = Array.isArray(prev) ? prev : [];
+      const updated = current.filter(r => r.id !== id);
+      setLocalData(STORAGE_KEYS.WORKOUT_HISTORY, updated);
+      saveWorkoutHistoryToDB(currentUserId, updated);
+      pushToCloud({ workoutHistory: updated });
+      return updated;
+    });
+  }, [currentUserId, pushToCloud]);
 
   // Finance & Jar Operations
   const addTransaction = (txData) => {
@@ -2087,6 +2129,9 @@ export const AppProvider = ({ children }) => {
         logDietItem,
         removeDietMeal,
         removeDietItem,
+        workoutHistory,
+        addWorkoutRecord,
+        deleteWorkoutRecord,
       }}
     >
       {children}

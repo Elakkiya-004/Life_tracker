@@ -35,6 +35,7 @@ import {
 import { Modal } from '../common/Modal';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
+import { syncToCloud } from '../../services/firebase';
 import {
   ACTIVITY_LEVELS,
   FITNESS_GOALS,
@@ -254,6 +255,10 @@ export const CalorieCalculatorModal = ({ isOpen, onClose, onApplySuccess }) => {
           detail: { dateStr: todayStr, userId: currentUserId, meals: updated }
         }));
       }
+      syncToCloud(currentUserId, {
+        [`dailyMeals_${todayStr}`]: updated,
+        lastMealLoggedAt: new Date().toISOString()
+      });
     } catch (e) {
       console.error('Failed to save meal log:', e);
     }

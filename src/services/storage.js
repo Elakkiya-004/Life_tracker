@@ -12,7 +12,9 @@ import {
   getTodoListFromDB,
   saveDailyHistoryToDB,
   archiveDailyRecordToCloud,
-  getAllDailyHistoryFromDB
+  getAllDailyHistoryFromDB,
+  saveWorkoutHistoryToDB,
+  getWorkoutHistoryFromDB
 } from './cloudDatabase';
 
 const STORAGE_KEYS = {
@@ -24,6 +26,7 @@ const STORAGE_KEYS = {
   SETTINGS: 'life_tracker_settings_v2',
   HEALTH_PROTOCOL: 'life_tracker_health_protocol_v1',
   DAILY_HISTORY: 'life_tracker_daily_history_v1',
+  WORKOUT_HISTORY: 'life_tracker_workout_history_v1',
   FIREBASE_CONFIG: 'life_tracker_firebase_config',
   AUTH_USER: 'life_tracker_auth_user_v1',
   USERS_DIRECTORY: 'life_tracker_users_directory_v1',
@@ -378,5 +381,7 @@ export {
   getTodoListFromDB,
   saveDailyHistoryToDB,
   archiveDailyRecordToCloud,
-  getAllDailyHistoryFromDB
+  getAllDailyHistoryFromDB,
+  saveWorkoutHistoryToDB,
+  getWorkoutHistoryFromDB
 };

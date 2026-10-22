@@ -140,7 +140,8 @@ export const Header = () => {
         {/* Daily Streak Indicator */}
         <div className="streak-pill" title="Daily Habits Completed Today">
           <Flame size={15} className="flame-icon" />
-          <span>Habits: {todayCompletedHabits}/{(Array.isArray(habits) ? habits.length : 0)} Done</span>
+          <span className="streak-text-full">Habits: {todayCompletedHabits}/{(Array.isArray(habits) ? habits.length : 0)} Done</span>
+          <span className="streak-text-mobile">{todayCompletedHabits}/{(Array.isArray(habits) ? habits.length : 0)}</span>
         </div>
 
         {/* Theme Toggle */}
@@ -346,8 +347,34 @@ export const Header = () => {
           background: rgba(239, 68, 68, 0.1);
         }
 
+        .streak-text-mobile {
+          display: none;
+        }
+
         .desktop-only {
           display: none;
+        }
+
+        @media (max-width: 600px) {
+          .app-header {
+            padding: 0.65rem 0.75rem;
+          }
+          .greeting-text {
+            font-size: 0.92rem;
+            max-width: 140px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          }
+          .streak-text-full {
+            display: none;
+          }
+          .streak-text-mobile {
+            display: inline;
+          }
+          .sync-text {
+            display: none;
+          }
         }
 
         @media (min-width: 768px) {

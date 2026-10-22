@@ -29,8 +29,15 @@ import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 
 export const WorkoutSection = () => {
-  const { todayStr, habits = [], addHabit, toggleHabit } = useApp();
-  const { currentUser } = useAuth();
+  const { 
+    todayStr, 
+    habits = [], 
+    addHabit, 
+    toggleHabit,
+    workoutHistory = [],
+    addWorkoutRecord,
+    deleteWorkoutRecord
+  } = useApp();
 
   // Determine current day of week (0 = Sunday, 1 = Monday, ...)
   const dayKeys = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
@@ -44,28 +51,6 @@ export const WorkoutSection = () => {
 
   const currentDayPlan = WORKOUT_DAYS[selectedDayKey] || WORKOUT_DAYS.monday;
   const currentProgression = WORKOUT_PROGRESSIONS.find(p => p.week === selectedProgressionWeek) || WORKOUT_PROGRESSIONS[2];
-
-  // Storage key for user workout logs
-  const currentUserId = currentUser?.uid || 'default_user';
-  const historyStorageKey = `life_tracker_workout_history_${currentUserId}`;
-
-  const [workoutHistory, setWorkoutHistory] = useState(() => {
-    try {
-      const saved = localStorage.getItem(historyStorageKey);
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
-  });
-
-  const saveHistoryToStorage = (updated) => {
-    setWorkoutHistory(updated);
-    try {
-      localStorage.setItem(historyStorageKey, JSON.stringify(updated));
-    } catch (e) {
-      console.error('Failed to save workout history:', e);
-    }
-  };
 
   // Sync logged workout into active daily tasks (Habits)
   const syncWorkoutToHabits = (record) => {
@@ -108,8 +93,9 @@ export const WorkoutSection = () => {
 
   // Workout completed in player callback
   const handleWorkoutCompleted = (record) => {
-    const updated = [record, ...workoutHistory];
-    saveHistoryToStorage(updated);
+    if (addWorkoutRecord) {
+      addWorkoutRecord(record);
+    }
     syncWorkoutToHabits(record);
     try {
       confetti({ particleCount: 70, spread: 60, origin: { y: 0.6 } });
@@ -118,7 +104,9 @@ export const WorkoutSection = () => {
 
   // Delete history entry
   const handleDeleteRecord = (id) => {
-    saveHistoryToStorage(workoutHistory.filter(h => h.id !== id));
+    if (deleteWorkoutRecord) {
+      deleteWorkoutRecord(id);
+    }
   };
 
   // Calculate high-level stats
@@ -190,7 +178,8 @@ export const WorkoutSection = () => {
               title="Launch Guided Interactive 20-Min Workout with Timer"
             >
               <Play size={16} fill="currentColor" />
-              <span>Start {currentDayPlan.title} (20 Min)</span>
+              <span className="btn-text-full">Start {currentDayPlan.title} (20 Min)</span>
+              <span className="btn-text-mobile">Start (20 Min)</span>
             </button>
           </div>
         </div>
@@ -318,7 +307,7 @@ export const WorkoutSection = () => {
 
           <button
             type="button"
-            className="btn btn-secondary btn-sm"
+            className="btn btn-secondary btn-sm btn-quick-log"
             onClick={() => {
               const minutes = 20;
               const estKcal = 135;
@@ -339,7 +328,8 @@ export const WorkoutSection = () => {
             }}
           >
             <Plus size={14} />
-            <span>Quick Log Today ({currentDayPlan.title})</span>
+            <span className="btn-text-full">Quick Log Today ({currentDayPlan.title})</span>
+            <span className="btn-text-mobile">Quick Log Today</span>
           </button>
         </div>
 
@@ -365,19 +355,19 @@ export const WorkoutSection = () => {
         <div className="records-stat-counters">
           <div className="stat-counter-box">
             <Award size={20} className="text-primary" />
-            <span className="scb-val">{totalWorkouts}</span>
+            <span className="scb-val">{(totalWorkouts || 0).toLocaleString()}</span>
             <span className="scb-lbl">Workouts Completed</span>
           </div>
 
           <div className="stat-counter-box">
             <Clock size={20} className="text-amber" />
-            <span className="scb-val">{totalMinutesTrained} <small>mins</small></span>
+            <span className="scb-val">{(totalMinutesTrained || 0).toLocaleString()} <small>mins</small></span>
             <span className="scb-lbl">Total Time Trained</span>
           </div>
 
           <div className="stat-counter-box">
             <Flame size={20} className="text-danger" />
-            <span className="scb-val">~{totalCaloriesBurned} <small>kcal</small></span>
+            <span className="scb-val">~{(totalCaloriesBurned || 0).toLocaleString()} <small>kcal</small></span>
             <span className="scb-lbl">Est. Calories Burned</span>
           </div>
         </div>
@@ -402,9 +392,9 @@ export const WorkoutSection = () => {
                     <span className="hrr-date">{record.dateStr}</span>
                   </div>
                   <div className="hrr-meta">
-                    <span>⏱️ {record.durationMinutes} mins</span>
-                    <span>🔥 ~{record.caloriesBurned} kcal</span>
-                    <span>⭐ {record.rating}/5</span>
+                    <span>⏱️ {record.durationMinutes || 20} mins</span>
+                    <span>🔥 ~{(record.caloriesBurned || 0).toLocaleString()} kcal</span>
+                    <span>⭐ {record.rating || 5}/5</span>
                     {record.notes && <span className="hrr-notes">"{record.notes}"</span>}
                   </div>
                 </div>

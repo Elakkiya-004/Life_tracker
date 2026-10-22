@@ -287,8 +287,9 @@ export const FinanceView = () => {
         <div className="jars-grid">
           {jars.map((jar) => {
             const spent = getJarSpent(jar.id, jar.category);
-            const remaining = jar.allocated - spent;
-            const fillPercent = Math.min(100, Math.round((spent / jar.allocated) * 100)) || 0;
+            const remaining = (parseFloat(jar.allocated) || 0) - spent;
+            const allocatedNum = parseFloat(jar.allocated) || 0;
+            const fillPercent = allocatedNum > 0 ? Math.min(100, Math.max(0, Math.round((spent / allocatedNum) * 100))) : 0;
             const IconComp = JAR_ICON_MAP[jar.icon] || PiggyBank;
 
             return (
@@ -300,7 +301,7 @@ export const FinanceView = () => {
                   <div className="jar-heading-wrap">
                     <h4 className="jar-name">{jar.name}</h4>
                     <span className="jar-allocated-badge">
-                      Target: {currency}{jar.allocated.toLocaleString()}
+                      Target: {currency}{(parseFloat(jar.allocated) || 0).toLocaleString()}
                     </span>
                   </div>
                 </div>
@@ -319,7 +320,7 @@ export const FinanceView = () => {
                   <div className="jar-meter-numbers">
                     <span className="text-xs text-sub">Spent: {currency}{spent.toLocaleString()}</span>
                     <span className={`text-xs font-bold ${remaining >= 0 ? 'text-success' : 'text-danger'}`}>
-                      {remaining >= 0 ? `Left: ${currency}${remaining}` : `Over: ${currency}${Math.abs(remaining)}`}
+                      {remaining >= 0 ? `Left: ${currency}${remaining.toLocaleString()}` : `Over: ${currency}${Math.abs(remaining).toLocaleString()}`}
                     </span>
                   </div>
                 </div>

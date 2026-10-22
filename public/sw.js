@@ -1,5 +1,5 @@
 // LifeTracker Pro Service Worker (PWA Offline & Asset Cache)
-const CACHE_NAME = 'lifetracker-cache-v1';
+const CACHE_NAME = 'lifetracker-cache-v2';
 
 const STATIC_PRECACHE = [
   '/',

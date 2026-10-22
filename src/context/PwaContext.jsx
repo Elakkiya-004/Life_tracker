@@ -74,6 +74,21 @@ export const PwaProvider = ({ children }) => {
                 });
               }
             });
+
+            // Check for updates whenever app tab is refocused or reopened
+            const checkForUpdates = () => {
+              try {
+                reg.update();
+              } catch {}
+            };
+
+            document.addEventListener('visibilitychange', () => {
+              if (document.visibilityState === 'visible') {
+                checkForUpdates();
+              }
+            });
+
+            window.addEventListener('focus', checkForUpdates);
           })
           .catch((err) => {
             console.warn('[PWA] Service Worker registration skipped or failed:', err);
