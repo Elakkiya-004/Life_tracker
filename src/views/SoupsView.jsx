@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { NightDietSoupsSection } from '../components/health/NightDietSoupsSection';
 import { CalorieCalculatorModal } from '../components/health/CalorieCalculatorModal';
@@ -18,8 +18,9 @@ import {
   Check
 } from 'lucide-react';
 
-export const SoupsView = () => {
+export const SoupsView = ({ initialCategory = 'soup' }) => {
   const { 
+    activeTab,
     setActiveTab, 
     todayStr = new Date().toISOString().split('T')[0],
     healthProtocol = {},
@@ -30,12 +31,40 @@ export const SoupsView = () => {
     habits = []
   } = useApp();
 
+  const [activeCategory, setActiveCategory] = useState(() => {
+    if (initialCategory) return initialCategory;
+    if (activeTab === 'juices' || activeTab === 'diet-juices') return 'juice';
+    return 'soup';
+  });
+
   const [isCalorieCalcOpen, setIsCalorieCalcOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
+
+  // Sync category state when initialCategory or activeTab changes
+  useEffect(() => {
+    if (initialCategory) {
+      setActiveCategory(initialCategory);
+    } else if (activeTab === 'juices' || activeTab === 'diet-juices') {
+      setActiveCategory('juice');
+    } else if (activeTab === 'soups' || activeTab === 'diet-soups') {
+      setActiveCategory('soup');
+    }
+  }, [initialCategory, activeTab]);
 
   const showToast = (msg) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 4000);
+  };
+
+  const handleCategorySwitch = (category) => {
+    setActiveCategory(category);
+    if (category === 'soup' && setActiveTab) {
+      setActiveTab('soups');
+    } else if (category === 'juice' && setActiveTab) {
+      setActiveTab('juices');
+    } else if (category === 'all' && setActiveTab) {
+      setActiveTab('soups-juices');
+    }
   };
 
   // Target calorie budget from health protocol
@@ -66,6 +95,17 @@ export const SoupsView = () => {
     );
     return inMeals || inHabits;
   };
+
+  // Filter logged meals based on active segregation category
+  const filteredMeals = useMemo(() => {
+    if (activeCategory === 'soup') {
+      return (dailyMeals || []).filter(m => m.type === 'soup' || m.mealType === 'dinner' || (m.tags && m.tags.includes('Soup')));
+    }
+    if (activeCategory === 'juice') {
+      return (dailyMeals || []).filter(m => m.type === 'juice' || m.category === 'Fresh Juice' || (m.tags && m.tags.includes('Juice')));
+    }
+    return dailyMeals || [];
+  }, [dailyMeals, activeCategory]);
 
   // 1-Click Log Juice from Schedule Banner
   const handleQuickLogJuice = (juice) => {
@@ -132,7 +172,9 @@ export const SoupsView = () => {
               <span>Health Protocol</span>
             </button>
             <span className="breadcrumb-sep">/</span>
-            <span className="breadcrumb-curr">Soups & Juices</span>
+            <span className="breadcrumb-curr">
+              {activeCategory === 'juice' ? 'Fresh Diet Juices' : activeCategory === 'soup' ? 'Night Diet Soups' : 'Soups & Juices'}
+            </span>
           </div>
 
           <div className="soups-header-actions">
@@ -147,23 +189,102 @@ export const SoupsView = () => {
           </div>
         </div>
 
+        {/* ========================================================================= */}
+        {/* INTERACTIVE SEGREGATION PILL SWITCHER */}
+        {/* ========================================================================= */}
+        <div className="segregation-switcher-card">
+          <div className="segregation-tabs">
+            <button
+              type="button"
+              className={`segregation-tab-btn ${activeCategory === 'soup' ? 'active active-soup' : ''}`}
+              onClick={() => handleCategorySwitch('soup')}
+            >
+              <Moon size={18} />
+              <span className="tab-title">Night Diet Soups</span>
+              <span className="count-badge count-soup">20</span>
+            </button>
+
+            <button
+              type="button"
+              className={`segregation-tab-btn ${activeCategory === 'juice' ? 'active active-juice' : ''}`}
+              onClick={() => handleCategorySwitch('juice')}
+            >
+              <Droplets size={18} />
+              <span className="tab-title">Fresh Diet Juices</span>
+              <span className="count-badge count-juice">20</span>
+            </button>
+
+            <button
+              type="button"
+              className={`segregation-tab-btn ${activeCategory === 'all' ? 'active active-all' : ''}`}
+              onClick={() => handleCategorySwitch('all')}
+            >
+              <Sparkles size={16} />
+              <span className="tab-title">All Recipes</span>
+              <span className="count-badge count-all">40</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Dynamic Segregated Header Banner */}
         <div className="soups-header-title-box">
-          <div className="soups-header-icon-bubble">
-            <Moon size={28} className="text-indigo" />
+          <div className="soups-header-icon-bubble" style={{
+            background: activeCategory === 'juice' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(99, 102, 241, 0.15)',
+            borderColor: activeCategory === 'juice' ? 'rgba(245, 158, 11, 0.35)' : 'rgba(99, 102, 241, 0.35)'
+          }}>
+            {activeCategory === 'juice' ? (
+              <Droplets size={28} className="text-warning" />
+            ) : (
+              <Moon size={28} className="text-indigo" />
+            )}
           </div>
           <div>
-            <div className="soup-section-tag-row">
-              <span className="badge badge-primary">🌙 20 NIGHT DIET SOUPS</span>
-              <span className="badge badge-warning">🥤 20 FRESH DIET JUICES</span>
-              <span className="badge badge-success">🌿 100% OIL-FREE & ZERO SUGAR</span>
-              <span className="badge badge-info">🔥 35–190 KCAL</span>
-              <span className="badge badge-secondary">🥣 40 RECIPES</span>
-            </div>
-            <h1 className="soups-page-title">40 Oil-Free Soups & Fresh Diet Juices</h1>
-            <p className="soups-page-subtitle">
-              Engineered with local fresh ingredients, strictly measured portions, zero cooking oil, and zero added refined sugar. 
-              Designed as nutrient-dense, calorie-controlled dinner meals and metabolic hydration drinks to maintain sustainable fat-loss deficits, gut motility, and daytime vitality.
-            </p>
+            {activeCategory === 'soup' ? (
+              <>
+                <div className="soup-section-tag-row">
+                  <span className="badge badge-primary">🌙 20 NIGHT DIET SOUPS</span>
+                  <span className="badge badge-success">🌿 100% OIL-FREE</span>
+                  <span className="badge badge-info">🔥 95–190 KCAL</span>
+                  <span className="badge badge-secondary">🥣 LIGHT DINNER REPLACEMENT</span>
+                  <span className="badge badge-warning">🛡️ HIGH PROTEIN & FIBRE</span>
+                </div>
+                <h1 className="soups-page-title">20 Oil-Free Night Diet Dinner Soups</h1>
+                <p className="soups-page-subtitle">
+                  Engineered with Tamil Nadu local fresh ingredients, strictly measured dry portions, and zero cooking oil, ghee, or butter. 
+                  Complete nutrient-dense dinner meals designed to keep you full overnight without bedtime hunger while preserving lean muscle and maintaining a sustainable fat-loss deficit.
+                </p>
+              </>
+            ) : activeCategory === 'juice' ? (
+              <>
+                <div className="soup-section-tag-row">
+                  <span className="badge badge-warning">🥤 20 FRESH DIET JUICES</span>
+                  <span className="badge badge-success">🌿 100% RAW & ZERO ADDED SUGAR</span>
+                  <span className="badge badge-info">🔥 35–85 KCAL</span>
+                  <span className="badge badge-secondary">⚡ METABOLIC HYDRATION</span>
+                  <span className="badge badge-primary">💧 ZERO FAT & HIGH POTASSIUM</span>
+                </div>
+                <h1 className="soups-page-title">20 Fresh Detox & Metabolic Diet Juices</h1>
+                <p className="soups-page-subtitle">
+                  Engineered with cold-pressed local ingredients, natural electrolytes, zero refined sugar, and zero artificial sweeteners. 
+                  Designed for morning empty stomach cleansing, daytime metabolic hydration, liver detox, and steady metabolic energy between meals.
+                </p>
+              </>
+            ) : (
+              <>
+                <div className="soup-section-tag-row">
+                  <span className="badge badge-primary">🌙 20 NIGHT DIET SOUPS</span>
+                  <span className="badge badge-warning">🥤 20 FRESH DIET JUICES</span>
+                  <span className="badge badge-success">🌿 100% OIL-FREE & ZERO SUGAR</span>
+                  <span className="badge badge-info">🔥 35–190 KCAL</span>
+                  <span className="badge badge-secondary">🥣 40 RECIPES</span>
+                </div>
+                <h1 className="soups-page-title">40 Oil-Free Soups & Fresh Diet Juices</h1>
+                <p className="soups-page-subtitle">
+                  Segregated collection of 20 oil-free dinner soups and 20 cold fresh metabolic diet juices. 
+                  Engineered with local fresh ingredients, strictly measured portions, zero cooking oil, and zero added refined sugar.
+                </p>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -198,7 +319,11 @@ export const SoupsView = () => {
                 Today's Calorie Calculation & Habit Tracker
               </h3>
               <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>
-                Logged soups & juices automatically sync to Daily Habits & Calorie Budget
+                {activeCategory === 'soup' 
+                  ? 'Night soups logged to dinner sync to Daily Habits (✓ Done) & Calorie Calculation'
+                  : activeCategory === 'juice'
+                    ? 'Fresh diet juices logged sync to Daily Habits (✓ Done) & Calorie Calculation'
+                    : 'Logged soups & juices automatically sync to Daily Habits & Calorie Budget'}
               </span>
             </div>
           </div>
@@ -258,30 +383,34 @@ export const SoupsView = () => {
         </div>
 
         {/* Today's Logged Items Badges Row */}
-        {dailyMeals.length > 0 && (
+        {filteredMeals.length > 0 ? (
           <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.08)', paddingTop: '0.75rem' }}>
             <div style={{ fontSize: '0.74rem', textTransform: 'uppercase', color: '#94a3b8', fontWeight: 600, marginBottom: '0.45rem' }}>
-              🍽️ Logged Today (Included in Calorie Calculation & Daily Habits):
+              {activeCategory === 'soup' 
+                ? '🥣 Logged Night Soups Today (In Calorie Calculation & Daily Habits):'
+                : activeCategory === 'juice'
+                  ? '🥤 Logged Fresh Juices Today (In Calorie Calculation & Daily Habits):'
+                  : '🍽️ Logged Items Today (In Calorie Calculation & Daily Habits):'}
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-              {dailyMeals.map((meal) => (
+              {filteredMeals.map((meal) => (
                 <div 
                   key={meal.id}
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '0.45rem',
-                    background: 'rgba(99, 102, 241, 0.15)',
-                    border: '1px solid rgba(99, 102, 241, 0.3)',
+                    background: meal.type === 'juice' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(99, 102, 241, 0.15)',
+                    border: meal.type === 'juice' ? '1px solid rgba(245, 158, 11, 0.3)' : '1px solid rgba(99, 102, 241, 0.3)',
                     padding: '0.3rem 0.65rem',
                     borderRadius: '20px',
                     fontSize: '0.78rem',
                     color: '#f8fafc'
                   }}
                 >
-                  <span>{meal.icon || '🥣'}</span>
+                  <span>{meal.icon || (meal.type === 'juice' ? '🥤' : '🥣')}</span>
                   <span style={{ fontWeight: 600 }}>{meal.name}</span>
-                  <span style={{ color: '#38bdf8', fontWeight: 700 }}>+{meal.calories} kcal</span>
+                  <span style={{ color: meal.type === 'juice' ? '#fbbf24' : '#38bdf8', fontWeight: 700 }}>+{meal.calories} kcal</span>
                   <span style={{ fontSize: '0.68rem', background: '#10b98125', color: '#10b981', padding: '0.1rem 0.35rem', borderRadius: '8px' }}>
                     ✓ In Habits
                   </span>
@@ -310,11 +439,19 @@ export const SoupsView = () => {
               ))}
             </div>
           </div>
+        ) : (
+          <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.08)', paddingTop: '0.6rem', fontSize: '0.8rem', color: '#64748b' }}>
+            {activeCategory === 'soup' 
+              ? '🌙 No night soup logged yet today. Choose from the 20 recipes below and click "+ Log to Today\'s Dinner"!'
+              : activeCategory === 'juice'
+                ? '🥤 No fresh juice logged yet today. Choose from the 20 recipes below and click "+ Log to Daily Meals"!'
+                : '🥣 No soup or juice logged yet today.'}
+          </div>
         )}
       </div>
 
-      {/* 🥤 Alternate-Day Juice Routine Rotation Banner */}
-      {juiceSchedule && (
+      {/* 🥤 Alternate-Day Juice Routine Rotation Banner (ONLY for Juices or All) */}
+      {(activeCategory === 'juice' || activeCategory === 'all') && juiceSchedule && (
         <div className={`card juice-live-banner ${juiceSchedule.isJuiceDayToday ? 'banner-active-day' : 'banner-rest-day'}`} style={{ marginBottom: '1.5rem' }}>
           <div className="juice-live-left">
             <div 
@@ -415,12 +552,12 @@ export const SoupsView = () => {
         onApplySuccess={() => showToast('🎉 Calorie targets updated from Calculator!')}
       />
 
-      {/* Full Night Diet Soups & Fresh Juices Component (40 Recipes) */}
+      {/* Full Night Diet Soups & Fresh Juices Section with Category Filter */}
       <NightDietSoupsSection 
         compactMode={false}
+        categoryFilter={activeCategory}
         onOpenCalorieCalculator={() => setIsCalorieCalcOpen(true)} 
       />
     </div>
   );
 };
-

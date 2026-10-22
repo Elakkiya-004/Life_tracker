@@ -49,6 +49,8 @@ export const Layout = () => {
       health: 'protocol',
       soups: 'protocol',
       'diet-soups': 'protocol',
+      juices: 'protocol',
+      'diet-juices': 'protocol',
       exercise: 'protocol',
       workout: 'protocol',
       workouts: 'protocol',
@@ -85,10 +87,13 @@ export const Layout = () => {
       case 'health':
         return <HealthProtocolView />;
       case 'soups':
-      case 'juices':
-      case 'soups-juices':
       case 'diet-soups':
-        return <SoupsView />;
+        return <SoupsView initialCategory="soup" />;
+      case 'juices':
+      case 'diet-juices':
+        return <SoupsView initialCategory="juice" />;
+      case 'soups-juices':
+        return <SoupsView initialCategory="all" />;
       case 'exercise':
       case 'workout':
       case 'workouts':

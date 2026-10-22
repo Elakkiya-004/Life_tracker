@@ -719,22 +719,33 @@ export const HealthProtocolView = () => {
               <span className="badge badge-success">🥣 40 RECIPES</span>
             </div>
             <h4 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, color: '#f8fafc' }}>
-              Soups & Fresh Diet Juices Hub
+              Night Diet Soups & Fresh Diet Juices (Segregated)
             </h4>
             <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.82rem', color: '#94a3b8' }}>
-              All 40 recipes, alternate-day rotation schedules, live calorie calculations, and habit check-offs are on the dedicated Soups & Juices page.
+              40 segregated recipes: 20 oil-free night dinner soups with 7-day rotation, and 20 cold fresh juices with alternate-day schedule.
             </p>
           </div>
         </div>
-        <button
-          type="button"
-          className="btn btn-primary btn-sm"
-          onClick={() => setActiveTab('soups')}
-          style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', padding: '0.6rem 1.2rem', fontWeight: 600 }}
-        >
-          <span>Open Soups & Juices</span>
-          <ArrowRight size={15} />
-        </button>
+        <div style={{ display: 'flex', gap: '0.65rem', flexWrap: 'wrap' }}>
+          <button
+            type="button"
+            className="btn btn-primary btn-sm"
+            onClick={() => setActiveTab('soups')}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', padding: '0.55rem 1rem', fontWeight: 600 }}
+          >
+            <span>🌙 Night Soups (20)</span>
+            <ArrowRight size={14} />
+          </button>
+          <button
+            type="button"
+            className="btn btn-secondary btn-sm"
+            onClick={() => setActiveTab('juices')}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', padding: '0.55rem 1rem', fontWeight: 600, borderColor: '#f59e0b', color: '#fbbf24' }}
+          >
+            <span>🥤 Fresh Juices (20)</span>
+            <ArrowRight size={14} />
+          </button>
+        </div>
       </div>
 
       {/* ========================================================================= */}

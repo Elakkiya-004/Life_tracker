@@ -5644,6 +5644,121 @@ body {
   border: 1px solid rgba(249, 115, 22, 0.3) !important;
 }
 
+.badge-juices {
+  background: rgba(245, 158, 11, 0.18) !important;
+  color: #fbbf24 !important;
+  border: 1px solid rgba(245, 158, 11, 0.3) !important;
+}
+
+/* ========================================================================= */
+/* SEGREGATION PILL SWITCHER TABS */
+/* ========================================================================= */
+.segregation-switcher-card {
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 0.45rem;
+  margin: 0.25rem 0 0.5rem 0;
+  display: flex;
+  align-items: center;
+  backdrop-filter: blur(8px);
+}
+
+.segregation-tabs {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+.segregation-tab-btn {
+  flex: 1;
+  min-width: 170px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 0.65rem 1.15rem;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: rgba(255, 255, 255, 0.03);
+  color: #94a3b8;
+  font-size: 0.92rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.segregation-tab-btn:hover {
+  background: rgba(255, 255, 255, 0.07);
+  color: #f1f5f9;
+  transform: translateY(-1px);
+}
+
+.segregation-tab-btn.active.active-soup {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.28) 0%, rgba(79, 70, 229, 0.35) 100%);
+  color: #e0e7ff;
+  border-color: rgba(129, 140, 248, 0.6);
+  box-shadow: 0 4px 18px rgba(99, 102, 241, 0.25);
+}
+
+.segregation-tab-btn.active.active-juice {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.24) 0%, rgba(217, 119, 6, 0.32) 100%);
+  color: #fef3c7;
+  border-color: rgba(245, 158, 11, 0.6);
+  box-shadow: 0 4px 18px rgba(245, 158, 11, 0.25);
+}
+
+.segregation-tab-btn.active.active-all {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.22) 0%, rgba(5, 150, 105, 0.3) 100%);
+  color: #d1fae5;
+  border-color: rgba(52, 211, 153, 0.5);
+  box-shadow: 0 4px 18px rgba(16, 185, 129, 0.2);
+}
+
+.segregation-tab-btn .count-badge {
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #cbd5e1;
+  transition: all 0.2s ease;
+}
+
+.segregation-tab-btn.active.active-soup .count-badge {
+  background: rgba(99, 102, 241, 0.35);
+  color: #ffffff;
+  border: 1px solid rgba(165, 180, 252, 0.4);
+}
+
+.segregation-tab-btn.active.active-juice .count-badge {
+  background: rgba(245, 158, 11, 0.35);
+  color: #ffffff;
+  border: 1px solid rgba(251, 191, 36, 0.4);
+}
+
+.segregation-tab-btn.active.active-all .count-badge {
+  background: rgba(16, 185, 129, 0.35);
+  color: #ffffff;
+  border: 1px solid rgba(110, 231, 183, 0.4);
+}
+
+@media (max-width: 640px) {
+  .segregation-tabs {
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+  .segregation-tab-btn {
+    width: 100%;
+    min-width: unset;
+    padding: 0.55rem 0.85rem;
+    font-size: 0.85rem;
+  }
+}
+
 /* Standalone Soups Page Layout */
 .soups-page-view {
   display: flex;

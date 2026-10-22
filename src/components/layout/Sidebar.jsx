@@ -20,7 +20,9 @@ import {
   Download,
   RefreshCw,
   Utensils,
-  Dumbbell
+  Dumbbell,
+  Moon,
+  Droplets
 } from 'lucide-react';
 import { usePwa } from '../../context/PwaContext';
 
@@ -50,7 +52,8 @@ export const Sidebar = () => {
     { id: 'habits', path: '/habits', label: 'Habits & Routines', icon: CheckCircle2, badge: `${todayCompletedHabits}/${(Array.isArray(habits) ? habits.length : 0)}` },
     { id: 'protocol', path: '/health', label: 'Health & Diet Protocol', icon: HeartPulse, highlight: true },
     { id: 'exercise', path: '/exercise', label: 'Exercise & Workout', icon: Dumbbell, badge: '6-Day' },
-    { id: 'soups', path: '/soups', label: 'Soups & Juices', icon: Utensils, badge: '30' },
+    { id: 'soups', path: '/soups', label: 'Night Diet Soups', icon: Moon, badge: '20' },
+    { id: 'juices', path: '/juices', label: 'Fresh Diet Juices', icon: Droplets, badge: '20' },
     { id: 'roadmap', path: '/roadmap', label: 'Career Roadmap', icon: Compass, badge: `${roadmapCompletionPercent}%` },
     { id: 'watchlists', path: '/mcu', label: 'MCU Watchlist', icon: Film, badge: `${marvelProgressPercent}%` },
     { id: 'finance', path: '/finance', label: 'Finance & Budget', icon: Wallet },
@@ -58,7 +61,7 @@ export const Sidebar = () => {
     { id: 'settings', path: '/settings', label: 'Settings & Cloud', icon: Settings },
   ];
 
-  const navItems = allNavItems.filter(item => item.id === 'admin' || isMenuVisible(item.id === 'soups' || item.id === 'exercise' ? 'protocol' : item.id));
+  const navItems = allNavItems.filter(item => item.id === 'admin' || isMenuVisible(item.id === 'soups' || item.id === 'juices' || item.id === 'exercise' ? 'protocol' : item.id));
 
   const getInitials = (name = '') => {
     const parts = name.trim().split(' ');
@@ -112,7 +115,7 @@ export const Sidebar = () => {
               {item.highlightAdmin ? (
                 <span className="nav-badge badge-admin">Admin</span>
               ) : item.badge ? (
-                <span className={`nav-badge ${item.id === 'exercise' ? 'badge-exercise' : item.id === 'soups' ? 'badge-soups' : item.id === 'watchlists' ? 'badge-marvel' : item.id === 'roadmap' ? 'badge-roadmap' : item.id === 'protocol' ? 'badge-protocol' : item.id === 'finance' ? 'badge-finance' : (todayHabitProgress === 100 ? 'badge-success' : '')}`}>
+                <span className={`nav-badge ${item.id === 'exercise' ? 'badge-exercise' : item.id === 'soups' ? 'badge-soups' : item.id === 'juices' ? 'badge-juices' : item.id === 'watchlists' ? 'badge-marvel' : item.id === 'roadmap' ? 'badge-roadmap' : item.id === 'protocol' ? 'badge-protocol' : item.id === 'finance' ? 'badge-finance' : (todayHabitProgress === 100 ? 'badge-success' : '')}`}>
                   {item.badge}
                 </span>
               ) : null}
@@ -389,6 +392,12 @@ export const Sidebar = () => {
         .badge-soups {
           background: rgba(249, 115, 22, 0.2);
           color: #fb923c;
+          font-weight: 800;
+        }
+
+        .badge-juices {
+          background: rgba(245, 158, 11, 0.2);
+          color: #fbbf24;
           font-weight: 800;
         }
 

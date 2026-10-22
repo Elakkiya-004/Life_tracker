@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Flame, 
   Moon, 
@@ -35,14 +35,17 @@ import {
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 
-export const NightDietSoupsSection = ({ onOpenCalorieCalculator, compactMode = false }) => {
+export const NightDietSoupsSection = ({ onOpenCalorieCalculator, compactMode = false, categoryFilter = 'all' }) => {
   const { todayStr = new Date().toISOString().split('T')[0], setActiveTab, logDietItem, dailyMeals } = useApp();
   const { currentUser } = useAuth();
   const currentUserId = currentUser?.uid || 'admin-super-001';
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('All');
-  const [typeTab, setTypeTab] = useState('all'); // 'all' | 'soup' | 'juice'
+  const [typeTab, setTypeTab] = useState(() => {
+    if (categoryFilter && categoryFilter !== 'all') return categoryFilter;
+    return 'all';
+  });
   const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'table'
   const [selectedSoupModal, setSelectedSoupModal] = useState(null);
   const [justLoggedId, setJustLoggedId] = useState(null);
@@ -52,6 +55,14 @@ export const NightDietSoupsSection = ({ onOpenCalorieCalculator, compactMode = f
     const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     return days[new Date().getDay()];
   });
+
+  // Keep typeTab in sync with categoryFilter prop
+  useEffect(() => {
+    if (categoryFilter) {
+      setTypeTab(categoryFilter);
+      setSelectedFilter('All');
+    }
+  }, [categoryFilter]);
 
   const selectedDropdownSoup = useMemo(() => {
     return ALL_SOUPS_AND_JUICES.find(s => s.id === selectedDropdownSoupId) || null;
@@ -89,14 +100,30 @@ export const NightDietSoupsSection = ({ onOpenCalorieCalculator, compactMode = f
       if (selectedFilter === 'All') return true;
       if (selectedFilter === 'Soups Only') return item.type === 'soup';
       if (selectedFilter === 'Juices Only') return item.type === 'juice';
+      if (selectedFilter === 'Under 50 kcal') return item.calories <= 50;
+      if (selectedFilter === 'Under 80 kcal') return item.calories <= 80;
       if (selectedFilter === 'Under 100 kcal') return item.calories <= 100;
       if (selectedFilter === 'Under 130 kcal') return item.calories <= 130;
       if (selectedFilter === 'High Protein') return item.protein >= 8.0;
       if (selectedFilter === 'Vegetarian') return item.category === 'Vegetarian' || item.type === 'juice';
-      if (selectedFilter === 'Greens / Keerai') return item.tags.includes('Greens / Keerai');
-      if (selectedFilter === 'Detox & Cleanser') return item.tags.some(t => t.toLowerCase().includes('detox') || t.toLowerCase().includes('cleanser') || t.toLowerCase().includes('alkaline'));
+      if (selectedFilter === 'Greens / Keerai') return (item.tags || []).some(t => /keerai|greens|palak|moringa|manathakkali/i.test(t));
+      if (selectedFilter === 'Detox & Glow' || selectedFilter === 'Detox & Cleanser') {
+        return (item.tags || []).some(t => /detox|glow|skin|cleanse|purifier|alkaline/i.test(t));
+      }
+      if (selectedFilter === 'Alkaline & Slimming') {
+        return (item.tags || []).some(t => /alkaline|slimming|fat burn|belly|cutter/i.test(t));
+      }
+      if (selectedFilter === 'Immunity & Vitamin C') {
+        return (item.tags || []).some(t => /immunity|vitamin c|amla/i.test(t));
+      }
+      if (selectedFilter === 'Hydration Cooler') {
+        return (item.tags || []).some(t => /cool|hydrat|bloat/i.test(t));
+      }
+      if (selectedFilter === 'Digestion & Gut Health') {
+        return (item.tags || []).some(t => /digest|gut|laxative|motility/i.test(t));
+      }
       if (selectedFilter === 'Non-Veg & Egg') return item.category === 'Non-Vegetarian' || item.category === 'Eggetarian';
-      if (selectedFilter === 'Traditional Kollu') return item.tags.includes('Traditional Kollu');
+      if (selectedFilter === 'Traditional Kollu') return (item.tags || []).includes('Traditional Kollu');
 
       return true;
     });
@@ -156,17 +183,43 @@ export const NightDietSoupsSection = ({ onOpenCalorieCalculator, compactMode = f
       {/* Header Row */}
       <div className="section-title-row">
         <div className="title-with-icon">
-          <Moon size={22} className="text-indigo" />
+          {typeTab === 'juice' ? (
+            <Droplets size={22} className="text-warning" />
+          ) : (
+            <Moon size={22} className="text-indigo" />
+          )}
           <div>
             <div className="soup-section-tag-row">
-              <span className="badge badge-primary">🌙 20 NIGHT DIET SOUPS</span>
-              <span className="badge badge-warning">🥤 20 FRESH DIET JUICES</span>
-              <span className="badge badge-success">🌿 100% OIL-FREE & ZERO SUGAR</span>
-              <span className="badge badge-info">🔥 35–190 KCAL</span>
-              <span className="badge badge-secondary">🥣 40 RECIPES</span>
+              {typeTab === 'soup' ? (
+                <>
+                  <span className="badge badge-primary">🌙 20 NIGHT DIET SOUPS</span>
+                  <span className="badge badge-success">🌿 100% OIL-FREE</span>
+                  <span className="badge badge-info">🔥 95–190 KCAL</span>
+                  <span className="badge badge-secondary">🥣 LIGHT DINNER MEALS</span>
+                </>
+              ) : typeTab === 'juice' ? (
+                <>
+                  <span className="badge badge-warning">🥤 20 FRESH DIET JUICES</span>
+                  <span className="badge badge-success">🌿 100% RAW & ZERO SUGAR</span>
+                  <span className="badge badge-info">🔥 35–85 KCAL</span>
+                  <span className="badge badge-secondary">⚡ METABOLIC HYDRATION</span>
+                </>
+              ) : (
+                <>
+                  <span className="badge badge-primary">🌙 20 NIGHT DIET SOUPS</span>
+                  <span className="badge badge-warning">🥤 20 FRESH DIET JUICES</span>
+                  <span className="badge badge-success">🌿 100% OIL-FREE & ZERO SUGAR</span>
+                  <span className="badge badge-info">🔥 35–190 KCAL</span>
+                  <span className="badge badge-secondary">🥣 40 RECIPES</span>
+                </>
+              )}
             </div>
             <h3 className="section-title">
-              {compactMode ? 'Oil-Free Soups & Healthy Juices' : '40 Oil-Free Soups & Healthy Juices for Weight Management'}
+              {typeTab === 'soup'
+                ? (compactMode ? '20 Oil-Free Night Diet Dinner Soups' : '20 Oil-Free Night Diet Dinner Soups for Weight Loss')
+                : typeTab === 'juice'
+                  ? (compactMode ? '20 Fresh Detox & Metabolic Diet Juices' : '20 Fresh Detox & Metabolic Diet Juices')
+                  : (compactMode ? 'Oil-Free Soups & Healthy Juices' : '40 Oil-Free Soups & Healthy Juices for Weight Management')}
             </h3>
           </div>
         </div>
@@ -176,11 +229,11 @@ export const NightDietSoupsSection = ({ onOpenCalorieCalculator, compactMode = f
             <button
               type="button"
               className="btn btn-secondary btn-sm btn-redirect-soups"
-              onClick={() => setActiveTab('soups')}
-              title="Open full dedicated Soups & Juices page in full screen"
+              onClick={() => setActiveTab(typeTab === 'juice' ? 'juices' : 'soups')}
+              title={`Open dedicated ${typeTab === 'juice' ? 'Fresh Diet Juices' : 'Night Diet Soups'} page`}
             >
               <ExternalLink size={14} className="text-primary" />
-              <span>Open Soups & Juices</span>
+              <span>{typeTab === 'juice' ? 'Open Fresh Juices' : 'Open Night Soups'}</span>
             </button>
           )}
 
@@ -221,60 +274,114 @@ export const NightDietSoupsSection = ({ onOpenCalorieCalculator, compactMode = f
       </div>
 
       <p className="soup-section-subtitle">
-        {compactMode 
-          ? 'Tamil Nadu Local-Market Ingredients • Measured Portions • Zero Added Oil • Select any recipe from the dropdown below or expand all cards.' 
-          : 'Tamil Nadu Local-Market Ingredients • Measured Portions • Calorie-Tracker Friendly • Zero Cooking Oil, Ghee, or Butter. Engineered as complete light dinner meals to maintain sustainable fat-loss calorie deficits without bedtime hunger.'}
+        {typeTab === 'soup'
+          ? (compactMode
+              ? 'Tamil Nadu Local-Market Ingredients • Measured Portions • Zero Added Oil • Select any dinner soup recipe below.'
+              : 'Tamil Nadu Local-Market Ingredients • Measured Portions • Calorie-Tracker Friendly • Zero Cooking Oil, Ghee, or Butter. Engineered as complete light dinner meals to maintain sustainable fat-loss calorie deficits without bedtime hunger.')
+          : typeTab === 'juice'
+            ? (compactMode
+                ? 'Cold-Pressed Vegetables & Fruits • Zero Added Sugar • Select any fresh diet juice below.'
+                : 'Cold-Pressed Pure Vegetables & Fruits • Zero Added Sugar • Zero Added Fats • Designed for morning empty stomach cleansing, daytime metabolic hydration, and digestive gut reset.')
+            : (compactMode 
+                ? 'Tamil Nadu Local-Market Ingredients • Measured Portions • Zero Added Oil • Select any recipe from the dropdown below or expand all cards.' 
+                : 'Tamil Nadu Local-Market Ingredients • Measured Portions • Calorie-Tracker Friendly • Zero Cooking Oil, Ghee, or Butter. Complete collection of 20 dinner soups and 20 metabolic fresh juices.')}
       </p>
 
       {/* Highlights Grid (Visible on Full Dedicated Page) */}
       {!compactMode && (
         <div className="soup-stats-summary-grid">
-          <div className="card soup-stat-card">
-            <div className="soup-stat-icon-wrap" style={{ background: 'rgba(99, 102, 241, 0.15)', color: '#818cf8' }}>
-              <Moon size={18} />
-            </div>
-            <div>
-              <span className="soup-stat-val">20 Recipes</span>
-              <span className="soup-stat-lbl">Local Tamil Nadu market staples</span>
-            </div>
-          </div>
+          {typeTab === 'juice' ? (
+            <>
+              <div className="card soup-stat-card">
+                <div className="soup-stat-icon-wrap" style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#fbbf24' }}>
+                  <Droplets size={18} />
+                </div>
+                <div>
+                  <span className="soup-stat-val">20 Juices</span>
+                  <span className="soup-stat-lbl">Cold-pressed pure vegetables & fruits</span>
+                </div>
+              </div>
 
-          <div className="card soup-stat-card highlight">
-            <div className="soup-stat-icon-wrap" style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#34d399' }}>
-              <Flame size={18} />
-            </div>
-            <div>
-              <span className="soup-stat-val">95 – 190 kcal</span>
-              <span className="soup-stat-lbl">Predictable, measured portions</span>
-            </div>
-          </div>
+              <div className="card soup-stat-card highlight">
+                <div className="soup-stat-icon-wrap" style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#34d399' }}>
+                  <Flame size={18} />
+                </div>
+                <div>
+                  <span className="soup-stat-val">35 – 85 kcal</span>
+                  <span className="soup-stat-lbl">Ultra-light daytime metabolic hydration</span>
+                </div>
+              </div>
 
-          <div className="card soup-stat-card">
-            <div className="soup-stat-icon-wrap" style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#fbbf24' }}>
-              <ShieldCheck size={18} />
-            </div>
-            <div>
-              <span className="soup-stat-val">0g Added Oil</span>
-              <span className="soup-stat-lbl">No ghee, butter, cream, or cubes</span>
-            </div>
-          </div>
+              <div className="card soup-stat-card">
+                <div className="soup-stat-icon-wrap" style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#f87171' }}>
+                  <ShieldCheck size={18} />
+                </div>
+                <div>
+                  <span className="soup-stat-val">0g Added Sugar</span>
+                  <span className="soup-stat-lbl">Zero syrups, honey, or sweeteners</span>
+                </div>
+              </div>
 
-          <div className="card soup-stat-card">
-            <div className="soup-stat-icon-wrap" style={{ background: 'rgba(14, 165, 233, 0.15)', color: '#38bdf8' }}>
-              <Award size={18} />
-            </div>
-            <div>
-              <span className="soup-stat-val">Up to 29g Protein</span>
-              <span className="soup-stat-lbl">High overnight muscle preservation</span>
-            </div>
-          </div>
+              <div className="card soup-stat-card">
+                <div className="soup-stat-icon-wrap" style={{ background: 'rgba(14, 165, 233, 0.15)', color: '#38bdf8' }}>
+                  <Award size={18} />
+                </div>
+                <div>
+                  <span className="soup-stat-val">100% Raw</span>
+                  <span className="soup-stat-lbl">Active enzymes, Vitamin C & electrolytes</span>
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="card soup-stat-card">
+                <div className="soup-stat-icon-wrap" style={{ background: 'rgba(99, 102, 241, 0.15)', color: '#818cf8' }}>
+                  <Moon size={18} />
+                </div>
+                <div>
+                  <span className="soup-stat-val">{typeTab === 'soup' ? '20 Soups' : '40 Recipes'}</span>
+                  <span className="soup-stat-lbl">{typeTab === 'soup' ? 'Local Tamil Nadu market dinner staples' : '20 Night Soups + 20 Fresh Juices'}</span>
+                </div>
+              </div>
+
+              <div className="card soup-stat-card highlight">
+                <div className="soup-stat-icon-wrap" style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#34d399' }}>
+                  <Flame size={18} />
+                </div>
+                <div>
+                  <span className="soup-stat-val">{typeTab === 'soup' ? '95 – 190 kcal' : '35 – 190 kcal'}</span>
+                  <span className="soup-stat-lbl">Predictable, measured portions</span>
+                </div>
+              </div>
+
+              <div className="card soup-stat-card">
+                <div className="soup-stat-icon-wrap" style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#fbbf24' }}>
+                  <ShieldCheck size={18} />
+                </div>
+                <div>
+                  <span className="soup-stat-val">0g Added Oil</span>
+                  <span className="soup-stat-lbl">No ghee, butter, cream, or cubes</span>
+                </div>
+              </div>
+
+              <div className="card soup-stat-card">
+                <div className="soup-stat-icon-wrap" style={{ background: 'rgba(14, 165, 233, 0.15)', color: '#38bdf8' }}>
+                  <Award size={18} />
+                </div>
+                <div>
+                  <span className="soup-stat-val">Up to 29g Protein</span>
+                  <span className="soup-stat-lbl">High overnight muscle preservation</span>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       )}
 
       {/* ========================================================================= */}
-      {/* TODAY'S RECOMMENDED NIGHT DIET SOUP BANNER */}
+      {/* TODAY'S RECOMMENDED NIGHT DIET SOUP BANNER (SOUPS ONLY) */}
       {/* ========================================================================= */}
-      {todayRotation && todayRotation.primarySoup && (
+      {typeTab !== 'juice' && todayRotation && todayRotation.primarySoup && (
         <div className="today-soup-feature-card card">
           <div className="feature-top-badge">
             <Calendar size={13} />
@@ -387,21 +494,31 @@ export const NightDietSoupsSection = ({ onOpenCalorieCalculator, compactMode = f
                 value={selectedDropdownSoupId}
                 onChange={(e) => setSelectedDropdownSoupId(e.target.value)}
               >
-                <option value="">-- Choose a Soup or Juice (40 recipes available) --</option>
-                <optgroup label="🥣 20 Oil-Free Night Diet Soups">
-                  {NIGHT_DIET_SOUPS.map(s => (
-                    <option key={s.id} value={s.id}>
-                      {s.emoji} {s.name} ({s.calories} kcal • {s.protein}g Protein)
-                    </option>
-                  ))}
-                </optgroup>
-                <optgroup label="🥤 20 Fresh Detox & Diet Juices">
-                  {HEALTHY_DIET_JUICES.map(j => (
-                    <option key={j.id} value={j.id}>
-                      {j.emoji} {j.name} ({j.calories} kcal • {j.categoryTag})
-                    </option>
-                  ))}
-                </optgroup>
+                <option value="">
+                  {typeTab === 'soup' 
+                    ? '-- Choose a Night Diet Soup (20 recipes available) --'
+                    : typeTab === 'juice'
+                      ? '-- Choose a Fresh Diet Juice (20 recipes available) --'
+                      : '-- Choose a Soup or Juice (40 recipes available) --'}
+                </option>
+                {(typeTab === 'all' || typeTab === 'soup') && (
+                  <optgroup label="🥣 20 Oil-Free Night Diet Soups">
+                    {NIGHT_DIET_SOUPS.map(s => (
+                      <option key={s.id} value={s.id}>
+                        {s.emoji} {s.name} ({s.calories} kcal • {s.protein}g Protein)
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
+                {(typeTab === 'all' || typeTab === 'juice') && (
+                  <optgroup label="🥤 20 Fresh Detox & Diet Juices">
+                    {HEALTHY_DIET_JUICES.map(j => (
+                      <option key={j.id} value={j.id}>
+                        {j.emoji} {j.name} ({j.calories} kcal • {j.categoryTag})
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
               </select>
             </div>
           </div>
@@ -516,93 +633,95 @@ export const NightDietSoupsSection = ({ onOpenCalorieCalculator, compactMode = f
       {!compactMode && (
         <div className="soup-expanded-section">
           {/* ========================================================================= */}
-          {/* WEEKLY DINNER ROTATION SCHEDULE STRIP */}
+          {/* WEEKLY DINNER ROTATION SCHEDULE STRIP (SOUPS ONLY) */}
           {/* ========================================================================= */}
-          <div className="card weekly-soup-schedule-card">
-            <div className="schedule-header">
-              <div className="schedule-title-left">
-                <Calendar size={16} className="text-primary" />
-                <span className="schedule-title">7-Day Night Diet Dinner Rotation</span>
-              </div>
-              <span className="schedule-note">Rotate weekly for balanced macronutrients, greens & micronutrients</span>
-            </div>
-
-            <div className="schedule-day-tabs">
-              {WEEKLY_SOUP_ROTATION.map(r => (
-                <button
-                  key={r.day}
-                  type="button"
-                  className={`schedule-day-tab ${selectedDayTab === r.day ? 'active' : ''}`}
-                  onClick={() => setSelectedDayTab(r.day)}
-                >
-                  <span className="day-name">{r.day.slice(0, 3)}</span>
-                  <span className="day-soup-hint">{r.name.split(' ')[0]}</span>
-                </button>
-              ))}
-            </div>
-
-            {/* Selected Day Preview Banner */}
-            <div className="schedule-selected-preview">
-              <div className="sel-day-meta">
-                <span className="sel-day-tag">{currentDayRotation.rot.day} Focus:</span>
-                <span className="sel-focus-text">{currentDayRotation.rot.focus}</span>
+          {typeTab !== 'juice' && (
+            <div className="card weekly-soup-schedule-card">
+              <div className="schedule-header">
+                <div className="schedule-title-left">
+                  <Calendar size={16} className="text-primary" />
+                  <span className="schedule-title">7-Day Night Diet Dinner Rotation</span>
+                </div>
+                <span className="schedule-note">Rotate weekly for balanced macronutrients, greens & micronutrients</span>
               </div>
 
-              <div className="sel-soups-row">
-                {currentDayRotation.primary && (
-                  <div className="sel-soup-item">
-                    <span className="sel-role">Primary Choice:</span>
-                    <span className="sel-soup-name">{currentDayRotation.primary.emoji} {currentDayRotation.primary.name}</span>
-                    <span className="sel-soup-cals">{currentDayRotation.primary.calories} kcal • {currentDayRotation.primary.protein}g protein</span>
-                    <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'center' }}>
-                      <button
-                        type="button"
-                        className="btn btn-secondary btn-xs"
-                        onClick={() => setSelectedSoupModal(currentDayRotation.primary)}
-                        title="View Recipe in Modal"
-                      >
-                        <BookOpen size={11} />
-                        <span>Recipe</span>
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-primary btn-xs"
-                        onClick={(e) => handleLogSoup(currentDayRotation.primary, e)}
-                      >
-                        + Log
-                      </button>
+              <div className="schedule-day-tabs">
+                {WEEKLY_SOUP_ROTATION.map(r => (
+                  <button
+                    key={r.day}
+                    type="button"
+                    className={`schedule-day-tab ${selectedDayTab === r.day ? 'active' : ''}`}
+                    onClick={() => setSelectedDayTab(r.day)}
+                  >
+                    <span className="day-name">{r.day.slice(0, 3)}</span>
+                    <span className="day-soup-hint">{r.name.split(' ')[0]}</span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Selected Day Preview Banner */}
+              <div className="schedule-selected-preview">
+                <div className="sel-day-meta">
+                  <span className="sel-day-tag">{currentDayRotation.rot.day} Focus:</span>
+                  <span className="sel-focus-text">{currentDayRotation.rot.focus}</span>
+                </div>
+
+                <div className="sel-soups-row">
+                  {currentDayRotation.primary && (
+                    <div className="sel-soup-item">
+                      <span className="sel-role">Primary Choice:</span>
+                      <span className="sel-soup-name">{currentDayRotation.primary.emoji} {currentDayRotation.primary.name}</span>
+                      <span className="sel-soup-cals">{currentDayRotation.primary.calories} kcal • {currentDayRotation.primary.protein}g protein</span>
+                      <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'center' }}>
+                        <button
+                          type="button"
+                          className="btn btn-secondary btn-xs"
+                          onClick={() => setSelectedSoupModal(currentDayRotation.primary)}
+                          title="View Recipe in Modal"
+                        >
+                          <BookOpen size={11} />
+                          <span>Recipe</span>
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-primary btn-xs"
+                          onClick={(e) => handleLogSoup(currentDayRotation.primary, e)}
+                        >
+                          + Log
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {currentDayRotation.vegAlt && (
-                  <div className="sel-soup-item veg-alt">
-                    <span className="sel-role">🌱 Veg / Alternate:</span>
-                    <span className="sel-soup-name">{currentDayRotation.vegAlt.emoji} {currentDayRotation.vegAlt.name}</span>
-                    <span className="sel-soup-cals">{currentDayRotation.vegAlt.calories} kcal • {currentDayRotation.vegAlt.protein}g protein</span>
-                    <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'center' }}>
-                      <button
-                        type="button"
-                        className="btn btn-secondary btn-xs"
-                        onClick={() => setSelectedSoupModal(currentDayRotation.vegAlt)}
-                        title="View Recipe in Modal"
-                      >
-                        <BookOpen size={11} />
-                        <span>Recipe</span>
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-secondary btn-xs"
-                        onClick={(e) => handleLogSoup(currentDayRotation.vegAlt, e)}
-                      >
-                        + Log
-                      </button>
+                  {currentDayRotation.vegAlt && (
+                    <div className="sel-soup-item veg-alt">
+                      <span className="sel-role">🌱 Veg / Alternate:</span>
+                      <span className="sel-soup-name">{currentDayRotation.vegAlt.emoji} {currentDayRotation.vegAlt.name}</span>
+                      <span className="sel-soup-cals">{currentDayRotation.vegAlt.calories} kcal • {currentDayRotation.vegAlt.protein}g protein</span>
+                      <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'center' }}>
+                        <button
+                          type="button"
+                          className="btn btn-secondary btn-xs"
+                          onClick={() => setSelectedSoupModal(currentDayRotation.vegAlt)}
+                          title="View Recipe in Modal"
+                        >
+                          <BookOpen size={11} />
+                          <span>Recipe</span>
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-secondary btn-xs"
+                          onClick={(e) => handleLogSoup(currentDayRotation.vegAlt, e)}
+                        >
+                          + Log
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* ========================================================================= */}
           {/* SEARCH & FILTER CONTROLS */}
@@ -612,26 +731,26 @@ export const NightDietSoupsSection = ({ onOpenCalorieCalculator, compactMode = f
               <button
                 type="button"
                 className={`btn btn-xs ${typeTab === 'all' ? 'btn-primary' : 'btn-secondary'}`}
-                onClick={() => setTypeTab('all')}
+                onClick={() => { setTypeTab('all'); setSelectedFilter('All'); }}
                 style={{ fontWeight: 700 }}
               >
-                All Recipes (30)
+                All Recipes ({ALL_SOUPS_AND_JUICES.length})
               </button>
               <button
                 type="button"
                 className={`btn btn-xs ${typeTab === 'soup' ? 'btn-primary' : 'btn-secondary'}`}
-                onClick={() => setTypeTab('soup')}
+                onClick={() => { setTypeTab('soup'); setSelectedFilter('All'); }}
                 style={{ fontWeight: 700 }}
               >
-                🥣 Soups Only (20)
+                🥣 Soups Only ({NIGHT_DIET_SOUPS.length})
               </button>
               <button
                 type="button"
                 className={`btn btn-xs ${typeTab === 'juice' ? 'btn-primary' : 'btn-secondary'}`}
-                onClick={() => setTypeTab('juice')}
+                onClick={() => { setTypeTab('juice'); setSelectedFilter('All'); }}
                 style={{ fontWeight: 700 }}
               >
-                🥤 Juices Only (10)
+                🥤 Juices Only ({HEALTHY_DIET_JUICES.length})
               </button>
             </div>
 
@@ -639,7 +758,13 @@ export const NightDietSoupsSection = ({ onOpenCalorieCalculator, compactMode = f
               <Search size={15} className="soup-search-icon" />
               <input
                 type="text"
-                placeholder="Search by ingredient or name (e.g. kollu, keerai, amla, carrot, venpoosani, chicken)..."
+                placeholder={
+                  typeTab === 'soup'
+                    ? "Search soups by ingredient (e.g. kollu, keerai, chicken, dal, pepper)..."
+                    : typeTab === 'juice'
+                      ? "Search juices by ingredient (e.g. amla, cucumber, ash gourd, mint, carrot)..."
+                      : "Search by ingredient or name (e.g. kollu, keerai, amla, carrot, venpoosani)..."
+                }
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="soup-search-input"
@@ -656,17 +781,41 @@ export const NightDietSoupsSection = ({ onOpenCalorieCalculator, compactMode = f
             </div>
 
             <div className="soup-filter-chips">
-              {[
-                'All',
-                'Under 100 kcal',
-                'Under 130 kcal',
-                'High Protein',
-                'Vegetarian',
-                'Greens / Keerai',
-                'Detox & Cleanser',
-                'Non-Veg & Egg',
-                'Traditional Kollu',
-              ].map(f => (
+              {(typeTab === 'soup'
+                ? [
+                    'All',
+                    'Under 100 kcal',
+                    'Under 130 kcal',
+                    'High Protein',
+                    'Vegetarian',
+                    'Greens / Keerai',
+                    'Non-Veg & Egg',
+                    'Traditional Kollu',
+                  ]
+                : typeTab === 'juice'
+                  ? [
+                      'All',
+                      'Under 50 kcal',
+                      'Under 80 kcal',
+                      'Detox & Glow',
+                      'Alkaline & Slimming',
+                      'Immunity & Vitamin C',
+                      'Hydration Cooler',
+                      'Digestion & Gut Health',
+                      'Greens / Keerai',
+                    ]
+                  : [
+                      'All',
+                      'Under 50 kcal',
+                      'Under 100 kcal',
+                      'High Protein',
+                      'Vegetarian',
+                      'Greens / Keerai',
+                      'Detox & Glow',
+                      'Non-Veg & Egg',
+                      'Traditional Kollu',
+                    ]
+              ).map(f => (
                 <button
                   key={f}
                   type="button"
@@ -704,7 +853,10 @@ export const NightDietSoupsSection = ({ onOpenCalorieCalculator, compactMode = f
 
           {/* Results Count Banner */}
           <div className="soup-results-meta">
-            <span>Showing {filteredSoups.length} of {ALL_SOUPS_AND_JUICES.length} recipes ({filteredSoups.filter(i => i.type === 'soup').length} soups, {filteredSoups.filter(i => i.type === 'juice').length} juices)</span>
+            <span>
+              Showing {filteredSoups.length} recipe{filteredSoups.length !== 1 ? 's' : ''} 
+              {typeTab === 'all' && ` (${filteredSoups.filter(i => i.type === 'soup').length} soups, ${filteredSoups.filter(i => i.type === 'juice').length} juices)`}
+            </span>
             {selectedFilter !== 'All' && (
               <span className="active-filter-badge">Filter: {selectedFilter}</span>
             )}
@@ -905,11 +1057,17 @@ export const NightDietSoupsSection = ({ onOpenCalorieCalculator, compactMode = f
           <div className="soup-guide-box card">
             <div className="guide-header-line">
               <Info size={16} className="text-primary" />
-              <h4 className="guide-title">Practical Weight Management & Calorie Tracker Guidelines</h4>
+              <h4 className="guide-title">
+                {typeTab === 'soup'
+                  ? 'Practical Night Diet Dinner Soup Guidelines & Calorie Rules'
+                  : typeTab === 'juice'
+                    ? 'Practical Fresh Diet Juice Guidelines & Metabolic Rules'
+                    : 'Practical Weight Management, Soups & Juices Guidelines'}
+              </h4>
             </div>
 
             <div className="guide-cards-grid">
-              {SOUP_WEIGHT_LOSS_TIPS.map((tip, i) => (
+              {(typeTab === 'soup' || typeTab === 'all') && SOUP_WEIGHT_LOSS_TIPS.map((tip, i) => (
                 <div key={i} className="guide-card">
                   <h5 className="guide-card-title">
                     <Check size={14} className="text-success" />
@@ -918,7 +1076,7 @@ export const NightDietSoupsSection = ({ onOpenCalorieCalculator, compactMode = f
                   <p className="guide-card-desc">{tip.desc}</p>
                 </div>
               ))}
-              {JUICE_BENEFITS_TIPS.map((tip, i) => (
+              {(typeTab === 'juice' || typeTab === 'all') && JUICE_BENEFITS_TIPS.map((tip, i) => (
                 <div key={`j-${i}`} className="guide-card" style={{ borderLeft: '3px solid #f59e0b' }}>
                   <h5 className="guide-card-title">
                     <Check size={14} className="text-warning" />
@@ -930,8 +1088,12 @@ export const NightDietSoupsSection = ({ onOpenCalorieCalculator, compactMode = f
             </div>
 
             <div className="guide-entry-note">
-              <strong>Calorie Tracker Entry Rule:</strong> Weigh dry ingredients before cooking/blending for maximum tracking precision. 
-              When logging from our built-in Calorie Calculator, select <em>Night Diet Soups</em> or <em>Fresh Diet Juices</em> to log complete 1-serving recipes in a single click!
+              <strong>Calorie Tracker Entry Rule:</strong>{' '}
+              {typeTab === 'soup'
+                ? 'Weigh dry ingredients before cooking for maximum tracking precision. When logging from our built-in Calorie Calculator, select Night Diet Soups to log complete 1-serving recipes in a single click!'
+                : typeTab === 'juice'
+                  ? 'Drink cold-pressed juices fresh within 15–20 minutes to preserve active plant enzymes and Vitamin C. Never add refined sugar syrups. 1-click log directly to Habits and Calorie Tracker!'
+                  : 'Weigh dry ingredients before cooking/blending for maximum tracking precision. When logging from our built-in Calorie Calculator, select Night Diet Soups or Fresh Diet Juices to log complete 1-serving recipes in a single click!'}
             </div>
           </div>
         </div>

@@ -23,7 +23,8 @@ import {
   Download,
   RefreshCw,
   Utensils,
-  Dumbbell
+  Dumbbell,
+  Droplets
 } from 'lucide-react';
 import { usePwa } from '../../context/PwaContext';
 
@@ -35,8 +36,8 @@ export const MobileDrawer = () => {
     setActiveTab, 
     todayCompletedHabits, 
     habits, 
-    roadmapCompletionPercent,
-    marvelProgressPercent,
+    roadmapCompletionPercent, 
+    marvelProgressPercent, 
     syncStatus, 
     settings, 
     updateSettings,
@@ -67,7 +68,8 @@ export const MobileDrawer = () => {
     { id: 'habits', path: '/habits', label: 'Habits & Routines', icon: CheckCircle2, badge: `${todayCompletedHabits}/${(Array.isArray(habits) ? habits.length : 0)}` },
     { id: 'protocol', path: '/health', label: 'Health & Diet Protocol', icon: HeartPulse, highlight: true },
     { id: 'exercise', path: '/exercise', label: 'Exercise & Workout', icon: Dumbbell, badge: '6-Day' },
-    { id: 'soups', path: '/soups', label: 'Soups & Juices', icon: Utensils, badge: '30' },
+    { id: 'soups', path: '/soups', label: 'Night Diet Soups', icon: Moon, badge: '20' },
+    { id: 'juices', path: '/juices', label: 'Fresh Diet Juices', icon: Droplets, badge: '20' },
     { id: 'roadmap', path: '/roadmap', label: 'Career Roadmap', icon: Compass, badge: `${roadmapCompletionPercent}%` },
     { id: 'watchlists', path: '/mcu', label: 'MCU Watchlist', icon: Film, badge: `${marvelProgressPercent}%` },
     { id: 'finance', path: '/finance', label: 'Finance & Budget', icon: Wallet },
@@ -75,7 +77,7 @@ export const MobileDrawer = () => {
     { id: 'settings', path: '/settings', label: 'Settings & Cloud', icon: Settings },
   ];
 
-  const navItems = allNavItems.filter(item => item.id === 'admin' || isMenuVisible(item.id === 'soups' || item.id === 'exercise' ? 'protocol' : item.id));
+  const navItems = allNavItems.filter(item => item.id === 'admin' || isMenuVisible(item.id === 'soups' || item.id === 'juices' || item.id === 'exercise' ? 'protocol' : item.id));
 
   const getInitials = (name = '') => {
     const parts = name.trim().split(' ');
