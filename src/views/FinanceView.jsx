@@ -57,7 +57,7 @@ export const FinanceView = () => {
   const safeJars = Array.isArray(jars) ? jars.filter(Boolean) : [];
 
   const currency = settings?.currency || '₹';
-  const salary = settings?.monthlySalary || 0;
+  const salary = settings?.monthlySalary !== undefined ? Number(settings.monthlySalary) : 18000;
 
   // Calculate spent per jar safely
   const getJarSpent = (jarId, category) => {

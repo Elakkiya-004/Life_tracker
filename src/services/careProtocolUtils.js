@@ -404,37 +404,10 @@ export const getScheduledProtocolsForDay = (healthProtocol = {}, dateOrDayName =
     }
   });
 
-  // 4. Healthy Juices & Hydration Regime (Alternate Days)
-  const juiceSchedule = getJuiceSchedule(dateOrDayName, healthProtocol.juiceProtocol);
-  if (juiceSchedule.isJuiceDayToday && juiceSchedule.todayJuice) {
-    const j = juiceSchedule.todayJuice;
-    results.push({
-      id: `proto-juice-${j.id}`,
-      regimeKey: 'juiceProtocol',
-      regimeName: 'Diet & Juice',
-      iconName: 'Droplets',
-      color: j.color || '#f97316',
-      category: 'Diet & Nutrition',
-      title: `${j.emoji} ${j.name}`,
-      frequencyLabel: 'Alternate Days (Today)',
-      frequency: 'two_days_once',
-      points: [
-        `${j.ingredients} — ${j.benefits}`,
-        juiceSchedule.tomorrowJuice 
-          ? `Tomorrow: ${juiceSchedule.tomorrowJuice.emoji} ${juiceSchedule.tomorrowJuice.name}` 
-          : `Tomorrow: Rest Day (Next: ${juiceSchedule.nextJuice ? juiceSchedule.nextJuice.emoji + ' ' + juiceSchedule.nextJuice.name : 'Scheduled Juice'})`
-      ],
-      notes: 'Drink fresh on an empty stomach or mid-morning for optimal nutrient absorption.',
-      suggestedHabitName: `Drink ${j.name}`,
-      juiceData: j,
-    });
-  }
-
   return {
     dayName: targetDay,
     protocols: results,
     hasProtocols: results.length > 0,
-    juiceSchedule,
   };
 };
 

@@ -600,44 +600,112 @@ export const DB_ROADMAP_OUTCOMES = [
 export const DB_MCU_WATCHLIST_TEMPLATE = [
   {
     id: 'list-mcu-doomsday',
-    title: 'Marvel Cinematic Universe (Phase 1 to 6)',
-    description: 'Track all MCU movies & Disney+ series in chronological & release order ahead of Avengers: Doomsday.',
+    title: 'Marvel Cinematic Universe (Avengers: Doomsday 72-Title Watch Order)',
+    description: 'Track all 72 MCU movies, Fox X-Men saga, Disney+ series, and special presentations in chronological story order leading to Avengers: Doomsday.',
     icon: 'Film',
     color: '#ef4444',
     items: [
-      { id: 'mcu-1', number: '01', type: 'FILM', title: 'Iron Man (2008)', category: 'Phase 1', importance: 'Origin of MCU', rating: '7.9', status: 'watched', notes: 'Tony Stark builds the Mark I armor.' },
-      { id: 'mcu-2', number: '02', type: 'FILM', title: 'The Incredible Hulk (2008)', category: 'Phase 1', importance: 'Phase 1 Canon', rating: '6.6', status: 'unwatched', notes: 'Bruce Banner origin.' },
-      { id: 'mcu-3', number: '03', type: 'FILM', title: 'Iron Man 2 (2010)', category: 'Phase 1', importance: 'Introduces Black Widow & War Machine', rating: '6.9', status: 'watched', notes: 'Justin Hammer & Whiplash.' },
-      { id: 'mcu-4', number: '04', type: 'FILM', title: 'Thor (2011)', category: 'Phase 1', importance: 'Introduces Thor, Loki & Asgard', rating: '7.0', status: 'watched', notes: 'God of Thunder banishment.' },
-      { id: 'mcu-5', number: '05', type: 'FILM', title: 'Captain America: The First Avenger (2011)', category: 'Phase 1', importance: 'Introduces Steve Rogers & Tesseract', rating: '6.9', status: 'watched', notes: 'Super Soldier serum & Red Skull.' },
-      { id: 'mcu-6', number: '06', type: 'FILM', title: 'The Avengers (2012)', category: 'Phase 1', importance: 'Battle of New York • Essential', rating: '8.0', status: 'watched', notes: 'First team assembly.' },
-      { id: 'mcu-7', number: '07', type: 'FILM', title: 'Iron Man 3 (2013)', category: 'Phase 2', importance: 'Tony Stark PTSD Arc', rating: '7.1', status: 'watched', notes: 'Extremis & Clean Slate protocol.' },
-      { id: 'mcu-8', number: '08', type: 'FILM', title: 'Thor: The Dark World (2013)', category: 'Phase 2', importance: 'Introduces Reality Stone (Aether)', rating: '6.8', status: 'unwatched', notes: 'Malekith & Dark Elves.' },
-      { id: 'mcu-9', number: '09', type: 'FILM', title: 'Captain America: The Winter Soldier (2014)', category: 'Phase 2', importance: 'HYDRA Infiltration • Top Tier', rating: '7.8', status: 'watched', notes: 'Bucky Barnes return.' },
-      { id: 'mcu-10', number: '10', type: 'FILM', title: 'Guardians of the Galaxy (2014)', category: 'Phase 2', importance: 'Introduces Cosmic MCU & Power Stone', rating: '8.0', status: 'watched', notes: 'Star-Lord, Gamora, Rocket, Groot, Drax.' },
-      { id: 'mcu-11', number: '11', type: 'FILM', title: 'Avengers: Age of Ultron (2015)', category: 'Phase 2', importance: 'Introduces Wanda, Vision & Mind Stone', rating: '7.3', status: 'watched', notes: 'Sokovia destruction.' },
-      { id: 'mcu-12', number: '12', type: 'FILM', title: 'Ant-Man (2015)', category: 'Phase 2', importance: 'Introduces Quantum Realm', rating: '7.3', status: 'watched', notes: 'Scott Lang & Hank Pym.' },
-      { id: 'mcu-13', number: '13', type: 'FILM', title: 'Captain America: Civil War (2016)', category: 'Phase 3', importance: 'Introduces Spider-Man & Black Panther', rating: '7.8', status: 'watched', notes: 'Sokovia Accords division.' },
-      { id: 'mcu-14', number: '14', type: 'FILM', title: 'Doctor Strange (2016)', category: 'Phase 3', importance: 'Introduces Mystic Arts & Time Stone', rating: '7.5', status: 'watched', notes: 'Stephen Strange & Dormammu.' },
-      { id: 'mcu-15', number: '15', type: 'FILM', title: 'Guardians of the Galaxy Vol. 2 (2017)', category: 'Phase 3', importance: 'Ego the Living Planet', rating: '7.6', status: 'watched', notes: 'Yondu redemption.' },
-      { id: 'mcu-16', number: '16', type: 'FILM', title: 'Spider-Man: Homecoming (2017)', category: 'Phase 3', importance: 'Peter Parker high school arc', rating: '7.4', status: 'watched', notes: 'Vulture & Iron Man mentorship.' },
-      { id: 'mcu-17', number: '17', type: 'FILM', title: 'Thor: Ragnarok (2017)', category: 'Phase 3', importance: 'Asgard destruction • Essential', rating: '7.9', status: 'watched', notes: 'Hela & Planet Sakaar.' },
-      { id: 'mcu-18', number: '18', type: 'FILM', title: 'Black Panther (2018)', category: 'Phase 3', importance: 'Wakanda & Vibranium world', rating: '7.3', status: 'watched', notes: "T'Challa & Killmonger." },
-      { id: 'mcu-19', number: '19', type: 'FILM', title: 'Avengers: Infinity War (2018)', category: 'Phase 3', importance: 'Thanos Snap • Masterpiece', rating: '8.4', status: 'watched', notes: '50% universe wiped out.' },
-      { id: 'mcu-20', number: '20', type: 'FILM', title: 'Ant-Man and the Wasp (2018)', category: 'Phase 3', importance: 'Quantum Realm Time Vortex', rating: '7.0', status: 'watched', notes: 'Ghost & Quantum extraction.' },
-      { id: 'mcu-21', number: '21', type: 'FILM', title: 'Captain Marvel (2019)', category: 'Phase 3', importance: 'Carol Danvers & Space Stone Origin', rating: '6.8', status: 'unwatched', notes: 'Kree-Skrull war.' },
-      { id: 'mcu-22', number: '22', type: 'FILM', title: 'Avengers: Endgame (2019)', category: 'Phase 3', importance: 'Time Heist & Climax • Pinnacle', rating: '8.4', status: 'watched', notes: 'Whatever it takes.' },
-      { id: 'mcu-23', number: '23', type: 'FILM', title: 'Spider-Man: Far From Home (2019)', category: 'Phase 3', importance: 'Post-Endgame Legacy', rating: '7.4', status: 'watched', notes: 'Mysterio & Identity reveal.' },
-      { id: 'mcu-24', number: '24', type: 'SERIES', title: 'WandaVision (2021)', category: 'Phase 4', importance: 'Scarlet Witch Transformation', rating: '7.9', status: 'watched', notes: 'Hex in Westview.' },
-      { id: 'mcu-25', number: '25', type: 'SERIES', title: 'Loki Season 1 (2021)', category: 'Phase 4', importance: 'Multiverse Sacred Timeline & He Who Remains', rating: '8.2', status: 'watched', notes: 'TVA & Multiversal War origin.' },
-      { id: 'mcu-26', number: '26', type: 'FILM', title: 'Spider-Man: No Way Home (2021)', category: 'Phase 4', importance: '3 Spider-Men Multiverse • Essential', rating: '8.2', status: 'watched', notes: 'Tobey, Andrew, Tom team-up.' },
-      { id: 'mcu-27', number: '27', type: 'FILM', title: 'Doctor Strange in the Multiverse of Madness (2022)', category: 'Phase 4', importance: 'Incursions & Illuminati', rating: '6.9', status: 'watched', notes: 'Earth-838 & Darkhold.' },
-      { id: 'mcu-28', number: '28', type: 'SERIES', title: 'Loki Season 2 (2023)', category: 'Phase 5', importance: 'God of Stories & Multiverse Anchor', rating: '8.2', status: 'watched', notes: 'Loki holds the multiverse tree.' },
-      { id: 'mcu-29', number: '29', type: 'FILM', title: 'Deadpool & Wolverine (2024)', category: 'Phase 5', importance: 'Anchor Beings & Void Incursion', rating: '7.8', status: 'watched', notes: 'Deadpool joins the MCU.' },
-      { id: 'mcu-30', number: '30', type: 'FILM', title: 'Avengers: Doomsday (2026)', category: 'Phase 6', importance: 'Robert Downey Jr. as Doctor Doom • Upcoming Climax', rating: '10.0', status: 'unwatched', notes: 'The Multiverse Saga Endgame begins.' }
+      // Before 1950 (01 to 05)
+      { id: 'mcu-1', number: '01', type: 'TV', title: 'Eyes of Wakanda (Season 1)', category: 'Before 1950', importance: 'Essential for Doomsday', rating: '6.2', status: 'unwatched', notes: 'Set in 1260 BC–1896 · 4 animated eps ~30min · Its last episode leads into Black Panther.' },
+      { id: 'mcu-2', number: '02', type: 'FILM', title: 'Captain America: The First Avenger', category: 'Before 1950', importance: 'Essential for Doomsday', rating: '7.0', status: 'watched', notes: 'Set in 1943–1945 · 1 Credit · STOP before credits — the credits scene belongs RIGHT BEFORE The Avengers' },
+      { id: 'mcu-3', number: '03', type: 'SPC', title: 'Marvel One-Shot: Agent Carter', category: 'Before 1950', importance: 'Essential for Doomsday', rating: '7.2', status: 'unwatched', notes: 'Set in 1946 · Short film canon to SSR & S.H.I.E.L.D. founding.' },
+      { id: 'mcu-4', number: '04', type: 'TV', title: 'Agent Carter (Season 1)', category: 'Before 1950', importance: 'Essential for Doomsday', rating: '7.5', status: 'unwatched', notes: 'Set in 1946 · 8 eps · 1946 SSR operations.' },
+      { id: 'mcu-5', number: '05', type: 'TV', title: 'Agent Carter (Season 2)', category: 'Before 1950', importance: 'Essential for Doomsday', rating: '7.5', status: 'unwatched', notes: 'Set in 1947 · 10 eps · 1947 Hollywood Zero Matter investigation.' },
+
+      // 1960s and 1970s (06 to 07)
+      { id: 'mcu-6', number: '06', type: 'FILM', studio: 'FOX', title: 'X-Men: First Class', category: '1960s and 1970s', importance: 'Recommended for Doomsday', rating: '7.3', status: 'watched', notes: 'Set in 1962 · Cuban Missile Crisis · Charles Xavier & Magneto origin.' },
+      { id: 'mcu-7', number: '07', type: 'FILM', studio: 'FOX', title: 'X-Men Origins: Wolverine', category: '1960s and 1970s', importance: 'Unconfirmed for Doomsday', rating: '6.3', status: 'unwatched', notes: 'Set in 1845–1979 · Optional — Logan is the essential Wolverine film.' },
+
+      // 1990s (08)
+      { id: 'mcu-8', number: '08', type: 'FILM', title: 'Captain Marvel', category: '1990s', importance: 'Essential for Doomsday', rating: '6.8', status: 'watched', notes: 'Set in 1995 · 1 Credit · STOP before end-credits — post-credit scene belongs after Infinity War' },
+
+      // 2000s (09 to 11)
+      { id: 'mcu-9', number: '09', type: 'FILM', studio: 'FOX', title: 'X-Men', category: '2000s', importance: 'Recommended for Doomsday', rating: '7.0', status: 'watched', notes: 'Set in 2000 · Original Fox mutant saga beginning.' },
+      { id: 'mcu-10', number: '10', type: 'FILM', studio: 'FOX', title: 'X2: X-Men United', category: '2000s', importance: 'Recommended for Doomsday', rating: '7.0', status: 'watched', notes: 'Set in 2003 · Weapon X & Colonel Stryker invasion.' },
+      { id: 'mcu-11', number: '11', type: 'FILM', studio: 'FOX', title: 'X-Men: The Last Stand', category: '2000s', importance: 'Recommended for Doomsday', rating: '6.4', status: 'unwatched', notes: 'Set in 2006 · Mutant cure & Dark Phoenix manifestation.' },
+
+      // 2008 to 2012 (12 to 19)
+      { id: 'mcu-12', number: '12', type: 'FILM', title: 'Iron Man', category: '2008 to 2012', importance: 'Essential for Doomsday', rating: '7.7', status: 'watched', notes: 'Set in 2008 · Watch all credits · "I am Iron Man" birth of the MCU.' },
+      { id: 'mcu-13', number: '13', type: 'FILM', title: 'Iron Man 2', category: '2008 to 2012', importance: 'Essential for Doomsday', rating: '6.9', status: 'watched', notes: 'Set in 2010 · 1 Credit · STOP before credits — the credits scene belongs RIGHT BEFORE Thor' },
+      { id: 'mcu-14', number: '14', type: 'FILM', title: 'The Incredible Hulk', category: '2008 to 2012', importance: 'Essential for Doomsday', rating: '6.3', status: 'unwatched', notes: 'Set in 2010 · Watch all credits · Bruce Banner origin.' },
+      { id: 'mcu-15', number: '15', type: 'SPC', title: 'Iron Man 2 (Post-Credit Scene)', category: '2008 to 2012', importance: 'Essential for Doomsday', rating: '7.0', status: 'unwatched', notes: 'Coulson arrives in New Mexico discovering Mjolnir hammer crater.' },
+      { id: 'mcu-16', number: '16', type: 'FILM', title: 'Thor', category: '2008 to 2012', importance: 'Essential for Doomsday', rating: '6.8', status: 'watched', notes: 'Set in 2010 · 1 Credit · STOP before credits — the credits scene belongs RIGHT BEFORE The Avengers' },
+      { id: 'mcu-17', number: '17', type: 'SPC', title: 'Captain America: The First Avenger (Credits)', category: '2008 to 2012', importance: 'Essential for Doomsday', rating: '7.0', status: 'unwatched', notes: 'Steve Rogers waking up in modern Times Square, recruited by Nick Fury.' },
+      { id: 'mcu-18', number: '18', type: 'SPC', title: 'Thor (Post-Credit Scene)', category: '2008 to 2012', importance: 'Essential for Doomsday', rating: '7.0', status: 'unwatched', notes: 'Nick Fury shows Dr. Selvig the Tesseract; Loki mind controls him.' },
+      { id: 'mcu-19', number: '19', type: 'FILM', title: 'The Avengers', category: '2008 to 2012', importance: 'Essential for Doomsday', rating: '8.1', status: 'watched', notes: 'Set in 2012 · Watch all credits · Battle of New York team assembly.' },
+
+      // 2013 and 2014 (20 to 28)
+      { id: 'mcu-20', number: '20', type: 'FILM', studio: 'FOX', title: 'The Wolverine', category: '2013 and 2014', importance: 'Optional for Doomsday', rating: '6.4', status: 'unwatched', notes: 'Set in 2013 · Optional — bridges The Last Stand to Days of Future Past.' },
+      { id: 'mcu-21', number: '21', type: 'FILM', studio: 'FOX', title: 'X-Men: Days of Future Past', category: '2013 and 2014', importance: 'Recommended for Doomsday', rating: '7.5', status: 'watched', notes: 'Set in 1973 & future dystopia · Time travel multiverse milestone.' },
+      { id: 'mcu-22', number: '22', type: 'FILM', studio: 'FOX', title: 'X-Men: Apocalypse', category: '2013 and 2014', importance: 'Recommended for Doomsday', rating: '6.5', status: 'unwatched', notes: 'Set in 1983 · Optional — continues the First Class and Days of Future Past timeline.' },
+      { id: 'mcu-23', number: '23', type: 'FILM', studio: 'FOX', title: 'Dark Phoenix', category: '2013 and 2014', importance: 'Recommended for Doomsday', rating: '6.0', status: 'unwatched', notes: 'Set in 1992 · Optional — the final film of the Fox X-Men saga.' },
+      { id: 'mcu-24', number: '24', type: 'FILM', title: 'Thor: The Dark World', category: '2013 and 2014', importance: 'Essential for Doomsday', rating: '6.5', status: 'unwatched', notes: 'Set in 2013 · Watch all credits · Reality Stone (Aether) introduction.' },
+      { id: 'mcu-25', number: '25', type: 'FILM', title: 'Iron Man 3', category: '2013 and 2014', importance: 'Essential for Doomsday', rating: '6.9', status: 'watched', notes: 'Set in 2013–2014 · Watch credits · Tony Stark PTSD & Clean Slate Protocol.' },
+      { id: 'mcu-26', number: '26', type: 'FILM', title: 'Captain America: The Winter Soldier', category: '2013 and 2014', importance: 'Essential for Doomsday', rating: '7.7', status: 'watched', notes: 'Set in 2014 · Watch credits · HYDRA inside S.H.I.E.L.D. & Bucky Barnes.' },
+      { id: 'mcu-27', number: '27', type: 'FILM', title: 'Guardians of the Galaxy', category: '2013 and 2014', importance: 'Essential for Doomsday', rating: '7.9', status: 'watched', notes: 'Set in 2014 · Watch both credit scenes · Cosmic MCU & Power Stone.' },
+      { id: 'mcu-28', number: '28', type: 'FILM', title: 'Guardians of the Galaxy Vol. 2', category: '2013 and 2014', importance: 'Essential for Doomsday', rating: '7.6', status: 'watched', notes: 'Set in 2014 · Watch all 5 credits · Ego the Living Planet & Celestial blood.' },
+
+      // 2015 and 2016 (29 to 38)
+      { id: 'mcu-29', number: '29', type: 'FILM', title: 'Avengers: Age of Ultron', category: '2015 and 2016', importance: 'Essential for Doomsday', rating: '7.3', status: 'watched', notes: 'Set in 2015 · Watch mid-credits · Wanda Maximoff, Vision & Mind Stone.' },
+      { id: 'mcu-30', number: '30', type: 'FILM', title: 'Ant-Man', category: '2015 and 2016', importance: 'Essential for Doomsday', rating: '7.1', status: 'watched', notes: 'Set in 2015 · Watch credits · Scott Lang & first look at Quantum Realm.' },
+      { id: 'mcu-31', number: '31', type: 'FILM', title: 'Captain America: Civil War', category: '2015 and 2016', importance: 'Essential for Doomsday', rating: '7.5', status: 'watched', notes: 'Set in 2016 · Watch credits · Introduces Spider-Man & Black Panther.' },
+      { id: 'mcu-32', number: '32', type: 'SPC', title: 'Team Thor', category: '2015 and 2016', importance: 'Optional for Doomsday', rating: '7.2', status: 'unwatched', notes: 'Set in 2016 · Comedic mockumentary with flatmate Darryl — skippable.' },
+      { id: 'mcu-33', number: '33', type: 'SPC', title: 'Team Thor: Part 2', category: '2015 and 2016', importance: 'Optional for Doomsday', rating: '6.9', status: 'unwatched', notes: 'Set in 2016 · Comedic short with flatmate Darryl — skippable.' },
+      { id: 'mcu-34', number: '34', type: 'FILM', studio: 'FOX', title: 'Deadpool', category: '2015 and 2016', importance: 'Essential for Doomsday', rating: '7.6', status: 'watched', notes: 'Set in 2016 · Watch before Deadpool & Wolverine · Wade Wilson origin.' },
+      { id: 'mcu-35', number: '35', type: 'FILM', title: 'Black Widow', category: '2015 and 2016', importance: 'Essential for Doomsday', rating: '7.2', status: 'watched', notes: 'Set in 2016 · 1 Credit · STOP before end-credits — post-credit scene belongs right before Hawkeye' },
+      { id: 'mcu-36', number: '36', type: 'FILM', title: 'Black Panther', category: '2015 and 2016', importance: 'Essential for Doomsday', rating: '7.4', status: 'watched', notes: 'Set in 2016 · Watch credits · Wakanda world & Vibranium civilization.' },
+      { id: 'mcu-37', number: '37', type: 'FILM', title: 'Spider-Man: Homecoming', category: '2015 and 2016', importance: 'Essential for Doomsday', rating: '7.3', status: 'watched', notes: 'Set in 2016 · Watch credits · Peter Parker high school arc & Tony mentorship.' },
+      { id: 'mcu-38', number: '38', type: 'FILM', title: 'Doctor Strange', category: '2015 and 2016', importance: 'Essential for Doomsday', rating: '7.4', status: 'watched', notes: 'Set in 2016–2017 · Watch credits · Kamar-Taj, Mystic Arts & Time Stone.' },
+
+      // 2017 and 2018 (39 to 46)
+      { id: 'mcu-39', number: '39', type: 'FILM', title: 'Thor: Ragnarok', category: '2017 and 2018', importance: 'Essential for Doomsday', rating: '7.6', status: 'watched', notes: 'Set in 2017 · Watch credits · Asgard destruction & Sakaar gladiators.' },
+      { id: 'mcu-40', number: '40', type: 'SPC', title: 'Team Darryl', category: '2017 and 2018', importance: 'Optional for Doomsday', rating: '6.2', status: 'unwatched', notes: 'Comedic short with Grandmaster as roommate — skippable.' },
+      { id: 'mcu-41', number: '41', type: 'FILM', studio: 'FOX', title: 'Logan', category: '2017 and 2018', importance: 'Recommended for Doomsday', rating: '7.8', status: 'watched', notes: 'Set in 2029 · Recommended before Deadpool & Wolverine · Hugh Jackman emotional climax.' },
+      { id: 'mcu-42', number: '42', type: 'FILM', studio: 'FOX', title: 'Deadpool 2', category: '2017 and 2018', importance: 'Essential for Doomsday', rating: '7.5', status: 'watched', notes: 'Set in 2018 · Watch before Deadpool & Wolverine · Cable & time device.' },
+      { id: 'mcu-43', number: '43', type: 'FILM', title: 'Ant-Man and the Wasp', category: '2017 and 2018', importance: 'Essential for Doomsday', rating: '6.9', status: 'watched', notes: 'Set in 2018 · 1 Credit · STOP before credits — the credits scene belongs RIGHT AFTER Infinity War' },
+      { id: 'mcu-44', number: '44', type: 'FILM', title: 'Avengers: Infinity War', category: '2017 and 2018', importance: 'Essential for Doomsday', rating: '8.2', status: 'watched', notes: 'Set in 2018 · Watch main credits. PAUSE before post-credits · The Thanos Snap.' },
+      { id: 'mcu-45', number: '45', type: 'SPC', title: 'Ant-Man & The Wasp (All Credits)', category: '2017 and 2018', importance: 'Essential for Doomsday', rating: '7.0', status: 'watched', notes: 'Watch right after Infinity War · Hank, Janet & Hope dust while Scott is in Quantum Realm.' },
+      { id: 'mcu-46', number: '46', type: 'SPC', title: 'Captain Marvel (Post-Credits Scene)', category: '2017 and 2018', importance: 'Essential for Doomsday', rating: '7.0', status: 'watched', notes: 'Watch NOW — directly connects to Endgame opening · Carol Danvers answers pager.' },
+
+      // 2019 to 2023 (47 to 51)
+      { id: 'mcu-47', number: '47', type: 'FILM', title: 'Avengers: Endgame', category: '2019 to 2023', importance: 'Essential for Doomsday', rating: '8.2', status: 'watched', notes: 'Set in 2018–2023 · Block out 3 hours · Time Heist & Tony Stark sacrifice.' },
+      { id: 'mcu-48', number: '48', type: 'FILM', title: 'Avengers: Endgame Encore', category: '2019 to 2023', importance: 'Essential for Doomsday', rating: '8.2', status: 'unwatched', notes: 'Set in 2018–2023 · 1 Credit · Block out just over 3 hours. Same story as Endgame with theatrical re-release tribute.' },
+      { id: 'mcu-49', number: '49', type: 'TV', title: 'Loki (Season 1)', category: '2019 to 2023', importance: 'Essential for Doomsday', rating: '8.2', status: 'watched', notes: '6 eps · Sacred Timeline, TVA, He Who Remains & Multiversal War origin.' },
+      { id: 'mcu-50', number: '50', type: 'TV', title: 'WandaVision (Season 1)', category: '2019 to 2023', importance: 'Essential for Doomsday', rating: '8.2', status: 'watched', notes: 'Set in 2023 · 9 eps · Stay for episode 9 mid-credits · Scarlet Witch transformation.' },
+      { id: 'mcu-51', number: '51', type: 'SPC', title: 'WandaVision (Ep 9 Mid-Credit Scene)', category: '2019 to 2023', importance: 'Essential for Doomsday', rating: '7.5', status: 'watched', notes: 'The scene in the middle of episode 9 credits. Watch it as you finish the episode.' },
+
+      // 2024 (52 to 59)
+      { id: 'mcu-52', number: '52', type: 'FILM', title: 'Shang-Chi and the Legend of the Ten Rings', category: '2024', importance: 'Essential for Doomsday', rating: '7.5', status: 'watched', notes: 'Set in 2024 · Watch credits · Ancient Ten Rings multiversal signal.' },
+      { id: 'mcu-53', number: '53', type: 'TV', title: 'The Falcon and the Winter Soldier (Season 1)', category: '2024', importance: 'Essential for Doomsday', rating: '7.6', status: 'watched', notes: 'Set in 2024 · 6 eps · Sam Wilson becomes Captain America.' },
+      { id: 'mcu-54', number: '54', type: 'SPC', title: "Peter's To-Do List", category: '2024', importance: 'Essential for Doomsday', rating: '7.0', status: 'unwatched', notes: 'Part of Far From Home — four minutes of footage cut from it. Watch with the film.' },
+      { id: 'mcu-55', number: '55', type: 'FILM', title: 'Spider-Man: Far From Home', category: '2024', importance: 'Essential for Doomsday', rating: '7.4', status: 'watched', notes: 'Set in 2024 · 1 Credit · Watch credits · Mysterio & Identity revealed to the world.' },
+      { id: 'mcu-56', number: '56', type: 'FILM', title: 'Spider-Man: No Way Home', category: '2024', importance: 'Essential for Doomsday', rating: '7.9', status: 'watched', notes: 'Set in 2024 · Tobey Maguire, Andrew Garfield & Tom Holland Multiverse collision.' },
+      { id: 'mcu-57', number: '57', type: 'FILM', title: 'Doctor Strange in the Multiverse of Madness', category: '2024', importance: 'Essential for Doomsday', rating: '7.2', status: 'watched', notes: 'Set in 2024 · Earth-838 Illuminati, Incursions & Darkhold corruption.' },
+      { id: 'mcu-58', number: '58', type: 'SPC', title: 'Black Widow (Post-Credit Scene)', category: '2024', importance: 'Essential for Doomsday', rating: '7.0', status: 'watched', notes: 'Watch NOW — directly sets up Hawkeye · Contessa Valentina visits Natasha grave.' },
+      { id: 'mcu-59', number: '59', type: 'TV', title: 'Hawkeye (Season 1)', category: '2024', importance: 'Essential for Doomsday', rating: '7.8', status: 'watched', notes: 'Set in 2024 · 6 eps · Clint Barton, Kate Bishop & Kingpin return.' },
+
+      // 2025 (60 to 62)
+      { id: 'mcu-60', number: '60', type: 'FILM', title: 'Black Panther: Wakanda Forever', category: '2025', importance: 'Essential for Doomsday', rating: '7.0', status: 'watched', notes: 'Set in 2025 · Shuri takes mantle · Namor & Talokan introduction.' },
+      { id: 'mcu-61', number: '61', type: 'TV', title: 'Ms. Marvel (Season 1)', category: '2025', importance: 'Optional for Doomsday', rating: '6.3', status: 'unwatched', notes: 'Set in 2025 · 6 eps · Kamala Khan Noor dimension & mutant bangle.' },
+      { id: 'mcu-62', number: '62', type: 'FILM', title: 'Thor: Love and Thunder', category: '2025', importance: 'Essential for Doomsday', rating: '6.4', status: 'watched', notes: 'Set in 2025 · Gorr the God Butcher & Eternity realm.' },
+
+      // 2026 (63 to 66)
+      { id: 'mcu-63', number: '63', type: 'FILM', title: 'Ant-Man and the Wasp: Quantumania', category: '2026', importance: 'Essential for Doomsday', rating: '6.2', status: 'watched', notes: 'Set in 2026 · Kang the Conqueror & Quantum Realm multiverse gateway.' },
+      { id: 'mcu-64', number: '64', type: 'FILM', title: 'The Marvels', category: '2026', importance: 'Optional for Doomsday', rating: '5.9', status: 'unwatched', notes: 'Set in 2026 · Carol, Monica & Kamala team up · X-Men universe tear in credits.' },
+      { id: 'mcu-65', number: '65', type: 'TV', title: 'Loki (Season 2)', category: '2026', importance: 'Essential for Doomsday', rating: '8.2', status: 'watched', notes: '6 eps · God of Stories · Loki weaves and holds the multiverse timeline tree.' },
+      { id: 'mcu-66', number: '66', type: 'FILM', studio: 'FOX', title: 'Deadpool & Wolverine', category: '2026', importance: 'Essential for Doomsday', rating: '7.6', status: 'watched', notes: 'Set in 2024 in Fox Universe & Void · Anchor beings, TVA & Wolverine team-up.' },
+
+      // 2027 and 2028 (67 to 72)
+      { id: 'mcu-67', number: '67', type: 'FILM', title: 'Captain America: Brave New World', category: '2027 and 2028', importance: 'Essential for Doomsday', rating: '6.0', status: 'unwatched', notes: 'Set in 2026–2027 · Red Hulk, Adamantium global crisis & President Ross.' },
+      { id: 'mcu-68', number: '68', type: 'FILM', title: 'Thunderbolts*', category: '2027 and 2028', importance: 'Essential for Doomsday', rating: '7.3', status: 'unwatched', notes: 'Set in 2027 · Yelena Belova, Bucky Barnes, Sentry & anti-hero team.' },
+      { id: 'mcu-69', number: '69', type: 'FILM', title: 'The Fantastic Four: First Steps', category: '2027 and 2028', importance: 'Essential for Doomsday', rating: '7.0', status: 'unwatched', notes: 'Set in 1964 in retro-future universe · Reed Richards, Sue Storm & Galactus.' },
+      { id: 'mcu-70', number: '70', type: 'FILM', title: 'Spider-Man: Brand New Day', category: '2027 and 2028', importance: 'Optional for Doomsday', rating: '8.0', status: 'unwatched', notes: 'Set in 2028 · Peter Parker street-level hero era in post-memory wipe New York.' },
+      { id: 'mcu-71', number: '71', type: 'SPC', title: 'Avengers: Endgame Encore (New Scenes)', category: '2027 and 2028', importance: 'Essential for Doomsday', rating: '7.5', status: 'unwatched', notes: 'Shown with the Encore in cinemas. If you can, see the Encore after Brand New Day.' },
+      { id: 'mcu-72', number: '72', type: 'FILM', title: 'Avengers: Doomsday', category: '2027 and 2028', importance: 'Essential for Doomsday', rating: '10.0', status: 'unwatched', notes: 'Set in 2028 · Robert Downey Jr. stars as Doctor Doom in the Multiverse Saga culmination!' }
     ]
   }
 ];
+
 
 // ============================================================================
 // 2. DATABASE INITIALIZATION & CLOUD SEEDING
@@ -677,12 +745,12 @@ export const seedDatabaseIfEmpty = async () => {
     // 3. Seed MCU Watchlist Template
     const mcuDocRef = doc(db, 'system_templates', 'mcu_watchlist');
     const mcuSnap = await getDoc(mcuDocRef);
-    if (!mcuSnap.exists()) {
+    if (!mcuSnap.exists() || (mcuSnap.data()?.lists?.[0]?.items?.length || 0) < 72) {
       await setDoc(mcuDocRef, {
         lists: DB_MCU_WATCHLIST_TEMPLATE,
         seededAt: new Date().toISOString()
-      });
-      console.log('🌱 Seeded system_templates/mcu_watchlist in Cloud Database');
+      }, { merge: true });
+      console.log('🌱 Seeded 72 Titles in system_templates/mcu_watchlist in Cloud Database');
     }
 
     // 4. Seed 20 Night Diet Soups & Weekly Rotation in Firestore

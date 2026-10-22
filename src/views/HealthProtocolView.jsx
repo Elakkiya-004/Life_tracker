@@ -8,7 +8,7 @@ import {
   Sun, 
   Shield, 
   ShieldCheck,
-  Dumbbell, 
+  Dumbbell,
   Apple,
   Edit3,
   Plus,
@@ -71,7 +71,7 @@ export const HealthProtocolView = () => {
     return WORKOUT_DAYS[dayKey] || WORKOUT_DAYS.monday;
   }, []);
 
-  // Edit Modals State: 'calories' | 'micronutrients' | 'exercise' | 'sugar' | 'skincare' | 'bodycare' | 'haircare' | null
+  // Edit Modals State: 'calories' | 'micronutrients' | 'sugar' | 'skincare' | 'bodycare' | 'haircare' | null
   const [activeModal, setActiveModal] = useState(null);
   
   // Temporary Form States for Modals
@@ -363,54 +363,7 @@ export const HealthProtocolView = () => {
     }
   };
 
-  // --- 6. EXERCISE ACTIONS ---
-  const handleOpenEditExercise = () => {
-    setFormData({
-      morningTitle: exerciseRoutine.morning?.title || '🌅 Morning Cardio (30–40 Mins)',
-      morningActivities: exerciseRoutine.morning?.activities || '',
-      morningBenefits: exerciseRoutine.morning?.benefits || '',
-      eveningTitle: exerciseRoutine.evening?.title || '💪 Evening Bodyweight Routine (20 Mins)',
-      eveningActivities: exerciseRoutine.evening?.activities || '',
-      eveningBenefits: exerciseRoutine.evening?.benefits || '',
-    });
-    setActiveModal('exercise');
-  };
-
-  const handleSaveExercise = (e) => {
-    e.preventDefault();
-    updateHealthProtocol(prev => ({
-      ...prev,
-      exerciseRoutine: {
-        morning: {
-          title: formData.morningTitle,
-          activities: formData.morningActivities,
-          benefits: formData.morningBenefits,
-        },
-        evening: {
-          title: formData.eveningTitle,
-          activities: formData.eveningActivities,
-          benefits: formData.eveningBenefits,
-        }
-      }
-    }));
-    setActiveModal(null);
-    showToast('✅ Exercise routine updated!');
-  };
-
-  const handleClearExercise = () => {
-    if (window.confirm('Delete/Clear Exercise Routine details?')) {
-      updateHealthProtocol(prev => ({
-        ...prev,
-        exerciseRoutine: {
-          morning: { title: '', activities: '', benefits: '' },
-          evening: { title: '', activities: '', benefits: '' }
-        }
-      }));
-      showToast('🗑️ Exercise routine cleared.');
-    }
-  };
-
-  // --- 7. SUGAR CUTTING ACTIONS ---
+  // --- 4. SUGAR CUTTING ACTIONS ---
   const handleOpenEditSugar = () => {
     setFormData({
       phases: sugarPhases.map(p => ({ ...p })),
@@ -1472,78 +1425,7 @@ export const HealthProtocolView = () => {
         }
       />
 
-      {/* 6. Edit Exercise Modal */}
-      <Modal
-        isOpen={activeModal === 'exercise'}
-        onClose={() => setActiveModal(null)}
-        title="Edit Exercise Routine"
-        maxWidth="580px"
-      >
-        <form onSubmit={handleSaveExercise} className="modal-form">
-          <div className="input-group">
-            <label className="label">Morning Cardio Title</label>
-            <input
-              type="text"
-              className="input"
-              value={formData.morningTitle}
-              onChange={(e) => setFormData({ ...formData, morningTitle: e.target.value })}
-            />
-          </div>
-          <div className="input-group">
-            <label className="label">Morning Activities</label>
-            <input
-              type="text"
-              className="input"
-              value={formData.morningActivities}
-              onChange={(e) => setFormData({ ...formData, morningActivities: e.target.value })}
-            />
-          </div>
-          <div className="input-group">
-            <label className="label">Morning Benefits / Notes</label>
-            <input
-              type="text"
-              className="input"
-              value={formData.morningBenefits}
-              onChange={(e) => setFormData({ ...formData, morningBenefits: e.target.value })}
-            />
-          </div>
-
-          <div className="input-group">
-            <label className="label">Evening Routine Title</label>
-            <input
-              type="text"
-              className="input"
-              value={formData.eveningTitle}
-              onChange={(e) => setFormData({ ...formData, eveningTitle: e.target.value })}
-            />
-          </div>
-          <div className="input-group">
-            <label className="label">Evening Activities</label>
-            <input
-              type="text"
-              className="input"
-              value={formData.eveningActivities}
-              onChange={(e) => setFormData({ ...formData, eveningActivities: e.target.value })}
-            />
-          </div>
-          <div className="input-group">
-            <label className="label">Evening Benefits / Notes</label>
-            <input
-              type="text"
-              className="input"
-              value={formData.eveningBenefits}
-              onChange={(e) => setFormData({ ...formData, eveningBenefits: e.target.value })}
-            />
-          </div>
-
-          <div className="modal-actions">
-            <button type="button" className="btn btn-secondary" onClick={() => setActiveModal(null)}>Cancel</button>
-            <button type="submit" className="btn btn-primary">Save Routine</button>
-          </div>
-        </form>
-      </Modal>
-
-      {/* 7. Edit Sugar Modal */}
+      {/* 4. Edit Sugar Modal */}
       <Modal
         isOpen={activeModal === 'sugar'}
         onClose={() => setActiveModal(null)}

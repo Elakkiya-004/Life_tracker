@@ -4,9 +4,9 @@ import { useApp } from '../../context/AppContext';
 import { Plus, Trash2, RotateCcw, AlertCircle, CheckCircle } from 'lucide-react';
 
 export const JarModal = ({ isOpen, onClose }) => {
-  const { jars, setAllJars, resetJarsToDefault, settings, updateSettings } = useApp();
+  const { jars, updateSalaryAndJars, resetJarsToDefault, settings } = useApp();
 
-  const [salary, setSalary] = useState(settings.monthlySalary || 18000);
+  const [salary, setSalary] = useState(() => (settings.monthlySalary !== undefined ? settings.monthlySalary : 18000));
   const [localJars, setLocalJars] = useState(jars);
   const [newJarName, setNewJarName] = useState('');
   const [newJarAlloc, setNewJarAlloc] = useState('');
@@ -21,8 +21,9 @@ export const JarModal = ({ isOpen, onClose }) => {
 
   const currency = settings.currency || '₹';
 
+  const numSalary = !isNaN(parseFloat(salary)) ? parseFloat(salary) : 0;
   const totalAllocated = (Array.isArray(localJars) ? localJars : []).reduce((sum, j) => sum + (parseFloat(j.allocated) || 0), 0);
-  const unallocated = salary - totalAllocated;
+  const unallocated = numSalary - totalAllocated;
 
   const handleJarAllocChange = (id, val) => {
     const num = parseFloat(val) || 0;
@@ -31,19 +32,19 @@ export const JarModal = ({ isOpen, onClose }) => {
 
   // Auto-distribute jars proportionally to match current salary input (e.g. ₹17k or ₹18k)
   const handleAutoScaleJars = () => {
-    const numSalary = parseFloat(salary) || 0;
-    if (numSalary <= 0 || !Array.isArray(localJars) || localJars.length === 0) return;
+    const targetSalary = parseFloat(salary) || 0;
+    if (targetSalary <= 0 || !Array.isArray(localJars) || localJars.length === 0) return;
 
     const currentTotal = localJars.reduce((sum, j) => sum + (parseFloat(j.allocated) || 0), 0);
     if (currentTotal <= 0) return;
 
-    const ratio = numSalary / currentTotal;
+    const ratio = targetSalary / currentTotal;
     let runningTotal = 0;
 
     const scaled = localJars.map((jar, index) => {
       if (index === localJars.length - 1) {
         // Last jar absorbs remainder so total equals salary exactly
-        const remainder = Math.max(0, numSalary - runningTotal);
+        const remainder = Math.max(0, targetSalary - runningTotal);
         return { ...jar, allocated: remainder };
       }
       const raw = (parseFloat(jar.allocated) || 0) * ratio;
@@ -77,18 +78,21 @@ export const JarModal = ({ isOpen, onClose }) => {
   };
 
   const handleSave = () => {
-    const validSalary = !isNaN(parseFloat(salary)) ? parseFloat(salary) : 18000;
-    updateSettings({ 
-      monthlySalary: validSalary,
-      monthlyBudget: totalAllocated > 0 ? totalAllocated : validSalary 
-    });
-    setAllJars(localJars);
+    const validSalary = !isNaN(parseFloat(salary)) ? parseFloat(salary) : (settings?.monthlySalary || 18000);
+    const sanitizedJars = (Array.isArray(localJars) ? localJars : []).map(j => ({
+      ...j,
+      allocated: !isNaN(parseFloat(j.allocated)) ? parseFloat(j.allocated) : 0,
+    }));
+    const totalAlloc = sanitizedJars.reduce((sum, j) => sum + (j.allocated || 0), 0);
+    const validBudget = totalAlloc > 0 ? totalAlloc : validSalary;
+
+    updateSalaryAndJars(validSalary, validBudget, sanitizedJars);
     onClose();
   };
 
   const handleReset = () => {
     if (window.confirm('Reset Jars to tailored ₹18k split (Loan ₹10k, Travel ₹1.5k, Bills ₹1.5k, Shopping ₹1k, Grandma ₹1k, Snacks ₹1k, Savings ₹2k)?')) {
-      resetJarsToDefault();
+      resetJarsToDefault(true);
       setSalary(18000);
       onClose();
     }
@@ -113,7 +117,14 @@ export const JarModal = ({ isOpen, onClose }) => {
                   type="number"
                   className="input salary-input"
                   value={salary}
-                  onChange={(e) => setSalary(parseFloat(e.target.value) || 0)}
+                  onChange={(e) => setSalary(e.target.value)}
+                  onBlur={() => {
+                    const p = parseFloat(salary);
+                    if (!isNaN(p) && p >= 0) setSalary(p);
+                  }}
+                  min="0"
+                  step="500"
+                  placeholder="18000"
                 />
               </div>
             </div>
@@ -129,9 +140,9 @@ export const JarModal = ({ isOpen, onClose }) => {
                   className="btn btn-secondary btn-xs"
                   onClick={handleAutoScaleJars}
                   style={{ marginTop: '0.35rem', fontSize: '0.72rem' }}
-                  title={`Automatically scale all jars proportionally to match ${currency}${salary.toLocaleString()}`}
+                  title={`Automatically scale all jars proportionally to match ${currency}${numSalary.toLocaleString()}`}
                 >
-                  ⚡ Auto-Fit Jars to {currency}{salary.toLocaleString()}
+                  ⚡ Auto-Fit Jars to {currency}{numSalary.toLocaleString()}
                 </button>
               )}
             </div>

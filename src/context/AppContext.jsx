@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import confetti from 'canvas-confetti';
 import { useAuth } from './AuthContext';
 
@@ -199,7 +199,32 @@ export const AppProvider = ({ children }) => {
   const [customLists, setCustomLists] = useState(() => {
     try {
       const data = getLocalData(STORAGE_KEYS.CUSTOM_LISTS, null);
-      if (Array.isArray(data) && data.length > 0 && data.some(l => l && Array.isArray(l.items) && l.items.length > 0)) return data;
+      if (Array.isArray(data) && data.length > 0 && data.some(l => l && Array.isArray(l.items) && l.items.length > 0)) {
+        const needsUpgrade = data.some(l => l && l.id === 'list-mcu-doomsday' && Array.isArray(l.items) && l.items.length < 72);
+        if (needsUpgrade) {
+          const upgraded = data.map(list => {
+            if (list && list.id === 'list-mcu-doomsday') {
+              const watchedMap = new Map();
+              (list.items || []).forEach(i => {
+                if (i && i.title) {
+                  const key = i.title.toLowerCase().replace(/\s*\(\d{4}\)/, '').trim();
+                  watchedMap.set(key, i.status);
+                }
+              });
+              const freshItems = DEFAULT_CUSTOM_LISTS[0].items.map(fresh => {
+                const cleanKey = fresh.title.toLowerCase().replace(/\s*\(\d{4}\)/, '').trim();
+                const existingStatus = watchedMap.get(cleanKey);
+                return existingStatus ? { ...fresh, status: existingStatus } : fresh;
+              });
+              return { ...DEFAULT_CUSTOM_LISTS[0], items: freshItems };
+            }
+            return list;
+          });
+          setLocalData(STORAGE_KEYS.CUSTOM_LISTS, upgraded);
+          return upgraded;
+        }
+        return data;
+      }
       setLocalData(STORAGE_KEYS.CUSTOM_LISTS, DEFAULT_CUSTOM_LISTS);
       return DEFAULT_CUSTOM_LISTS;
     } catch {
@@ -285,6 +310,17 @@ export const AppProvider = ({ children }) => {
     }
     return resolved;
   });
+
+  const settingsRef = useRef(settings);
+  const jarsRef = useRef(jars);
+
+  useEffect(() => {
+    settingsRef.current = settings;
+  }, [settings]);
+
+  useEffect(() => {
+    jarsRef.current = jars;
+  }, [jars]);
   
   // Real browser URL routing state (Supports /habits, /health, /roadmap, /mcu, /finance, etc.)
   const [activeTab, setActiveTabState] = useState(() => getInitialTabFromLocation());
@@ -337,13 +373,13 @@ export const AppProvider = ({ children }) => {
       habits: habits || [],
       todos: habits || [],
       transactions: transactions || [],
-      jars: jars || DEFAULT_JARS,
+      jars: jarsRef.current || jars || DEFAULT_JARS,
       roadmap: roadmap || DEFAULT_ROADMAP,
       customLists: customLists || DEFAULT_CUSTOM_LISTS,
       healthProtocol: healthProtocol || DEFAULT_HEALTH_PROTOCOL,
       dailyHistory: dailyHistory || {},
       dailyHabitNotes: dailyHabitNotes || {},
-      settings: settings || DEFAULT_SETTINGS,
+      settings: settingsRef.current || settings || DEFAULT_SETTINGS,
       lastTrackerDate: effectiveDate,
       ...(customPayload || {}),
     };
@@ -602,10 +638,12 @@ export const AppProvider = ({ children }) => {
         if (Array.isArray(cloudData.jars)) {
           const isOldDefault = !cloudData.jars.some(j => j && j.id === 'jar-snacks');
           if (isOldDefault) {
+            jarsRef.current = DEFAULT_JARS;
             setJars(DEFAULT_JARS);
             setLocalData(STORAGE_KEYS.JARS, DEFAULT_JARS);
             syncToCloud(currentUserId, { jars: DEFAULT_JARS });
           } else {
+            jarsRef.current = cloudData.jars;
             setJars(cloudData.jars);
             setLocalData(STORAGE_KEYS.JARS, cloudData.jars);
           }
@@ -621,8 +659,33 @@ export const AppProvider = ({ children }) => {
         }
 
         if (Array.isArray(cloudData.customLists) && cloudData.customLists.length > 0 && cloudData.customLists.some(l => l && Array.isArray(l.items) && l.items.length > 0)) {
-          setCustomLists(cloudData.customLists);
-          setLocalData(STORAGE_KEYS.CUSTOM_LISTS, cloudData.customLists);
+          const needsUpgrade = cloudData.customLists.some(l => l && l.id === 'list-mcu-doomsday' && Array.isArray(l.items) && l.items.length < 72);
+          if (needsUpgrade) {
+            const upgraded = cloudData.customLists.map(list => {
+              if (list && list.id === 'list-mcu-doomsday') {
+                const watchedMap = new Map();
+                (list.items || []).forEach(i => {
+                  if (i && i.title) {
+                    const key = i.title.toLowerCase().replace(/\s*\(\d{4}\)/, '').trim();
+                    watchedMap.set(key, i.status);
+                  }
+                });
+                const freshItems = DEFAULT_CUSTOM_LISTS[0].items.map(fresh => {
+                  const cleanKey = fresh.title.toLowerCase().replace(/\s*\(\d{4}\)/, '').trim();
+                  const existingStatus = watchedMap.get(cleanKey);
+                  return existingStatus ? { ...fresh, status: existingStatus } : fresh;
+                });
+                return { ...DEFAULT_CUSTOM_LISTS[0], items: freshItems };
+              }
+              return list;
+            });
+            setCustomLists(upgraded);
+            setLocalData(STORAGE_KEYS.CUSTOM_LISTS, upgraded);
+            syncToCloud(currentUserId, { customLists: upgraded });
+          } else {
+            setCustomLists(cloudData.customLists);
+            setLocalData(STORAGE_KEYS.CUSTOM_LISTS, cloudData.customLists);
+          }
         } else if (!cloudData.customLists || cloudData.customLists.length === 0) {
           syncToCloud(currentUserId, { customLists: DEFAULT_CUSTOM_LISTS });
         }
@@ -635,6 +698,7 @@ export const AppProvider = ({ children }) => {
         if (cloudData.settings) {
           setSettings(prev => {
             const merged = { ...(prev || DEFAULT_SETTINGS), ...cloudData.settings };
+            settingsRef.current = merged;
             setLocalData(STORAGE_KEYS.SETTINGS, merged);
             return merged;
           });
@@ -1282,17 +1346,51 @@ export const AppProvider = ({ children }) => {
 
   const setAllJars = (newJarsList) => {
     const safeJars = Array.isArray(newJarsList) ? newJarsList : DEFAULT_JARS;
+    jarsRef.current = safeJars;
     setJars(safeJars);
     setLocalData(STORAGE_KEYS.JARS, safeJars);
-    pushToCloud({ habits, transactions, jars: safeJars, roadmap, customLists, healthProtocol, dailyHistory, settings });
+    pushToCloud({ habits, transactions, jars: safeJars, roadmap, customLists, healthProtocol, dailyHistory, settings: settingsRef.current || settings });
+  };
+
+  const updateSalaryAndJars = (newSalary, newBudget, newJarsList) => {
+    const validSalary = !isNaN(parseFloat(newSalary)) ? parseFloat(newSalary) : (settingsRef.current?.monthlySalary || 18000);
+    const validBudget = !isNaN(parseFloat(newBudget)) && parseFloat(newBudget) > 0 ? parseFloat(newBudget) : validSalary;
+    const safeJars = Array.isArray(newJarsList) ? newJarsList : (jarsRef.current || jars || DEFAULT_JARS);
+
+    const updatedSettings = {
+      ...(settingsRef.current || settings || DEFAULT_SETTINGS),
+      monthlySalary: validSalary,
+      monthlyBudget: validBudget,
+    };
+
+    settingsRef.current = updatedSettings;
+    jarsRef.current = safeJars;
+
+    setSettings(updatedSettings);
+    setLocalData(STORAGE_KEYS.SETTINGS, updatedSettings);
+
+    setJars(safeJars);
+    setLocalData(STORAGE_KEYS.JARS, safeJars);
+
+    pushToCloud({
+      habits,
+      transactions,
+      jars: safeJars,
+      roadmap,
+      customLists,
+      healthProtocol,
+      dailyHistory,
+      settings: updatedSettings,
+    });
   };
 
   const updateJar = (jarId, jarData) => {
     const currentJars = Array.isArray(jars) ? jars : DEFAULT_JARS;
     const updated = currentJars.map(j => j.id === jarId ? { ...j, ...jarData } : j);
+    jarsRef.current = updated;
     setJars(updated);
     setLocalData(STORAGE_KEYS.JARS, updated);
-    pushToCloud({ habits, transactions, jars: updated, roadmap, customLists, healthProtocol, dailyHistory, settings });
+    pushToCloud({ habits, transactions, jars: updated, roadmap, customLists, healthProtocol, dailyHistory, settings: settingsRef.current || settings });
   };
 
   const addJar = (jarData) => {
@@ -1306,23 +1404,33 @@ export const AppProvider = ({ children }) => {
     };
     const currentJars = Array.isArray(jars) ? jars : DEFAULT_JARS;
     const updated = [...currentJars, newJar];
+    jarsRef.current = updated;
     setJars(updated);
     setLocalData(STORAGE_KEYS.JARS, updated);
-    pushToCloud({ habits, transactions, jars: updated, roadmap, customLists, healthProtocol, dailyHistory, settings });
+    pushToCloud({ habits, transactions, jars: updated, roadmap, customLists, healthProtocol, dailyHistory, settings: settingsRef.current || settings });
   };
 
   const deleteJar = (jarId) => {
     const currentJars = Array.isArray(jars) ? jars : DEFAULT_JARS;
     const updated = currentJars.filter(j => j.id !== jarId);
+    jarsRef.current = updated;
     setJars(updated);
     setLocalData(STORAGE_KEYS.JARS, updated);
-    pushToCloud({ habits, transactions, jars: updated, roadmap, customLists, healthProtocol, dailyHistory, settings });
+    pushToCloud({ habits, transactions, jars: updated, roadmap, customLists, healthProtocol, dailyHistory, settings: settingsRef.current || settings });
   };
 
-  const resetJarsToDefault = () => {
+  const resetJarsToDefault = (shouldResetSalary = true) => {
+    jarsRef.current = DEFAULT_JARS;
     setJars(DEFAULT_JARS);
     setLocalData(STORAGE_KEYS.JARS, DEFAULT_JARS);
-    pushToCloud({ habits, transactions, jars: DEFAULT_JARS, roadmap, customLists, healthProtocol, dailyHistory, settings });
+    let updatedSettings = settingsRef.current || settings || DEFAULT_SETTINGS;
+    if (shouldResetSalary) {
+      updatedSettings = { ...updatedSettings, monthlySalary: 18000, monthlyBudget: 16000 };
+      settingsRef.current = updatedSettings;
+      setSettings(updatedSettings);
+      setLocalData(STORAGE_KEYS.SETTINGS, updatedSettings);
+    }
+    pushToCloud({ habits, transactions, jars: DEFAULT_JARS, roadmap, customLists, healthProtocol, dailyHistory, settings: updatedSettings });
   };
 
   // Career Roadmap Operations
@@ -1550,10 +1658,11 @@ export const AppProvider = ({ children }) => {
 
   // Settings Operations
   const updateSettings = (newSettings) => {
-    const updated = { ...(settings || DEFAULT_SETTINGS), ...newSettings };
+    const updated = { ...(settingsRef.current || settings || DEFAULT_SETTINGS), ...newSettings };
+    settingsRef.current = updated;
     setSettings(updated);
     setLocalData(STORAGE_KEYS.SETTINGS, updated);
-    pushToCloud({ habits, transactions, jars, roadmap, customLists, healthProtocol, settings: updated });
+    pushToCloud({ habits, transactions, jars: jarsRef.current || jars, roadmap, customLists, healthProtocol, dailyHistory, settings: updated });
   };
 
   // Health Protocol Operations
@@ -1951,6 +2060,7 @@ export const AppProvider = ({ children }) => {
         deleteTransaction,
         updateJar,
         setAllJars,
+        updateSalaryAndJars,
         addJar,
         deleteJar,
         resetJarsToDefault,
