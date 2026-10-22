@@ -787,7 +787,7 @@ export const saveHealthProtocolToDB = async (userId, protocol) => {
   }
   try {
     const clean = sanitizeHealthProtocol(protocol);
-    const userDocRef = doc(db, 'users', userId || 'default_user');
+    const userDocRef = doc(db, 'users', userId || 'admin-super-001');
     await setDoc(userDocRef, {
       healthProtocol: clean,
       lastUpdated: new Date().toISOString()
@@ -807,7 +807,7 @@ export const getHealthProtocolFromDB = async (userId) => {
     initFirebase();
   }
   try {
-    const userDocRef = doc(db, 'users', userId || 'default_user');
+    const userDocRef = doc(db, 'users', userId || 'admin-super-001');
     const snap = await getDoc(userDocRef);
     if (snap.exists() && snap.data()?.healthProtocol) {
       return sanitizeHealthProtocol(snap.data().healthProtocol);
@@ -836,7 +836,7 @@ export const listenToHealthProtocolDB = (userId, onUpdate) => {
     if (!db) return () => {};
   }
   try {
-    const userDocRef = doc(db, 'users', userId || 'default_user');
+    const userDocRef = doc(db, 'users', userId || 'admin-super-001');
     return onSnapshot(userDocRef, (snap) => {
       if (snap.exists() && snap.data()?.healthProtocol) {
         onUpdate(sanitizeHealthProtocol(snap.data().healthProtocol));
@@ -900,7 +900,7 @@ export const saveNightDietSoupsToDB = async (soupsData) => {
 /**
  * Save user To-Do List / Habits directly to Cloud Firestore
  */
-export const saveTodoListToDB = async (userId = 'default_user', todosList = [], trackerDate = null) => {
+export const saveTodoListToDB = async (userId = 'admin-super-001', todosList = [], trackerDate = null) => {
   if (!db || !isInitialized) {
     initFirebase();
   }
@@ -928,7 +928,7 @@ export const saveTodoListToDB = async (userId = 'default_user', todosList = [], 
 /**
  * Fetch To-Do List from Cloud Firestore
  */
-export const getTodoListFromDB = async (userId = 'default_user') => {
+export const getTodoListFromDB = async (userId = 'admin-super-001') => {
   if (!db || !isInitialized) {
     initFirebase();
   }
@@ -950,7 +950,7 @@ export const getTodoListFromDB = async (userId = 'default_user') => {
 /**
  * Save historical daily progress & reflections to Cloud DB for future analytics
  */
-export const saveDailyHistoryToDB = async (userId = 'default_user', dailyHistory = {}, dailyHabitNotes = {}) => {
+export const saveDailyHistoryToDB = async (userId = 'admin-super-001', dailyHistory = {}, dailyHabitNotes = {}) => {
   if (!db || !isInitialized) {
     initFirebase();
   }
@@ -975,7 +975,7 @@ export const saveDailyHistoryToDB = async (userId = 'default_user', dailyHistory
 /**
  * Archive a specific day's completed record into Cloud Firestore subcollection for permanent storage & analytics
  */
-export const archiveDailyRecordToCloud = async (userId = 'default_user', dateStr, daySummary) => {
+export const archiveDailyRecordToCloud = async (userId = 'admin-super-001', dateStr, daySummary) => {
   if (!db || !isInitialized) {
     initFirebase();
   }
@@ -998,7 +998,7 @@ export const archiveDailyRecordToCloud = async (userId = 'default_user', dateStr
 /**
  * Fetch all historical daily records from Cloud DB for future deep-dive analytics
  */
-export const getAllDailyHistoryFromDB = async (userId = 'default_user') => {
+export const getAllDailyHistoryFromDB = async (userId = 'admin-super-001') => {
   if (!db || !isInitialized) {
     initFirebase();
   }
@@ -1035,7 +1035,7 @@ export const getAllDailyHistoryFromDB = async (userId = 'default_user') => {
 /**
  * Save user workout history directly to Cloud Firestore
  */
-export const saveWorkoutHistoryToDB = async (userId = 'default_user', workoutHistory = []) => {
+export const saveWorkoutHistoryToDB = async (userId = 'admin-super-001', workoutHistory = []) => {
   if (!db || !isInitialized) {
     initFirebase();
   }
@@ -1058,7 +1058,7 @@ export const saveWorkoutHistoryToDB = async (userId = 'default_user', workoutHis
 /**
  * Fetch Workout History from Cloud Firestore
  */
-export const getWorkoutHistoryFromDB = async (userId = 'default_user') => {
+export const getWorkoutHistoryFromDB = async (userId = 'admin-super-001') => {
   if (!db || !isInitialized) {
     initFirebase();
   }

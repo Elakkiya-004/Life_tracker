@@ -201,7 +201,7 @@ export const CalorieCalculatorModal = ({ isOpen, onClose, onApplySuccess }) => {
   };
 
   // --- 3. Meal & Food Calorie Tracker State ---
-  const currentUserId = currentUser?.uid || 'default_user';
+  const currentUserId = currentUser?.uid || 'admin-super-001';
   const trackerStorageKey = `life_tracker_meals_${currentUserId}_${todayStr || new Date().toISOString().split('T')[0]}`;
 
   const [loggedMeals, setLoggedMeals] = useState(() => {

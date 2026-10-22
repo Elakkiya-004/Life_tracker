@@ -1344,7 +1344,7 @@ export const getTodaySoupRotation = (date = new Date()) => {
 /**
  * Helper to get logged meals for a specific date
  */
-export const getLoggedMealsForDate = (dateStr = new Date().toISOString().split('T')[0], userId = 'default_user') => {
+export const getLoggedMealsForDate = (dateStr = new Date().toISOString().split('T')[0], userId = 'admin-super-001') => {
   try {
     const key = `life_tracker_meals_${userId}_${dateStr}`;
     const raw = localStorage.getItem(key);
@@ -1357,7 +1357,7 @@ export const getLoggedMealsForDate = (dateStr = new Date().toISOString().split('
 /**
  * Helper to calculate total consumed calories for a date
  */
-export const getConsumedCaloriesForDate = (dateStr = new Date().toISOString().split('T')[0], userId = 'default_user') => {
+export const getConsumedCaloriesForDate = (dateStr = new Date().toISOString().split('T')[0], userId = 'admin-super-001') => {
   const meals = getLoggedMealsForDate(dateStr, userId);
   return meals.reduce((sum, m) => sum + Math.round((m.calories || 0) * (m.multiplier || 1)), 0);
 };
@@ -1366,7 +1366,7 @@ export const getConsumedCaloriesForDate = (dateStr = new Date().toISOString().sp
  * Helper to log soup or juice to user's daily meals in localStorage,
  * and dispatch global sync event so all UI components update in real-time.
  */
-export const logSoupToDailyMeals = (item, preferredMealType = null, dateStr = new Date().toISOString().split('T')[0], userId = 'default_user') => {
+export const logSoupToDailyMeals = (item, preferredMealType = null, dateStr = new Date().toISOString().split('T')[0], userId = 'admin-super-001') => {
   try {
     const isJuice = item.type === 'juice' || item.id?.startsWith('juice-');
     const defaultMealType = isJuice ? 'snack' : 'dinner';

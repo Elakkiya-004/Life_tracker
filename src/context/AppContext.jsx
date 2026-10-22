@@ -7,6 +7,7 @@ import {
   setLocalData,
   STORAGE_KEYS,
   DEFAULT_HABITS,
+  DEFAULT_USERS,
   DEFAULT_JARS,
   DEFAULT_ROADMAP,
   DEFAULT_CUSTOM_LISTS,
@@ -18,6 +19,7 @@ import {
   pruneOldHistoryData,
   archiveAndResetHabits,
   saveTodoListToDB,
+  getTodoListFromDB,
   saveDailyHistoryToDB,
   archiveDailyRecordToCloud,
   getAllDailyHistoryFromDB,
@@ -104,7 +106,7 @@ const getInitialTabFromLocation = () => {
 
 export const AppProvider = ({ children }) => {
   const { currentUser } = useAuth();
-  const currentUserId = currentUser?.uid || 'default_user';
+  const currentUserId = currentUser?.uid || DEFAULT_USERS[0]?.uid || 'admin-super-001';
   // Safe state initialization with clean defaults (No static dummy data)
   const [habits, setHabits] = useState(() => {
     try {
@@ -235,7 +237,7 @@ export const AppProvider = ({ children }) => {
   });
 
   const [healthProtocol, setHealthProtocol] = useState(() => {
-    const uid = currentUser?.uid || 'default_user';
+    const uid = currentUser?.uid || DEFAULT_USERS[0]?.uid || 'admin-super-001';
     const userKey = `${STORAGE_KEYS.HEALTH_PROTOCOL}_${uid}`;
     const data = getLocalData(userKey, null);
     if (data && typeof data === 'object') {
@@ -246,7 +248,7 @@ export const AppProvider = ({ children }) => {
 
   // Reload protocol when current user switches
   useEffect(() => {
-    const uid = currentUser?.uid || 'default_user';
+    const uid = currentUser?.uid || DEFAULT_USERS[0]?.uid || 'admin-super-001';
     const userKey = `${STORAGE_KEYS.HEALTH_PROTOCOL}_${uid}`;
     const saved = getLocalData(userKey, null);
     if (saved && typeof saved === 'object') {
@@ -436,48 +438,29 @@ export const AppProvider = ({ children }) => {
     return (dailyMeals || []).reduce((sum, m) => sum + Math.round((m.calories || 0) * (m.multiplier || 1)), 0);
   }, [dailyMeals]);
 
-  // Startup & Offline Rollover Check:
-  // Detects if the tracking day has changed, archives previous day's snapshot into History & Cloud DB,
-  // and preserves the active To-Do list so tasks are never lost!
+  // Startup Tracker Date Initialization (Safe: does not wipe habits before Cloud connects)
   useEffect(() => {
     const currentEffectiveDate = getEffectiveTrackerDate();
     const lastTrackerDate = getLocalData(STORAGE_KEYS.LAST_TRACKER_DATE, null);
 
     if (!lastTrackerDate) {
       setLocalData(STORAGE_KEYS.LAST_TRACKER_DATE, currentEffectiveDate);
-    } else if (lastTrackerDate !== currentEffectiveDate) {
-      console.log(`🌙 22:15 IST Rollover detected on startup: ${lastTrackerDate} -> ${currentEffectiveDate}`);
-      const rawHabits = getLocalData(STORAGE_KEYS.HABITS, []);
-      const rawHistory = getLocalData(STORAGE_KEYS.DAILY_HISTORY, {});
-
-      // Archive previous tasks into daily progress history while clearing or preserving active to-dos
-      const rawSettings = getLocalData(STORAGE_KEYS.SETTINGS, DEFAULT_SETTINGS);
-      const mode = rawSettings?.habitRolloverMode || 'auto_clear';
-      const { updatedHistory, clearedHabits } = archiveAndResetHabits(rawHabits, lastTrackerDate, rawHistory, mode);
-      setDailyHistory(updatedHistory);
-      setLocalData(STORAGE_KEYS.DAILY_HISTORY, updatedHistory);
-      setHabits(clearedHabits);
-      setLocalData(STORAGE_KEYS.HABITS, clearedHabits);
-
-      // Permanently archive previous day to Cloud DB subcollection
-      if (updatedHistory[lastTrackerDate]) {
-        archiveDailyRecordToCloud(currentUserId, lastTrackerDate, updatedHistory[lastTrackerDate]);
-      }
-      saveTodoListToDB(currentUserId, clearedHabits);
-
-      pushToCloud({
-        habits: clearedHabits,
-        todos: clearedHabits,
-        dailyHistory: updatedHistory,
-        dailyHabitNotes,
-        lastTrackerDate: currentEffectiveDate,
-        transactions, jars, roadmap, customLists, healthProtocol, settings
-      });
-
-      setLocalData(STORAGE_KEYS.LAST_TRACKER_DATE, currentEffectiveDate);
-      setTodayStr(currentEffectiveDate);
     }
-  }, []); // Run once on startup
+  }, []);
+
+  // Proactively fetch latest habits from Cloud Database on mount or user change
+  useEffect(() => {
+    let isCancelled = false;
+    getTodoListFromDB(currentUserId).then((dbHabits) => {
+      if (!isCancelled && Array.isArray(dbHabits) && dbHabits.length > 0) {
+        setHabits(dbHabits);
+        setLocalData(STORAGE_KEYS.HABITS, dbHabits);
+      }
+    });
+    return () => {
+      isCancelled = true;
+    };
+  }, [currentUserId]);
 
   // Live timer: auto-advance, archive previous tasks into history & Cloud DB at 22:15 IST
   useEffect(() => {
@@ -618,25 +601,10 @@ export const AppProvider = ({ children }) => {
           setHabits([]);
           setLocalData(STORAGE_KEYS.HABITS, []);
         } else if (cloudHabits.length > 0) {
-          // If local is explicitly empty because user just cleared, don't resurrect old tasks
-          if (Array.isArray(localHabits) && localHabits.length === 0 && cloudData.habitsClearedAt) {
-            setHabits([]);
-            setLocalData(STORAGE_KEYS.HABITS, []);
-          } else {
-            // Merge local and cloud to ensure no items added locally or on another device are lost
-            const mergedMap = new Map();
-            cloudHabits.forEach(h => h && h.id && mergedMap.set(h.id, h));
-            if (Array.isArray(localHabits)) {
-              localHabits.forEach(h => {
-                if (h && h.id && !mergedMap.has(h.id)) {
-                  mergedMap.set(h.id, h);
-                }
-              });
-            }
-            const finalHabits = Array.from(mergedMap.values());
-            setHabits(finalHabits);
-            setLocalData(STORAGE_KEYS.HABITS, finalHabits);
-          }
+          // Cloud has habits: Cloud database is authoritative single source of truth!
+          setHabits(cloudHabits);
+          setLocalData(STORAGE_KEYS.HABITS, cloudHabits);
+          setLocalData(STORAGE_KEYS.LAST_TRACKER_DATE, currentEffectiveDate);
         } else if (Array.isArray(localHabits) && localHabits.length > 0) {
           // Cloud is empty / initial state: preserve local to-dos and upload to Cloud DB!
           setHabits(localHabits);
@@ -1711,7 +1679,7 @@ export const AppProvider = ({ children }) => {
   const updateHealthProtocol = (newProtocol) => {
     setHealthProtocol(prev => {
       const updated = typeof newProtocol === 'function' ? newProtocol(prev || DEFAULT_HEALTH_PROTOCOL) : newProtocol;
-      const uid = currentUser?.uid || 'default_user';
+      const uid = currentUser?.uid || DEFAULT_USERS[0]?.uid || 'admin-super-001';
       const userKey = `${STORAGE_KEYS.HEALTH_PROTOCOL}_${uid}`;
       const clean = sanitizeHealthProtocol(updated);
       setLocalData(userKey, clean);
@@ -1721,7 +1689,7 @@ export const AppProvider = ({ children }) => {
   };
 
   const importHealthProtocolFromExcel = (parsedProtocol, stats = null) => {
-    const uid = currentUser?.uid || 'default_user';
+    const uid = currentUser?.uid || DEFAULT_USERS[0]?.uid || 'admin-super-001';
     const userKey = `${STORAGE_KEYS.HEALTH_PROTOCOL}_${uid}`;
     const enrichedProtocol = {
       ...DEFAULT_HEALTH_PROTOCOL,
@@ -1744,7 +1712,7 @@ export const AppProvider = ({ children }) => {
   };
 
   const resetHealthProtocolToDefault = () => {
-    const uid = currentUser?.uid || 'default_user';
+    const uid = currentUser?.uid || DEFAULT_USERS[0]?.uid || 'admin-super-001';
     const userKey = `${STORAGE_KEYS.HEALTH_PROTOCOL}_${uid}`;
     setHealthProtocol(DEFAULT_HEALTH_PROTOCOL);
     setLocalData(userKey, DEFAULT_HEALTH_PROTOCOL);

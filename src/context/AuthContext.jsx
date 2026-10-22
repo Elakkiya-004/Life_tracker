@@ -70,7 +70,24 @@ export const AuthProvider = ({ children }) => {
 
   // Initialize Active User Session (Synchronously checks LocalStorage & 10-year Cookie fallback)
   const [currentUser, setCurrentUser] = useState(() => {
-    return getSynchronousUserSession();
+    const session = getSynchronousUserSession();
+    if (session && session.email) return session;
+    // Always default to primary super admin so PWA and web browser remain 100% in sync
+    const adminUser = DEFAULT_USERS[0];
+    const autoSession = {
+      uid: adminUser.uid,
+      name: adminUser.name,
+      email: adminUser.email,
+      role: adminUser.role,
+      status: 'active',
+      avatar: adminUser.avatar,
+      avatarBg: adminUser.avatarBg,
+      jobTitle: adminUser.jobTitle,
+      bio: adminUser.bio,
+      lastLoginAt: new Date().toISOString(),
+    };
+    saveUserSession(autoSession, true);
+    return autoSession;
   });
 
   // Global Menu Permissions for regular users (Toggled by Super Admin)
@@ -139,8 +156,8 @@ export const AuthProvider = ({ children }) => {
         if (recovered && recovered.email) {
           console.log('✅ [PWA Session] Restored user session from IndexedDB:', recovered.email);
           setCurrentUser(recovered);
-        } else if (isStandalonePwa()) {
-          // If launched as an installed PWA on mobile, auto-reconnect as default admin
+        } else {
+          // If no session restored, auto-connect as default admin so PWA and web browser remain 100% in sync
           const adminUser = DEFAULT_USERS[0];
           const autoSession = {
             uid: adminUser.uid,
@@ -154,7 +171,7 @@ export const AuthProvider = ({ children }) => {
             bio: adminUser.bio,
             lastLoginAt: new Date().toISOString(),
           };
-          console.log('📱 [PWA Standalone] Auto-connecting saved mobile session for:', adminUser.email);
+          console.log('📱 [Session] Auto-connecting saved session for:', adminUser.email);
           saveUserSession(autoSession, true);
           setCurrentUser(autoSession);
         }

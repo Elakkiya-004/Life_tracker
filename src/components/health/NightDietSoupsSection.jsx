@@ -38,7 +38,7 @@ import { useAuth } from '../../context/AuthContext';
 export const NightDietSoupsSection = ({ onOpenCalorieCalculator, compactMode = false }) => {
   const { todayStr = new Date().toISOString().split('T')[0], setActiveTab, logDietItem, dailyMeals } = useApp();
   const { currentUser } = useAuth();
-  const currentUserId = currentUser?.uid || 'default_user';
+  const currentUserId = currentUser?.uid || 'admin-super-001';
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('All');

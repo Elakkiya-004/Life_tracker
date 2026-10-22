@@ -91,7 +91,7 @@ export const initFirebase = (customConfig = null) => {
 };
 
 // Cloud Sync Helpers for Individual User Workspace
-export const syncToCloud = async (userId = 'default_user', data) => {
+export const syncToCloud = async (userId = 'admin-super-001', data) => {
   if (!db || !isInitialized) {
     const initRes = initFirebase();
     if (!initRes.success) return { success: false, reason: 'offline_mode' };
@@ -111,7 +111,7 @@ export const syncToCloud = async (userId = 'default_user', data) => {
   }
 };
 
-export const listenToCloud = (userId = 'default_user', onUpdate) => {
+export const listenToCloud = (userId = 'admin-super-001', onUpdate) => {
   if (!db || !isInitialized) {
     const initRes = initFirebase();
     if (!initRes.success) return () => {};
