@@ -129,17 +129,17 @@ export const NightDietSoupsSection = ({ onOpenCalorieCalculator, compactMode = f
     });
   }, [searchQuery, selectedFilter, typeTab]);
 
-  // Quick Log Soup or Juice: Reflects in both Calorie Calculation and Daily Habits
+  // Quick Log Soup or Juice: Reflects in Calorie Calculation and Daily Habits (Manual Tick)
   const handleLogSoup = (item, e) => {
     if (e) e.stopPropagation();
     if (!item) return;
 
     if (logDietItem) {
-      const result = logDietItem({ item });
+      const result = logDietItem({ item, isCompleted: false });
       if (result?.success) {
         setJustLoggedId(item.id);
         const icon = item.type === 'juice' ? '🥤' : '🥣';
-        setToastMessage(`${icon} "${item.name}" (${item.calories} kcal) logged! Reflected in Daily Habits (✓ Completed) and Calorie Calculation (+${item.calories} kcal).`);
+        setToastMessage(`${icon} "${item.name}" (${item.calories} kcal) logged to Calorie Tracker! Added to Daily Habits (ready for manual tick).`);
         setTimeout(() => {
           setJustLoggedId(null);
           setToastMessage(null);

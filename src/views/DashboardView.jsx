@@ -90,7 +90,7 @@ export const DashboardView = () => {
   const roadmapList = Array.isArray(roadmap) ? roadmap : [];
 
   const streakDays = currentStreak || habitsList.reduce((max, h) => Math.max(max, h?.streak || 0), 0);
-  const currentWeek = roadmapList.find(w => w?.status === 'In Progress') || roadmapList[0] || null;
+  const currentWeek = roadmapList.find(w => w?.status === 'In Progress' || (w?.day && w?.status !== 'Completed' && w?.planStatus !== 'Rest')) || roadmapList[0] || null;
 
   return (
     <div className="dashboard-container">
@@ -148,7 +148,7 @@ export const DashboardView = () => {
         </div>
       </div>
 
-      {/* 🎯 16-Week Career Curriculum Current Milestone Widget */}
+      {/* 🎯 120-Day Full-Stack Developer Curriculum Milestone Widget */}
       {currentWeek && (
         <div className="card roadmap-dashboard-card">
           <div className="roadmap-dash-header">
@@ -159,11 +159,11 @@ export const DashboardView = () => {
               <div>
                 <div className="roadmap-badge-row">
                   <span className="badge badge-primary">{currentWeek.period} Target</span>
-                  <span className="text-xs text-sub">{currentWeek.dateRange || currentWeek.month}</span>
-                  <span className="badge badge-roadmap">{currentWeek.completedTasks?.length || 0}/5 Done</span>
+                  <span className="text-xs text-sub">{currentWeek.dateRange || currentWeek.date || currentWeek.month}</span>
+                  <span className="badge badge-roadmap">{currentWeek.cycle ? currentWeek.cycle.split(':')[0] : 'Plan'}</span>
                 </div>
                 <h3 className="roadmap-dash-heading">
-                  16-Week Master Curriculum • {currentWeek.period} Focus
+                  120-Day Developer Plan • {currentWeek.period} Focus
                 </h3>
               </div>
             </div>
@@ -173,7 +173,7 @@ export const DashboardView = () => {
               onClick={() => setActiveTab('roadmap')}
             >
               <Table size={14} />
-              <span>Full 16-Week Table</span>
+              <span>Full 120-Day Plan</span>
               <ArrowRight size={14} />
             </button>
           </div>

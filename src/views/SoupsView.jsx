@@ -125,9 +125,9 @@ export const SoupsView = ({ initialCategory = 'soup' }) => {
     };
 
     if (logDietItem) {
-      logDietItem({ item: fullJuice });
+      logDietItem({ item: fullJuice, isCompleted: false });
     }
-    showToast(`🥤 "${juice.name}" (${fullJuice.calories} kcal) logged! Reflected in Daily Habits (✓ Done) & Calorie Calculation (+${fullJuice.calories} kcal)`);
+    showToast(`🥤 "${juice.name}" (${fullJuice.calories} kcal) logged to Calorie Calculation! Added to Daily Habits (ready for manual tick)`);
   };
 
   return (
@@ -320,10 +320,10 @@ export const SoupsView = ({ initialCategory = 'soup' }) => {
               </h3>
               <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>
                 {activeCategory === 'soup' 
-                  ? 'Night soups logged to dinner sync to Daily Habits (✓ Done) & Calorie Calculation'
+                  ? 'Night soups logged to dinner sync to Calorie Calculation & Daily Habits (Manual Tick)'
                   : activeCategory === 'juice'
-                    ? 'Fresh diet juices logged sync to Daily Habits (✓ Done) & Calorie Calculation'
-                    : 'Logged soups & juices automatically sync to Daily Habits & Calorie Budget'}
+                    ? 'Fresh diet juices logged sync to Calorie Calculation & Daily Habits (Manual Tick)'
+                    : 'Logged soups & juices sync to Calorie Budget & Daily Habits (Manual Tick)'}
               </span>
             </div>
           </div>

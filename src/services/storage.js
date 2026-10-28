@@ -1,8 +1,6 @@
 import { 
   DB_HEALTH_PROTOCOL_TEMPLATE as DEFAULT_HEALTH_PROTOCOL, 
-  DB_CAREER_ROADMAP_TEMPLATE as DEFAULT_ROADMAP, 
   DB_MCU_WATCHLIST_TEMPLATE as DEFAULT_CUSTOM_LISTS, 
-  DB_ROADMAP_OUTCOMES as ROADMAP_OUTCOMES,
   sanitizeHealthProtocol,
   seedDatabaseIfEmpty,
   saveHealthProtocolToDB,
@@ -17,10 +15,46 @@ import {
   getWorkoutHistoryFromDB
 } from './cloudDatabase';
 
+import {
+  DEFAULT_DEV_PLAN_DAYS as DEFAULT_ROADMAP,
+  CYCLE_MILESTONES as ROADMAP_OUTCOMES,
+  DEV_PLAN_CONCEPTS,
+  DEV_PLAN_WEEKLY_REVIEWS,
+  DEV_PLAN_RESOURCES,
+  DEV_PLAN_AI_WORKFLOW,
+  DEFAULT_PLAN_START_DATE,
+  DEFAULT_DAILY_TARGET_HOURS,
+  TOTAL_PLAN_DAYS,
+  formatPlanDate,
+  addDaysToDate,
+  recalculatePlanDates,
+  shiftPlanDatesFromDay,
+  updateSingleDayDate,
+  swapDatesBetweenDays
+} from './devPlanData';
+
+export {
+  DEFAULT_ROADMAP,
+  ROADMAP_OUTCOMES,
+  DEV_PLAN_CONCEPTS,
+  DEV_PLAN_WEEKLY_REVIEWS,
+  DEV_PLAN_RESOURCES,
+  DEV_PLAN_AI_WORKFLOW,
+  DEFAULT_PLAN_START_DATE,
+  DEFAULT_DAILY_TARGET_HOURS,
+  TOTAL_PLAN_DAYS,
+  formatPlanDate,
+  addDaysToDate,
+  recalculatePlanDates,
+  shiftPlanDatesFromDay,
+  updateSingleDayDate,
+  swapDatesBetweenDays
+};
+
 const STORAGE_KEYS = {
   HABITS: 'life_tracker_habits_v2',
   TRANSACTIONS: 'life_tracker_transactions_v2',
-  ROADMAP: 'life_tracker_roadmap',
+  ROADMAP: 'life_tracker_roadmap_v2',
   CUSTOM_LISTS: 'life_tracker_custom_lists_v1',
   JARS: 'life_tracker_budget_jars_v3',
   SETTINGS: 'life_tracker_settings_v2',
@@ -40,7 +74,7 @@ export const AVAILABLE_MENUS = [
   { id: 'dashboard', label: 'Dashboard', path: '/', icon: 'LayoutDashboard', desc: 'Main home overview, habits progress ring, streak tracker' },
   { id: 'habits', label: 'Habits & Routines', path: '/habits', icon: 'CheckCircle2', desc: 'Daily to-do checklist, routine streaks, 22:15 IST auto-reset' },
   { id: 'protocol', label: 'Health & Diet Protocol', path: '/health', icon: 'HeartPulse', desc: 'Intermittent fasting 16:8, water counter, meal schedule' },
-  { id: 'roadmap', label: 'Career Roadmap', path: '/roadmap', icon: 'Compass', desc: '16-Week DSA, Full-Stack, React Native Excel curriculum' },
+  { id: 'roadmap', label: 'Career Roadmap', path: '/roadmap', icon: 'Compass', desc: '120-Day Full-Stack Developer Plan & Excel Curriculum' },
   { id: 'watchlists', label: 'MCU Watchlist', path: '/mcu', icon: 'Film', desc: 'Marvel Cinematic Universe Phase 1–6 release tracker' },
   { id: 'finance', label: 'Finance & Budget', path: '/finance', icon: 'Wallet', desc: 'Monthly take-home salary & 7-jar budget manager' },
   { id: 'analytics', label: 'Analytics & Score', path: '/analytics', icon: 'BarChart3', desc: 'Discipline score, completion trends & monthly graphs' },
@@ -368,10 +402,8 @@ export const importAllData = (jsonString) => {
 
 export { 
   STORAGE_KEYS, 
-  DEFAULT_ROADMAP, 
   DEFAULT_CUSTOM_LISTS, 
   DEFAULT_HEALTH_PROTOCOL, 
-  ROADMAP_OUTCOMES,
   sanitizeHealthProtocol,
   seedDatabaseIfEmpty,
   saveHealthProtocolToDB,

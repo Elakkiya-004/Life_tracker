@@ -13,6 +13,19 @@ import {
   DEFAULT_CUSTOM_LISTS,
   DEFAULT_SETTINGS,
   DEFAULT_HEALTH_PROTOCOL,
+  DEV_PLAN_CONCEPTS,
+  DEV_PLAN_WEEKLY_REVIEWS,
+  DEV_PLAN_RESOURCES,
+  DEV_PLAN_AI_WORKFLOW,
+  DEFAULT_PLAN_START_DATE,
+  DEFAULT_DAILY_TARGET_HOURS,
+  TOTAL_PLAN_DAYS,
+  formatPlanDate,
+  addDaysToDate,
+  recalculatePlanDates,
+  shiftPlanDatesFromDay,
+  updateSingleDayDate,
+  swapDatesBetweenDays,
   sanitizeHealthProtocol,
   seedDatabaseIfEmpty,
   getEffectiveTrackerDate,
@@ -147,48 +160,58 @@ export const AppProvider = ({ children }) => {
   });
 
   const mergeRoadmapWithDefaults = (existingList) => {
-    if (!Array.isArray(existingList) || existingList.length === 0) return DEFAULT_ROADMAP;
+    if (!Array.isArray(existingList) || existingList.length < 100 || !existingList[0]?.day) {
+      return DEFAULT_ROADMAP;
+    }
     
-    // Map through existingList to preserve all custom fields, user-completed tasks, and notes
-    const seenPeriods = new Set();
+    // Map through existingList to preserve all custom fields, user-completed tasks, actualMinutes, confidence, and notes
+    const seenDays = new Set();
     const mergedList = [];
 
-    existingList.forEach(week => {
-      if (!week) return;
-      const defaultWeek = DEFAULT_ROADMAP.find(d => d.id === week.id || d.period === week.period);
-      if (!defaultWeek) {
-        if (!seenPeriods.has(week.period || week.id)) {
-          seenPeriods.add(week.period || week.id);
-          mergedList.push(week);
+    existingList.forEach(day => {
+      if (!day || !day.day) return;
+      const defaultDay = DEFAULT_ROADMAP.find(d => d.id === day.id || d.day === day.day);
+      if (!defaultDay) {
+        if (!seenDays.has(day.day)) {
+          seenDays.add(day.day);
+          mergedList.push(day);
         }
         return;
       }
-      if (!seenPeriods.has(defaultWeek.period)) {
-        seenPeriods.add(defaultWeek.period);
+      if (!seenDays.has(defaultDay.day)) {
+        seenDays.add(defaultDay.day);
         mergedList.push({
-          ...defaultWeek,
-          ...week,
-          id: defaultWeek.id,
-          period: defaultWeek.period,
-          month: defaultWeek.month,
-          dateRange: defaultWeek.dateRange,
-          status: week.status || defaultWeek.status,
-          completedTasks: Array.isArray(week.completedTasks) ? week.completedTasks : (defaultWeek.completedTasks || []),
-          isLightWeek: typeof week.isLightWeek === 'boolean' ? week.isLightWeek : defaultWeek.isLightWeek,
-          notes: week.notes !== undefined ? week.notes : (defaultWeek.notes || ''),
+          ...defaultDay,
+          ...day,
+          id: defaultDay.id,
+          day: defaultDay.day,
+          date: day.date || defaultDay.date,
+          dateRange: day.dateRange || defaultDay.dateRange,
+          month: day.month || defaultDay.month,
+          weekday: day.weekday || defaultDay.weekday,
+          status: day.status || defaultDay.status,
+          completion: day.completion || defaultDay.completion,
+          actualMinutes: typeof day.actualMinutes === 'number' ? day.actualMinutes : defaultDay.actualMinutes,
+          confidence: typeof day.confidence === 'number' ? day.confidence : defaultDay.confidence,
+          completedTasks: Array.isArray(day.completedTasks) ? day.completedTasks : (defaultDay.completedTasks || []),
+          notes: day.notes !== undefined ? day.notes : (defaultDay.notes || ''),
+          mistakesBlockers: day.mistakesBlockers !== undefined ? day.mistakesBlockers : (defaultDay.mistakesBlockers || ''),
+          dsaResult: day.dsaResult !== undefined ? day.dsaResult : (defaultDay.dsaResult || ''),
+          projectOutput: day.projectOutput !== undefined ? day.projectOutput : (defaultDay.projectOutput || ''),
+          tomorrowsTask: day.tomorrowsTask !== undefined ? day.tomorrowsTask : (defaultDay.tomorrowsTask || ''),
         });
       }
     });
 
-    // Ensure any default week that wasn't in existingList is added
-    DEFAULT_ROADMAP.forEach(defaultWeek => {
-      if (!seenPeriods.has(defaultWeek.period)) {
-        seenPeriods.add(defaultWeek.period);
-        mergedList.push(defaultWeek);
+    // Ensure any default day that wasn't in existingList is added
+    DEFAULT_ROADMAP.forEach(defaultDay => {
+      if (!seenDays.has(defaultDay.day)) {
+        seenDays.add(defaultDay.day);
+        mergedList.push(defaultDay);
       }
     });
 
-    return mergedList;
+    return mergedList.sort((a, b) => a.day - b.day);
   };
 
   const [roadmap, setRoadmap] = useState(() => {
@@ -1095,11 +1118,11 @@ export const AppProvider = ({ children }) => {
   };
 
   /**
-   * Logs a diet juice or soup meal, reflecting IMMEDIATELY in both:
-   * 1. Daily Habits checklist (listed in today's tasks, optionally marked completed)
-   * 2. Calorie Calculation & Meals Tracker (added to consumed calories and macros)
+   * Logs a diet juice or soup meal, reflecting in:
+   * 1. Calorie Calculation & Meals Tracker (added to consumed calories and macros)
+   * 2. Daily Habits checklist (listed in today's tasks as pending, for MANUAL ticking by user)
    */
-  const logDietItem = ({ item, mealType = null, isCompleted = true }) => {
+  const logDietItem = ({ item, mealType = null, isCompleted = false }) => {
     if (!item) return { success: false };
 
     // 1. Log to Calorie Calculator meals in storage & cloud
@@ -1108,7 +1131,7 @@ export const AppProvider = ({ children }) => {
       setDailyMeals(mealResult.updatedMeals);
     }
 
-    // 2. Reflect immediately in Daily Habits
+    // 2. Add or ensure entry in Daily Habits (unticked/pending so user ticks manually)
     const isJuice = item.type === 'juice' || item.id?.startsWith('juice-');
     const cleanItemName = (item.name || '').trim();
 
@@ -1125,7 +1148,7 @@ export const AppProvider = ({ children }) => {
       let updated;
 
       if (existingIndex >= 0) {
-        // Habit exists: ensure todayStr is in completedDates if isCompleted
+        // Habit exists: do NOT auto-complete; preserve user's existing completion state
         const existing = currentHabits[existingIndex];
         const prevDates = Array.isArray(existing.completedDates) ? existing.completedDates : [];
         let newDates = prevDates;
@@ -1133,7 +1156,7 @@ export const AppProvider = ({ children }) => {
           newDates = [...prevDates, todayStr];
         }
 
-        // Recalculate streak
+        // Only calculate streak if isCompleted was explicitly passed as true
         let streak = existing.streak || 0;
         if (isCompleted) {
           streak = 0;
@@ -1155,12 +1178,12 @@ export const AppProvider = ({ children }) => {
         const updatedHabit = {
           ...existing,
           completedDates: newDates,
-          streak: Math.max(isCompleted ? 1 : 0, streak),
+          streak: Math.max(isCompleted ? 1 : (existing.streak || 0), streak),
         };
         updated = [...currentHabits];
         updated[existingIndex] = updatedHabit;
       } else {
-        // Create fresh habit and list in tasks
+        // Create fresh habit and list in tasks (pending / unticked for manual check)
         const habitName = isJuice 
           ? `Drink ${item.emoji || '🥤'} ${cleanItemName} (${item.calories || 80} kcal)`
           : `Have ${item.emoji || '🥣'} ${cleanItemName} (${item.calories} kcal)`;
@@ -1566,6 +1589,123 @@ export const AppProvider = ({ children }) => {
     const updated = currentRoadmap.map(week => week.id === weekId ? { ...week, notes } : week);
     setRoadmap(updated);
     pushToCloud({ habits, transactions, jars, roadmap: updated, customLists, settings });
+  };
+
+  // 120-Day Full-Stack Developer Plan Operations
+  const updateDayPlan = (dayId, fields) => {
+    const currentRoadmap = Array.isArray(roadmap) && roadmap.length > 0 ? roadmap : DEFAULT_ROADMAP;
+    const updated = currentRoadmap.map(d => d.id === dayId ? { ...d, ...fields } : d);
+    setRoadmap(updated);
+    setLocalData(STORAGE_KEYS.ROADMAP, updated);
+    pushToCloud({ habits, transactions, jars, roadmap: updated, customLists, settings });
+  };
+
+  const toggleDayComplete = (dayId) => {
+    const currentRoadmap = Array.isArray(roadmap) && roadmap.length > 0 ? roadmap : DEFAULT_ROADMAP;
+    const allChecklist = ['Learn', 'Code', 'DSA/Project', 'Recall'];
+    const updated = currentRoadmap.map(day => {
+      if (day.id !== dayId) return day;
+      const willBeDone = day.status !== 'Completed' && day.completion !== 'Done';
+      if (willBeDone) triggerCelebration();
+      return {
+        ...day,
+        status: willBeDone ? 'Completed' : 'Not Started',
+        completion: willBeDone ? 'Done' : 'Pending',
+        completedTasks: willBeDone ? allChecklist : []
+      };
+    });
+    setRoadmap(updated);
+    setLocalData(STORAGE_KEYS.ROADMAP, updated);
+    pushToCloud({ habits, transactions, jars, roadmap: updated, customLists, settings });
+  };
+
+  const toggleDayChecklist = (dayId, taskItem) => {
+    const currentRoadmap = Array.isArray(roadmap) && roadmap.length > 0 ? roadmap : DEFAULT_ROADMAP;
+    const updated = currentRoadmap.map(day => {
+      if (day.id !== dayId) return day;
+      const prev = Array.isArray(day.completedTasks) ? day.completedTasks : [];
+      const hasIt = prev.includes(taskItem);
+      const newTasks = hasIt ? prev.filter(t => t !== taskItem) : [...prev, taskItem];
+      const isComplete = newTasks.length >= 4;
+      if (isComplete && !hasIt) triggerCelebration();
+      return {
+        ...day,
+        completedTasks: newTasks,
+        status: isComplete ? 'Completed' : (newTasks.length > 0 ? 'In Progress' : 'Not Started'),
+        completion: isComplete ? 'Done' : (newTasks.length > 0 ? 'Partial' : 'Pending')
+      };
+    });
+    setRoadmap(updated);
+    setLocalData(STORAGE_KEYS.ROADMAP, updated);
+    pushToCloud({ habits, transactions, jars, roadmap: updated, customLists, settings });
+  };
+
+  const recalculateAllDates = (startDateStr) => {
+    const currentRoadmap = Array.isArray(roadmap) && roadmap.length > 0 ? roadmap : DEFAULT_ROADMAP;
+    const updated = recalculatePlanDates(currentRoadmap, startDateStr);
+    setRoadmap(updated);
+    setLocalData(STORAGE_KEYS.ROADMAP, updated);
+    pushToCloud({ habits, transactions, jars, roadmap: updated, customLists, settings });
+  };
+
+  const shiftDatesFromDay = (fromDayNumber, deltaDays) => {
+    const currentRoadmap = Array.isArray(roadmap) && roadmap.length > 0 ? roadmap : DEFAULT_ROADMAP;
+    const updated = shiftPlanDatesFromDay(currentRoadmap, fromDayNumber, deltaDays);
+    setRoadmap(updated);
+    setLocalData(STORAGE_KEYS.ROADMAP, updated);
+    pushToCloud({ habits, transactions, jars, roadmap: updated, customLists, settings });
+  };
+
+  const updateDayDate = (dayId, newDateStr) => {
+    const currentRoadmap = Array.isArray(roadmap) && roadmap.length > 0 ? roadmap : DEFAULT_ROADMAP;
+    const updated = updateSingleDayDate(currentRoadmap, dayId, newDateStr);
+    setRoadmap(updated);
+    setLocalData(STORAGE_KEYS.ROADMAP, updated);
+    pushToCloud({ habits, transactions, jars, roadmap: updated, customLists, settings });
+  };
+
+  const swapDayDates = (dayId1, dayId2) => {
+    const currentRoadmap = Array.isArray(roadmap) && roadmap.length > 0 ? roadmap : DEFAULT_ROADMAP;
+    const updated = swapDatesBetweenDays(currentRoadmap, dayId1, dayId2);
+    setRoadmap(updated);
+    setLocalData(STORAGE_KEYS.ROADMAP, updated);
+    pushToCloud({ habits, transactions, jars, roadmap: updated, customLists, settings });
+  };
+
+  // Tech Concepts Mastery
+  const [devPlanConcepts, setDevPlanConcepts] = useState(() => {
+    try {
+      const data = getLocalData('life_tracker_dev_concepts_v1', null);
+      return Array.isArray(data) && data.length > 0 ? data : DEV_PLAN_CONCEPTS;
+    } catch {
+      return DEV_PLAN_CONCEPTS;
+    }
+  });
+
+  const toggleConceptMastery = (conceptId) => {
+    setDevPlanConcepts(prev => {
+      const updated = prev.map(c => c.id === conceptId ? { ...c, mastered: !c.mastered } : c);
+      setLocalData('life_tracker_dev_concepts_v1', updated);
+      return updated;
+    });
+  };
+
+  // Weekly Reviews
+  const [devPlanWeeklyReviews, setDevPlanWeeklyReviews] = useState(() => {
+    try {
+      const data = getLocalData('life_tracker_dev_reviews_v1', null);
+      return Array.isArray(data) && data.length > 0 ? data : DEV_PLAN_WEEKLY_REVIEWS;
+    } catch {
+      return DEV_PLAN_WEEKLY_REVIEWS;
+    }
+  });
+
+  const updateWeeklyReview = (reviewId, fields) => {
+    setDevPlanWeeklyReviews(prev => {
+      const updated = prev.map(r => r.id === reviewId ? { ...r, ...fields } : r);
+      setLocalData('life_tracker_dev_reviews_v1', updated);
+      return updated;
+    });
   };
 
   // Custom List & Watchlist Operations
@@ -1983,16 +2123,20 @@ export const AppProvider = ({ children }) => {
 
   const netSavings = currentMonthIncome - currentMonthExpense;
 
-  // Roadmap Metrics
-  const totalRoadmapTasks = safeRoadmap.length * 5;
-  const totalCompletedRoadmapTasks = safeRoadmap.reduce((sum, w) => sum + (Array.isArray(w?.completedTasks) ? w.completedTasks.length : 0), 0);
-  const roadmapCompletionPercent = totalRoadmapTasks > 0 
-    ? Math.round((totalCompletedRoadmapTasks / totalRoadmapTasks) * 100) 
+  // Roadmap Metrics (120-Day Full-Stack Plan)
+  const totalRoadmapDays = safeRoadmap.length;
+  const completedRoadmapDays = safeRoadmap.filter(d => d && (d.status === 'Completed' || d.completion === 'Done')).length;
+  const totalStudyMinutesLogged = safeRoadmap.reduce((sum, d) => sum + (Number(d?.actualMinutes) || 0), 0);
+  const totalStudyHoursLogged = (totalStudyMinutesLogged / 60).toFixed(1);
+  const totalRoadmapTasks = safeRoadmap.length * 4;
+  const totalCompletedRoadmapTasks = safeRoadmap.reduce((sum, w) => sum + (Array.isArray(w?.completedTasks) ? w.completedTasks.length : (w?.status === 'Completed' ? 4 : 0)), 0);
+  const roadmapCompletionPercent = totalRoadmapDays > 0 
+    ? Math.round((completedRoadmapDays / totalRoadmapDays) * 100) 
     : 0;
 
-  // Active current roadmap milestone (the first in-progress or first week)
-  const currentRoadmapWeek = safeRoadmap.find(w => w && w.status === 'In Progress') || safeRoadmap[0] || null;
-  const currentRoadmapWeekDoneTasks = Array.isArray(currentRoadmapWeek?.completedTasks) ? currentRoadmapWeek.completedTasks.length : 0;
+  // Active current roadmap milestone (the first in-progress or first study day)
+  const currentRoadmapWeek = safeRoadmap.find(w => w && (w.status === 'In Progress' || w.status === 'Study')) || safeRoadmap[0] || null;
+  const currentRoadmapWeekDoneTasks = Array.isArray(currentRoadmapWeek?.completedTasks) ? currentRoadmapWeek.completedTasks.length : (currentRoadmapWeek?.status === 'Completed' ? 4 : 0);
 
   // Marvel Watchlist Metrics
   const marvelList = safeCustomLists.find(l => l && l.id === 'list-mcu-doomsday') || safeCustomLists[0] || null;
@@ -2052,11 +2196,31 @@ export const AppProvider = ({ children }) => {
         currentMonthIncome,
         currentMonthExpense,
         netSavings,
+        totalRoadmapDays,
+        completedRoadmapDays,
+        totalStudyMinutesLogged,
+        totalStudyHoursLogged,
         totalRoadmapTasks,
         totalCompletedRoadmapTasks,
         roadmapCompletionPercent,
         currentRoadmapWeek,
         currentRoadmapWeekDoneTasks,
+        updateDayPlan,
+        toggleDayComplete,
+        toggleDayChecklist,
+        recalculateAllDates,
+        shiftDatesFromDay,
+        updateDayDate,
+        swapDayDates,
+        devPlanConcepts,
+        toggleConceptMastery,
+        devPlanWeeklyReviews,
+        updateWeeklyReview,
+        devPlanResources: DEV_PLAN_RESOURCES,
+        devPlanAiWorkflow: DEV_PLAN_AI_WORKFLOW,
+        defaultPlanStartDate: DEFAULT_PLAN_START_DATE,
+        defaultDailyTargetHours: DEFAULT_DAILY_TARGET_HOURS,
+        totalPlanDays: TOTAL_PLAN_DAYS,
         toggleHabit,
         addHabit,
         updateHabit,

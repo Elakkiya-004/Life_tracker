@@ -130,10 +130,10 @@ export const Header = () => {
         {(activeTab === 'roadmap' || activeTab === 'career') && (
           <div 
             className="streak-pill roadmap-streak-pill" 
-            title={`Career Roadmap Milestone (${currentRoadmapWeek?.period || 'Sep W1'}): ${currentRoadmapWeekDoneTasks}/5 Tasks Done`}
+            title={`120-Day Developer Plan: Day ${currentRoadmapWeek?.day || 1} • ${currentRoadmapWeek?.mainTopic || ''}`}
           >
             <Compass size={15} className="compass-icon text-cyan-400" />
-            <span>🎯 {currentRoadmapWeek?.period || 'Sep W1'}: {currentRoadmapWeekDoneTasks}/5 Done</span>
+            <span>🎯 Day {currentRoadmapWeek?.day || 1}: {currentRoadmapWeek?.status === 'Completed' ? 'Completed' : (currentRoadmapWeek?.mainTopic ? currentRoadmapWeek.mainTopic.substring(0, 18) + '...' : 'In Progress')}</span>
           </div>
         )}
 
